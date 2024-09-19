@@ -4,6 +4,7 @@ namespace App\Traits;
 
 use App\Models\Attachment;
 use App\Models\Role;
+use App\Models\Stock;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -97,6 +98,15 @@ trait GeneralTrait
         return 'upload/' . $fileName;    
     }
 
+    public function checkCompanyStock($product_id,$qty)
+    {
+        $stock=Stock::where(['product_id'=> $product_id,'person_id'=>1,'person_type'=>'User'])->latest()->first();
+        $remainingStock = $stock ? $stock->remaining_qty : 0;
+        if ($remainingStock < $qty) {
+            return response()->json(['status' => 'error', 'message' => 'Insufficient Stock.'], 400);
+        }
+        return true;
+    }
    
     // // Example of a utility method
     // public function formatDate($date)

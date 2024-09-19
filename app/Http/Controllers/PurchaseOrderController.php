@@ -131,10 +131,9 @@ class PurchaseOrderController extends Controller
                     'vat_amount' => $vatAmount,
                     'total' => $total,
                 ]);
-
                
                 // Add stock entry
-                $stock = Stock::where(['product_id'=> $productIds[$i],'person_id'=>1,'person_type'=>'Admin'])->first();
+                $stock = Stock::where(['product_id'=> $productIds[$i],'person_id'=>1,'person_type'=>'User'])->first();
                 $old_total_qty=$stock?$stock->total_qty:0;
                 $old_remaining_qty=$stock?$stock->remaining_qty:0;
 
@@ -144,7 +143,7 @@ class PurchaseOrderController extends Controller
                     'stock_in' => $quantities[$i],  
                     'remaining_qty' => $old_remaining_qty+$quantities[$i], 
                     'person_id' => 1,
-                    'person_type' => 'Admin',   
+                    'person_type' => 'User',   
                     'link_id' => $orderDetail->id,
                     'link_name' => 'purchase_order_detail', 
                 ]);

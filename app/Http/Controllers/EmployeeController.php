@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Employee;
+use App\Models\Stock;
 use App\Models\User;
 use App\Traits\GeneralTrait;
 use Illuminate\Http\Request;
@@ -14,10 +15,22 @@ class EmployeeController extends Controller
     
     public function index($id=null){
         if($id==null){
-            $employee=User::with(['employee','role:id,name'])->whereIn('role_id',[2,3,4,6])->orderBy('id', 'DESC')->get();
-            return response()->json(['data' => $employee]);
+            $employees=User::with(['employee','role:id,name'])->whereIn('role_id',[2,3,4,6])->orderBy('id', 'DESC')->get();
+
+            //sales manager only
+            // foreach($employees as $key=>$employee){
+            //     if($employee->role_id==4){
+            //         $employees[$key]->stocks=Stock::with(['product:id,product_name'])->where(['person_id' => $employee->id, 'person_type' => 'User'])
+            //          ->latest()->get(['id','product_id','total_qty','remaining_qty','created_at'])->unique('product_id');
+            //     }
+            // }
+            return response()->json(['data' => $employees]);
         }else{
             $employee=User::with('employee')->where('id',$id)->whereIn('role_id',[2,3,4,6])->first();
+            if ($employee && $employee->role_id == 4) {
+                $employee->stocks = Stock::with(['product:id,product_name'])->where(['person_id' => $employee->id, 'person_type' => 'User'])
+                    ->latest()->get(['id','product_id','total_qty','remaining_qty','created_at'])->unique('product_id');
+            }
             return response()->json(['data' => $employee]);
         }
     }
@@ -89,6 +102,68 @@ class EmployeeController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['status' => 'error','message' => 'Failed to Add Employee. ' .$e->getMessage()],500);
+        }
+    }
+
+    //
+    public function getSalesManager(){
+        $sales_managers=User::with(['employee','role:id,name'])->where('role_id',4)->orderBy('id', 'DESC')->get();
+        return response()->json(['data' => $sales_managers]);
+    }
+
+    // assign stock to sales manager
+    public function assignStock(Request $request)
+    {
+        try {
+            DB::beginTransaction();
+            $request->validate([
+                'product_id' => 'required|exists:products,id',
+                'sales_manager_id' => 'required|exists:users,id,role_id,4', 
+                'quantity' => 'required|numeric|min:1',
+            ]);
+            
+            // Call the function to check stock
+            $quantityCheck = $this->checkCompanyStock($request->product_id,$request->quantity);
+            if ($quantityCheck !== true) {
+                return $quantityCheck;
+            }
+
+            // Add sales manager stock entry
+            $stock = Stock::where(['product_id'=> $request->product_id,'person_id'=>$request->sales_manager_id,'person_type'=>'User'])->latest()->first();
+            $old_total_qty=$stock?$stock->total_qty:0;
+            $old_remaining_qty=$stock?$stock->remaining_qty:0;
+            $saleStock=Stock::create([
+                'product_id' => $request->product_id,
+                'total_qty' => $old_total_qty+$request->quantity, 
+                'stock_in' => $request->quantity,  
+                'remaining_qty' => $old_remaining_qty+$request->quantity, 
+                'person_id' => $request->sales_manager_id,
+                'person_type' => 'User',  
+            ]);
+
+            // Add company stock entry
+            $stock = Stock::where(['product_id'=> $request->product_id,'person_id'=>1,'person_type'=>'User'])->latest()->first();
+            $old_total_qty=$stock?$stock->total_qty:0;
+            $old_remaining_qty=$stock?$stock->remaining_qty:0;
+            Stock::create([
+                'product_id' => $request->product_id,
+                'total_qty' => $old_total_qty-$request->quantity, 
+                'stock_out' => $request->quantity,  
+                'remaining_qty' => $old_remaining_qty-$request->quantity, 
+                'person_id' => 1,
+                'person_type' => 'User',   
+                'link_id' => $saleStock->id,
+                'link_name' => 'assign_stock', 
+            ]);
+            
+            DB::commit();
+            return response()->json(['status' => 'success','message' => 'Stock has been Assigned Successfully']);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return response()->json(['status'=> 'error','message' => $e->validator->errors()->first()], 422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['status' => 'error','message' => 'Failed to Assign Stock. ' .$e->getMessage()],500);
         }
     }
 }
