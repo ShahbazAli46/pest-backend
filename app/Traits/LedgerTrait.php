@@ -89,7 +89,7 @@ trait LedgerTrait
 
         if ($paymentType == 'cash') {
             if ($companyCashBalance < $amount) {
-                return response()->json(['status' => 'error', 'message' => 'Insufficient cash balance for this expense.'], 400);
+                return response()->json(['status' => 'error', 'message' => 'Insufficient Cash Balance.'], 400);
             }
         }
     
@@ -97,10 +97,10 @@ trait LedgerTrait
             if (!$bankId) {
                 return response()->json(['status' => 'error', 'message' => 'Bank ID is required for cheque or online payments.'], 400);
             }
-            $bankLedger = Ledger::where('bank_id', $bankId)->latest()->first();
+            $bankLedger = Ledger::where(['bank_id'=> $bankId,'person_type'=>'User','person_id'=>1])->latest()->first();
             $bankBalance = $bankLedger ? $bankLedger->bank_balance : 0;
             if ($bankBalance < $amount) {
-                return response()->json(['status' => 'error', 'message' => 'Insufficient bank balance for this expense.'], 400);
+                return response()->json(['status' => 'error', 'message' => 'Insufficient Bank Balance.'], 400);
             }
         }
 

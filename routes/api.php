@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\{BankController, BrandController,ClientController,EmployeeController, ExpenseCategoryController, ExpenseController, ProductController, PurchaseOrderController, ServiceController,SupplierController,UserAuthController, VehicleController, VehicleExpenseController, VendorController};
+use App\Http\Controllers\{AdminController, BankController, BrandController,ClientController,EmployeeController, ExpenseCategoryController, ExpenseController, ProductController, PurchaseOrderController, ServiceController,SupplierController,UserAuthController, VehicleController, VehicleExpenseController, VendorController};
 use App\Models\ExpenseCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -40,6 +40,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('supplier/{id?}',[SupplierController::class,'index']);
     Route::post('supplier/create',[SupplierController::class,'store']);
     Route::post('supplier/add_payment',[SupplierController::class,'addPayment']);
+    Route::get('supplier/ledger/get/{id?}',[SupplierController::class,'getSupplierLedger']);
+
 
     // Services
     Route::get('service/{id?}',[ServiceController::class,'index']);
@@ -56,7 +58,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Products
     Route::get('product/{id?}',[ProductController::class,'index']);
     Route::post('product/create',[ProductController::class,'store']);
-    Route::get('product/get/stocks',[ProductController::class,'showProductStok']);
+    Route::get('product/stock/get/{id?}',[ProductController::class,'getProductStok']);
 
 
     // Vehicle
@@ -87,6 +89,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('purchase_order/{id?}',[PurchaseOrderController::class,'index']);
     Route::post('purchase_order/create',[PurchaseOrderController::class,'store']);
 
+    //Company or Admin
+    Route::get('admin/ledger/get/{id?}',[AdminController::class,'getAdminLedger']);
 
     Route::post('logout',[UserAuthController::class,'logout']);
 });

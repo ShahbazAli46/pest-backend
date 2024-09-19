@@ -168,8 +168,6 @@ class PurchaseOrderController extends Controller
                 'link_name' => 'purchase',
             ]);
 
-            
-
             DB::commit();
             return response()->json(['status' => 'success', 'message' => 'Purchase Order Created Successfully!']);
         } catch (\Illuminate\Validation\ValidationException $e) {

@@ -6,6 +6,7 @@ use App\Models\Bank;
 use App\Models\Ledger;
 use App\Models\Supplier;
 use App\Traits\LedgerTrait;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -179,5 +180,32 @@ class SupplierController extends Controller
         }
     }
 
-    
+    public function getSupplierLedger(Request $request,$id=null){
+        if($id==null){
+            if($request->has('start_date') && $request->has('end_date')){
+                $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
+                $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
+                $ledgers = Ledger::with(['personable'])->whereBetween('created_at', [$startDate, $endDate])->where(['person_type' => 'Supplier'])->get();
+                return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $ledgers]);
+            }else{
+                $ledgers = Ledger::with(['personable'])->where(['person_type' => 'Supplier'])->get();
+                return response()->json(['data' => $ledgers]);
+            }
+        }else{
+            try {
+                if($request->has('start_date') && $request->has('end_date')){
+                    $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
+                    $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
+                    $ledgers = Ledger::with(['personable'])->whereBetween('created_at', [$startDate, $endDate])->where(['person_type' => 'Supplier','person_id' => $id])->get();
+                    return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $ledgers]);
+                }else{
+                    $ledgers = Ledger::with(['personable'])->where(['person_type' => 'Supplier','person_id' => $id])->get();
+                    return response()->json(['data' => $ledgers]);
+                }
+            } catch (ModelNotFoundException $e) {
+                return response()->json(['status'=>'error', 'message' => 'Supplier Not Found.'], 404);
+            }
+        }
+    }
+
 }

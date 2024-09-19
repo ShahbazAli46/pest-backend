@@ -74,7 +74,7 @@ trait GeneralTrait
             // Save the attachment record in the database
             $newAttachment = new Attachment;
             $newAttachment->file_name = $name;
-            $newAttachment->file_path = 'upload/' . $folder . '/' . $fileName;
+            $newAttachment->file_path = 'upload/' . $fileName;
             $newAttachment->file_extension = $attachment->getClientOriginalExtension();
             $newAttachment->file_size = $file_size;
             $newAttachment->attachmentable_id = $model_id;
@@ -94,7 +94,7 @@ trait GeneralTrait
             mkdir($destinationPath, 0755, true);
         }
         $image->move($destinationPath, $fileName);
-        return 'upload/' . $folder . '/' . $fileName;    
+        return 'upload/' . $fileName;    
     }
 
    

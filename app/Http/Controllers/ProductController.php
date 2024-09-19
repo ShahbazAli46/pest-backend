@@ -76,9 +76,17 @@ class ProductController extends Controller
         }
     }
 
-    public function showProductStok()
+    public function getProductStok($id=null)
     {
-        $stocks=Stock::with(['product:id,product_name'])->where(['person_id'=>1,'person_type'=>'Admin'])->get();
-        return response()->json(['data' => $stocks]);
+        // id==product_id
+        if($id==null){
+            $stocks=Stock::with(['product:id,product_name'])->where(['person_id'=>1,'person_type'=>'Admin'])->get();
+            return response()->json(['data' => $stocks]);
+        }else{
+            $stocks=Stock::with(['product:id,product_name'])->where(['person_id'=>1,'person_type'=>'Admin','product_id'=>$id])->get();
+            return response()->json(['data' => $stocks]);
+        }
+      
     }
+    
 }
