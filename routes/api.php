@@ -1,8 +1,6 @@
 <?php
 
-use App\Http\Controllers\{AdminController, BankController, BrandController,ClientController,EmployeeController, ExpenseCategoryController, ExpenseController, ProductController, PurchaseOrderController, ServiceController,SupplierController,UserAuthController, VehicleController, VehicleExpenseController, VendorController};
-use App\Models\ExpenseCategory;
-use Illuminate\Http\Request;
+use App\Http\Controllers\{AdminController, BankController, BrandController,ClientController,EmployeeController, ExpenseCategoryController, ExpenseController, ProductController, PurchaseOrderController, QuoteController, ServiceController,SupplierController, TermsAndConditionController, TreatmentMethodController, UserAuthController, VehicleController, VehicleExpenseController, VendorController};
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -92,6 +90,21 @@ Route::middleware('auth:sanctum')->group(function () {
 
     //Company or Admin
     Route::get('admin/ledger/get/{id?}',[AdminController::class,'getAdminLedger']);
+    Route::get('admin/dashboard',[AdminController::class,'getAdminDashboard']);
+
+    // Terms And Condition
+    Route::get('terms_and_condition/{id?}',[TermsAndConditionController::class,'index']);
+    Route::post('terms_and_condition/create',[TermsAndConditionController::class,'store']);
+    Route::post('terms_and_condition/update/{id}',[TermsAndConditionController::class,'update']);
+
+    // Treatment Method
+    Route::get('treatment_method/{id?}',[TreatmentMethodController::class,'index']);
+    Route::post('treatment_method/create',[TreatmentMethodController::class,'store']);
+    Route::post('treatment_method/update/{id}',[TreatmentMethodController::class,'update']);
+
+
+    Route::get('quote/{id?}',[QuoteController::class,'index']);
+    Route::post('quote/create',[QuoteController::class,'store']);
 
     Route::post('logout',[UserAuthController::class,'logout']);
 });

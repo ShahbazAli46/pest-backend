@@ -147,7 +147,7 @@ class EmployeeController extends Controller
             $old_remaining_qty=$stock?$stock->remaining_qty:0;
             Stock::create([
                 'product_id' => $request->product_id,
-                'total_qty' => $old_total_qty-$request->quantity, 
+                'total_qty' => $old_total_qty, 
                 'stock_out' => $request->quantity,  
                 'remaining_qty' => $old_remaining_qty-$request->quantity, 
                 'person_id' => 1,
