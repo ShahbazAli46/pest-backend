@@ -15,10 +15,10 @@ class AdminController extends Controller
         if($request->has('start_date') && $request->has('end_date')){
             $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
             $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
-            $ledgers = Ledger::with(['personable'])->whereBetween('created_at', [$startDate, $endDate])->where(['person_type' => 'User','person_id'=>1])->get();
+            $ledgers = Ledger::with(['personable'])->whereBetween('created_at', [$startDate, $endDate])->where(['person_type' => 'App\Models\User','person_id'=>1])->get();
             return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $ledgers]);
         }else{
-            $ledgers = Ledger::with(['personable'])->where(['person_type' => 'User','person_id'=>1])->get();
+            $ledgers = Ledger::with(['personable'])->where(['person_type' => 'App\Models\User','person_id'=>1])->get();
             return response()->json(['data' => $ledgers]);
         }
     }
@@ -33,17 +33,17 @@ class AdminController extends Controller
             $normal_expense=Expense::whereBetween('created_at', [$startDate, $endDate])->sum('total_amount')??0;
             $vehicle_expense=VehicleExpense::whereBetween('created_at', [$startDate, $endDate])->sum('total_amount')??0;
             $data['total_expense']=$normal_expense+$vehicle_expense;
-            $data['cash_collection']=Ledger::where(['person_type'=> 'User','person_id'=>1,'entry_type'=>'cr'])->whereBetween('created_at', [$startDate, $endDate])->sum('cr_amt');
-            $data['pos_collection']=Ledger::where(['person_type'=> 'User','person_id'=>1,'payment_type'=>'pos','entry_type'=>'cr'])->whereBetween('created_at', [$startDate, $endDate])->sum('cr_amt');
-            $data['bank_transfer']=Ledger::where(['person_type'=> 'User','person_id'=>1,'entry_type'=>'cr'])->whereIn('payment_type',['cheque','online'])->whereBetween('created_at', [$startDate, $endDate])->sum('cr_amt');
+            $data['cash_collection']=Ledger::where(['person_type'=> 'App\Models\User','person_id'=>1,'entry_type'=>'cr'])->whereBetween('created_at', [$startDate, $endDate])->sum('cr_amt');
+            $data['pos_collection']=Ledger::where(['person_type'=> 'App\Models\User','person_id'=>1,'payment_type'=>'pos','entry_type'=>'cr'])->whereBetween('created_at', [$startDate, $endDate])->sum('cr_amt');
+            $data['bank_transfer']=Ledger::where(['person_type'=> 'App\Models\User','person_id'=>1,'entry_type'=>'cr'])->whereIn('payment_type',['cheque','online'])->whereBetween('created_at', [$startDate, $endDate])->sum('cr_amt');
             return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $data]);
         }else{
             $normal_expense=Expense::sum('total_amount')??0;
             $vehicle_expense=VehicleExpense::sum('total_amount')??0;
             $data['total_expense']=$normal_expense+$vehicle_expense;
-            $data['cash_collection']=Ledger::where(['person_type'=> 'User','person_id'=>1,'entry_type'=>'cr'])->sum('cr_amt');
-            $data['pos_collection']=Ledger::where(['person_type'=> 'User','person_id'=>1,'payment_type'=>'pos','entry_type'=>'cr'])->sum('cr_amt');
-            $data['bank_transfer']=Ledger::where(['person_type'=> 'User','person_id'=>1,'entry_type'=>'cr'])->whereIn('payment_type',['cheque','online'])->sum('cr_amt');
+            $data['cash_collection']=Ledger::where(['person_type'=> 'App\Models\User','person_id'=>1,'entry_type'=>'cr'])->sum('cr_amt');
+            $data['pos_collection']=Ledger::where(['person_type'=> 'App\Models\User','person_id'=>1,'payment_type'=>'pos','entry_type'=>'cr'])->sum('cr_amt');
+            $data['bank_transfer']=Ledger::where(['person_type'=> 'App\Models\User','person_id'=>1,'entry_type'=>'cr'])->whereIn('payment_type',['cheque','online'])->sum('cr_amt');
             return response()->json(['data' => $data]);
         }
     }

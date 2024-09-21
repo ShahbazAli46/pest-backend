@@ -133,7 +133,7 @@ class PurchaseOrderController extends Controller
                 ]);
                
                 // Add stock entry
-                $stock = Stock::where(['product_id'=> $productIds[$i],'person_id'=>1,'person_type'=>'User'])->first();
+                $stock = Stock::where(['product_id'=> $productIds[$i],'person_id'=>1,'person_type'=>'App\Models\User'])->first();
                 $old_total_qty=$stock?$stock->total_qty:0;
                 $old_remaining_qty=$stock?$stock->remaining_qty:0;
 
@@ -143,7 +143,7 @@ class PurchaseOrderController extends Controller
                     'stock_in' => $quantities[$i],  
                     'remaining_qty' => $old_remaining_qty+$quantities[$i], 
                     'person_id' => 1,
-                    'person_type' => 'User',   
+                    'person_type' => 'App\Models\User',   
                     'link_id' => $orderDetail->id,
                     'link_name' => 'purchase_order_detail', 
                 ]);
@@ -151,7 +151,7 @@ class PurchaseOrderController extends Controller
             }
 
             // Update the supplier ledger
-            $lastLedger = Ledger::where(['person_type' => 'Supplier', 'person_id' => $request->supplier_id])->latest()->first();
+            $lastLedger = Ledger::where(['person_type' => 'App\Models\Supplier', 'person_id' => $request->supplier_id])->latest()->first();
             $oldBalance = $lastLedger ? $lastLedger->cash_balance : 0;
             $newBalance= $oldBalance+$grandTotal;
             Ledger::create([
@@ -162,7 +162,7 @@ class PurchaseOrderController extends Controller
                 'cash_balance' => $newBalance,
                 'entry_type' => 'dr',
                 'person_id' => $request->supplier_id, 
-                'person_type' => 'Supplier', 
+                'person_type' => 'App\Models\Supplier', 
                 'link_id' => $purchaseOrder->id, 
                 'link_name' => 'purchase',
             ]);

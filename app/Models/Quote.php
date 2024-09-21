@@ -16,14 +16,31 @@ class Quote extends Model
     'grand_total','contract_start_date', 'contract_end_date', 'is_contracted', 'term_and_condition_id'];
 
 
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function termAndCondition()
     {
         return $this->belongsTo(TermAndCondition::class);
     }
 
-    public function treatmentMethod()
+    public function getTreatmentMethods()
     {
-        return $this->belongsTo(TreatmentMethod::class);
+        $tmIds = json_decode($this->tm_ids);
+        return TreatmentMethod::whereIn('id', $tmIds)->get();
     }
+
+    public function quoteServices()
+    {
+        return $this->hasMany(QuoteService::class);
+    }
+
+    public function quoteServiceDates()
+    {
+        return $this->hasMany(QuoteServiceDate::class);
+    }
+
 
 }

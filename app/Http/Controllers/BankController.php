@@ -35,7 +35,7 @@ class BankController extends Controller
             if($bank){
 
                 //Compnay ledger
-                $lastLedger = Ledger::where(['person_type'=> 'User','person_id'=>1])->latest()->first();
+                $lastLedger = Ledger::where(['person_type'=> 'App\Models\User','person_id'=>1])->latest()->first();
                 $oldBankBalance = $lastLedger ? $lastLedger->bank_balance : 0;
                 $oldCashBalance = $lastLedger ? $lastLedger->cash_balance : 0;
                 $newBankBalance = $oldBankBalance + $validateData['balance'];
@@ -50,7 +50,7 @@ class BankController extends Controller
                     'cash_balance' => $oldCashBalance,  
                     'entry_type' => 'cr',  
                     'person_id' => 1,  
-                    'person_type' => 'User',  // Admin or Company
+                    'person_type' => 'App\Models\User',  // Admin or Company
                     'link_id' => null,  
                     'link_name' => null,  
                 ]);

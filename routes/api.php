@@ -104,7 +104,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
     Route::get('quote/{id?}',[QuoteController::class,'index']);
-    Route::post('quote/create',[QuoteController::class,'store']);
+    Route::post('quote/manage',[QuoteController::class,'manage']);
+    Route::get('quote/move/contract/{id}',[QuoteController::class,'moveToContract']);
 
     Route::post('logout',[UserAuthController::class,'logout']);
 });

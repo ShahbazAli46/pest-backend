@@ -80,10 +80,10 @@ class ProductController extends Controller
     {
         // id==product_id
         if($id==null){
-            $stocks=Stock::with(['product:id,product_name'])->where(['person_id'=>1,'person_type'=>'Admin'])->get();
+            $stocks=Stock::with(['product:id,product_name'])->where(['person_id'=>1,'person_type'=>'App\Models\User'])->get();
             return response()->json(['data' => $stocks]);
         }else{
-            $stocks=Stock::with(['product:id,product_name'])->where(['person_id'=>1,'person_type'=>'Admin','product_id'=>$id])->get();
+            $stocks=Stock::with(['product:id,product_name'])->where(['person_id'=>1,'person_type'=>'App\Models\User','product_id'=>$id])->get();
             return response()->json(['data' => $stocks]);
         }
       

@@ -12,8 +12,4 @@ class TreatmentMethod extends Model
 
     protected $fillable = ['name'];
 
-    public function quotes()
-    {
-        return $this->hasMany(Quote::class);
-    }
 }

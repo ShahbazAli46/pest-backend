@@ -20,7 +20,7 @@ return new class extends Migration
             $table->decimal('stock_out', 15, 2)->default(0.00);
             $table->decimal('remaining_qty', 15, 2)->default(0.00);
             $table->unsignedBigInteger('person_id');
-            $table->enum('person_type',['User']);
+            $table->enum('person_type',['App\Models\User']);
             $table->unsignedBigInteger('link_id')->nullable();
             $table->enum('link_name',['purchase_order_detail','assign_stock'])->nullable();
             $table->timestamps();

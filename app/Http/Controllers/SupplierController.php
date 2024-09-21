@@ -59,7 +59,7 @@ class SupplierController extends Controller
                     'entry_type' => 'dr',  // Debit entry for opening balance
                     'cash_balance' => $openingBalance,
                     'person_id' => $supplier->id,
-                    'person_type' => 'Supplier',
+                    'person_type' => 'App\Models\Supplier',
                 ]);
 
                 DB::commit();
@@ -126,7 +126,7 @@ class SupplierController extends Controller
 
         
             // Update the supplier ledger
-            $lastSupLedger = Ledger::where(['person_type' => 'Supplier', 'person_id' => $request->supplier_id])->latest()->first();
+            $lastSupLedger = Ledger::where(['person_type' => 'App\Models\Supplier', 'person_id' => $request->supplier_id])->latest()->first();
             $oldSupCashBalance = $lastSupLedger ? $lastSupLedger->cash_balance : 0;
             $newSupCashBalance = $oldSupCashBalance - $requestData['total_amount'];
             $supplier=Supplier::find($request->supplier_id);
@@ -138,11 +138,11 @@ class SupplierController extends Controller
                 'entry_type' => 'cr',  
                 'cash_balance' => $newSupCashBalance,
                 'person_id' => $request->supplier_id,
-                'person_type' => 'Supplier',
+                'person_type' => 'App\Models\Supplier',
             ]);
 
             // Update the company ledger
-            $lastLedger = Ledger::where(['person_type' => 'User', 'person_id' => 1])->latest()->first();
+            $lastLedger = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->latest()->first();
             $oldBankBalance = $lastLedger ? $lastLedger->bank_balance : 0;
             $oldCashBalance = $lastLedger ? $lastLedger->cash_balance : 0;
             if($request->input('payment_type') !== 'cash'){
@@ -164,7 +164,7 @@ class SupplierController extends Controller
                 'cash_balance' => $newCashBalance,
                 'entry_type' => 'dr',
                 'person_id' => 1, // Admin or Company 
-                'person_type' => 'User', 
+                'person_type' => 'App\Models\User', 
                 'link_id' => $sup_ledger->id, 
                 'link_name' => 'supplier_ledger',
             ]);
@@ -185,10 +185,10 @@ class SupplierController extends Controller
             if($request->has('start_date') && $request->has('end_date')){
                 $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
                 $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
-                $ledgers = Ledger::with(['personable'])->whereBetween('created_at', [$startDate, $endDate])->where(['person_type' => 'Supplier'])->get();
+                $ledgers = Ledger::with(['personable'])->whereBetween('created_at', [$startDate, $endDate])->where(['person_type' => 'App\Models\Supplier'])->get();
                 return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $ledgers]);
             }else{
-                $ledgers = Ledger::with(['personable'])->where(['person_type' => 'Supplier'])->get();
+                $ledgers = Ledger::with(['personable'])->where(['person_type' => 'App\Models\Supplier'])->get();
                 return response()->json(['data' => $ledgers]);
             }
         }else{
@@ -196,10 +196,10 @@ class SupplierController extends Controller
                 if($request->has('start_date') && $request->has('end_date')){
                     $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
                     $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
-                    $ledgers = Ledger::with(['personable'])->whereBetween('created_at', [$startDate, $endDate])->where(['person_type' => 'Supplier','person_id' => $id])->get();
+                    $ledgers = Ledger::with(['personable'])->whereBetween('created_at', [$startDate, $endDate])->where(['person_type' => 'App\Models\Supplier','person_id' => $id])->get();
                     return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $ledgers]);
                 }else{
-                    $ledgers = Ledger::with(['personable'])->where(['person_type' => 'Supplier','person_id' => $id])->get();
+                    $ledgers = Ledger::with(['personable'])->where(['person_type' => 'App\Models\Supplier','person_id' => $id])->get();
                     return response()->json(['data' => $ledgers]);
                 }
             } catch (ModelNotFoundException $e) {

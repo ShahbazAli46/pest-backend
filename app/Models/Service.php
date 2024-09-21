@@ -11,4 +11,10 @@ class Service extends Model
     public $table="services";
 
     protected $fillable = ['pest_name','service_title','term_and_conditions'];
+
+    public function quoteServices()
+    {
+        return $this->hasMany(QuoteService::class);
+    }
+
 }

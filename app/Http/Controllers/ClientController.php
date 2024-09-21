@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Client;
 use App\Models\ClientAddress;
+use App\Models\Employee;
 use App\Models\Ledger;
 use App\Models\User;
 use App\Models\Vendor;
@@ -18,10 +19,10 @@ class ClientController extends Controller
 
     public function index($id=null){
         if($id==null){
-            $clients=User::with(['client','client.addresses'])->where('role_id',5)->orderBy('id', 'DESC')->get();
+            $clients=User::with(['client.referencable','client.addresses'])->where('role_id',5)->orderBy('id', 'DESC')->get();
             return response()->json(['data' => $clients]);
         }else{
-            $client=User::with(['client','client.addresses'])->where('role_id',5)->where('id',$id)->first();
+            $client=User::with(['client.referencable','client.addresses'])->where('role_id',5)->where('id',$id)->first();
             return response()->json(['data' => $client]);
         }
     }
@@ -37,7 +38,7 @@ class ClientController extends Controller
                 return [
                     'id' => $user->id,
                     'name' => $user->name,
-                    'type' => 'Employee' 
+                    'type' => Employee::class 
                 ];
             });
     
@@ -47,7 +48,7 @@ class ClientController extends Controller
                 return [
                     'id' => $vendor->id,
                     'name' => $vendor->name,
-                    'type' => 'Vendor' // Add type identifier
+                    'type' => Vendor::class // Add type identifier
                 ];
             });
     
@@ -68,7 +69,7 @@ class ClientController extends Controller
                 'phone_number' => 'nullable|string|max:50',
                 'mobile_number' => 'nullable|string|max:50',
                 'industry_name' => 'nullable|string|max:255',
-                'referencable_type' => 'required|string|in:Employee,Vendor',
+                'referencable_type' => 'required|string|in:App\Models\Employee,App\Models\Vendor',
                 'referencable_id' => 'required|integer',
                 'opening_balance' => 'required|numeric|min:0',
             ]);
@@ -95,7 +96,7 @@ class ClientController extends Controller
                     'entry_type' => 'dr',  // Debit entry for opening balance
                     'cash_balance' => $request->opening_balance,
                     'person_id' => $client->id,
-                    'person_type' => 'Client',
+                    'person_type' => Client::class,
                 ]);
 
                 DB::commit();
