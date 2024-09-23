@@ -18,7 +18,7 @@ return new class extends Migration
             $table->unsignedBigInteger('brand_id');
             $table->date('mfg_date')->nullable();
             $table->date('exp_date')->nullable();
-            $table->enum('product_type',['Liquid','Powder','Gel'])->nullable();
+            $table->enum('product_type',['Liquid','Powder','Gel','Pieces'])->nullable();
             $table->string('unit',50)->nullable();
             $table->string('active_ingredients')->nullable();
             $table->string('others_ingredients')->nullable();

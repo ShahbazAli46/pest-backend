@@ -2,28 +2,33 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Job;
 use App\Models\Quote;
 use App\Models\QuoteService;
 use App\Models\QuoteServiceDate;
 use App\Models\Vendor;
+use App\Traits\GeneralTrait;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class QuoteController extends Controller
 {
-
+    use GeneralTrait;
     //
-    public function index($id=null){
-        if($id==null){
-            //need rewrite
-            $quotes = Quote::with(['user.client.referencable', 'termAndCondition', 'quoteServices.service','quoteServices.quoteServiceDates'])
+    public function index($id){
+        $is_int = filter_var($id, FILTER_VALIDATE_INT);
+        $type=$id;
+        if ($is_int === false) {
+            $is_contracted=$type=='contracted'?1:0;
+            $quotes = Quote::with(['user.client.referencable'])
+            ->where('is_contracted',$is_contracted)
             ->orderBy('id', 'DESC')->get()
             ->map(function ($quote) {
                 $quote->treatment_methods = $quote->getTreatmentMethods(); // Call your method to get treatment methods
                 return $quote; 
             });
-            return response()->json(['data' => $quotes]);
+            return response()->json(['type'=>$type,'data' => $quotes]);
         }else{
             $quote = Quote::with(['user.client.referencable', 'termAndCondition', 'quoteServices.service','quoteServices.quoteServiceDates'])->find($id);
             if ($quote) {
@@ -191,6 +196,40 @@ class QuoteController extends Controller
 
             $quote->update(['is_contracted'=>1,'contract_start_date'=>now(),'contract_end_date'=>$end_date]);
             if($quote){
+                //create jobs
+                $uniqueServiceDates = $quote->quoteServiceDates()->select('service_date')->distinct()->get();
+                $requestData = $quote->toArray(); 
+                $requestData['quote_id'] = $quote->id; 
+                $requestData['job_title'] = $quote->quote_title;
+                $requestData['priority'] = 'high';
+                $requestData['tm_ids'] = json_decode($quote->tm_ids);
+                
+                foreach ($uniqueServiceDates as $serviceDate) {
+                    // Fetch service dates for this particular date
+                    $serviceDates = $quote->quoteServiceDates()->get();
+                    $service_ids = [];
+                    $service_rates = [];
+                    
+                    foreach ($serviceDates as $s_date) {
+                        $relatedQuoteService = $s_date->quoteService; // This gives the related model, not the relationship
+                        if ($relatedQuoteService) {
+                            array_push($service_ids, $relatedQuoteService->service_id);
+                            array_push($service_rates, $relatedQuoteService->rate);
+                        }
+                    }
+                    $requestData['service_ids'] = $service_ids;
+                    $requestData['service_rates'] = $service_rates;
+
+                    $requestData['job_date'] = $serviceDate->service_date;
+                
+                    $request = new Request();
+                    $request->merge($requestData);
+
+                    $job = $this->createJob($request);
+                    if($job->original['status']=='error'){
+                        return response()->json(['status' => 'error','message' => 'Failed to Create Job,Please Try Again Later.'],500);
+                    }
+                }
                 DB::commit();
                 return response()->json(['status' => 'success','message' => 'Quote Moved to Contract Successfully']);
             }else{

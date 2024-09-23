@@ -132,8 +132,8 @@ class ClientController extends Controller
             $user=User::active()->with(['client'])->where('id',$request->user_id)->where('role_id',5)->first();
           
             // Check if the user has a client record
-            if (!$user->client->isEmpty()) {
-                $client = $user->client->first();
+            if ($user && $user->client) {
+                $client = $user->client;
             } else {
                 return response()->json(['status' => 'error', 'message' => 'Client Not Found.'], 404);
             }

@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\{AdminController, BankController, BrandController,ClientController,EmployeeController, ExpenseCategoryController, ExpenseController, ProductController, PurchaseOrderController, QuoteController, ServiceController,SupplierController, TermsAndConditionController, TreatmentMethodController, UserAuthController, VehicleController, VehicleExpenseController, VendorController};
+use App\Http\Controllers\{AdminController, BankController, BrandController,ClientController,EmployeeController, ExpenseCategoryController, ExpenseController, JobController, ProductController, PurchaseOrderController, QuoteController, ServiceController,SupplierController, TermsAndConditionController, TreatmentMethodController, UserAuthController, VehicleController, VehicleExpenseController, VendorController};
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -102,10 +102,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('treatment_method/create',[TreatmentMethodController::class,'store']);
     Route::post('treatment_method/update/{id}',[TreatmentMethodController::class,'update']);
 
-
+    //Quote & Contracts
     Route::get('quote/{id?}',[QuoteController::class,'index']);
     Route::post('quote/manage',[QuoteController::class,'manage']);
     Route::get('quote/move/contract/{id}',[QuoteController::class,'moveToContract']);
+
+    Route::get('job/{id?}',[JobController::class,'index']);
+    Route::post('quote/store',[JobController::class,'store']);
 
     Route::post('logout',[UserAuthController::class,'logout']);
 });
