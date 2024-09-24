@@ -38,7 +38,7 @@ class ClientController extends Controller
                 return [
                     'id' => $user->id,
                     'name' => $user->name,
-                    'type' => Employee::class 
+                    'type' => User::class 
                 ];
             });
     

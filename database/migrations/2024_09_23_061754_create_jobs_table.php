@@ -33,6 +33,13 @@ return new class extends Migration
             $table->decimal('vat_amt', 15, 2)->default(0);
             $table->decimal('grand_total', 15, 2)->default(0);
             $table->boolean('is_completed')->default(0);
+            $table->boolean('is_modified')->default(0);
+
+            $table->unsignedBigInteger('captain_id')->nullable();
+            $table->foreign('captain_id')->references('id')->on('users')->onDelete('cascade');
+            $table->json('team_member_ids')->nullable();
+            $table->text('job_instructions')->nullable();
+            
             $table->unsignedBigInteger('term_and_condition_id');
             $table->foreign('term_and_condition_id')->references('id')->on('terms_and_conditions')->onDelete('cascade');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');

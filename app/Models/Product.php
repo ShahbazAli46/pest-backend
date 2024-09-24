@@ -29,7 +29,7 @@ class Product extends Model
     
     public function stocks()
     {
-        return $this->hasMany(Stock::class);
+        return $this->hasMany(Stock::class,'product_id');
     }
 
     // Accessor for the product_picture attribute

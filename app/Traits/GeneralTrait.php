@@ -103,7 +103,7 @@ trait GeneralTrait
 
     public function checkCompanyStock($product_id,$qty)
     {
-        $stock=Stock::where(['product_id'=> $product_id,'person_id'=>1,'person_type'=>'User'])->latest()->first();
+        $stock=Stock::where(['product_id'=> $product_id,'person_id'=>1,'person_type'=>'App\Models\User'])->latest()->first();
         $remainingStock = $stock ? $stock->remaining_qty : 0;
         if ($remainingStock < $qty) {
             return response()->json(['status' => 'error', 'message' => 'Insufficient Stock.'], 400);
@@ -138,8 +138,8 @@ trait GeneralTrait
                 'service_ids.*' => 'required|exists:services,id', 
             
                 // Validate the details array inside each service
-                // 'service_rates' => 'required|array',
-                // 'service_rates.*' => 'required|min:1', 
+                'service_rates' => 'required|array',
+                'service_rates.*' => 'required|min:1', 
             ]);
 
             // Extract service IDs

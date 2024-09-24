@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\{AdminController, BankController, BrandController,ClientController,EmployeeController, ExpenseCategoryController, ExpenseController, JobController, ProductController, PurchaseOrderController, QuoteController, ServiceController,SupplierController, TermsAndConditionController, TreatmentMethodController, UserAuthController, VehicleController, VehicleExpenseController, VendorController};
+use App\Http\Controllers\{AdminController, BankController, BrandController,ClientController,EmployeeController, ExpenseCategoryController, ExpenseController, JobController, JobServiceReportController, ProductController, PurchaseOrderController, QuoteController, ServiceController,SupplierController, TermsAndConditionController, TreatmentMethodController, UserAuthController, VehicleController, VehicleExpenseController, VendorController};
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -41,7 +41,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('supplier/add_payment',[SupplierController::class,'addPayment']);
     Route::get('supplier/ledger/get/{id?}',[SupplierController::class,'getSupplierLedger']);
 
-
     // Services
     Route::get('service/{id?}',[ServiceController::class,'index']);
     Route::post('service/create',[ServiceController::class,'store']);
@@ -58,7 +57,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('product/{id?}',[ProductController::class,'index']);
     Route::post('product/create',[ProductController::class,'store']);
     Route::get('product/stock/get/{id?}',[ProductController::class,'getProductStok']);
-
 
     // Vehicle
     Route::get('vehicle/{id?}',[VehicleController::class,'index']);
@@ -83,7 +81,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('vehicle_expense/{id?}',[VehicleExpenseController::class,'index']);
     Route::post('vehicle_expense/create',[VehicleExpenseController::class,'store']);
 
-
     // Purchase Orders
     Route::get('purchase_order/{id?}',[PurchaseOrderController::class,'index']);
     Route::post('purchase_order/create',[PurchaseOrderController::class,'store']);
@@ -107,8 +104,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('quote/manage',[QuoteController::class,'manage']);
     Route::get('quote/move/contract/{id}',[QuoteController::class,'moveToContract']);
 
+    //Jobs
     Route::get('job/{id?}',[JobController::class,'index']);
-    Route::post('quote/store',[JobController::class,'store']);
+    Route::post('job/create',[JobController::class,'store']);
+    Route::post('job/reschedule',[JobController::class,'rescheduleJob']);
+    Route::post('job/sales_manager/assign',[JobController::class,'assignJob']);
+    Route::get('job/move/complete/{id}',[JobController::class,'moveToComplete']);
+
+    Route::get('job/service_report/{id}',[JobServiceReportController::class,'index']);
+    Route::post('job/service_report/create',[JobServiceReportController::class,'store']);
+
 
     Route::post('logout',[UserAuthController::class,'logout']);
 });

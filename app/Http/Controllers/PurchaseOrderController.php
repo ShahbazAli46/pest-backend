@@ -133,7 +133,7 @@ class PurchaseOrderController extends Controller
                 ]);
                
                 // Add stock entry
-                $stock = Stock::where(['product_id'=> $productIds[$i],'person_id'=>1,'person_type'=>'App\Models\User'])->first();
+                $stock = Stock::where(['product_id'=> $productIds[$i],'person_id'=>1,'person_type'=>'App\Models\User'])->latest()->first();
                 $old_total_qty=$stock?$stock->total_qty:0;
                 $old_remaining_qty=$stock?$stock->remaining_qty:0;
 

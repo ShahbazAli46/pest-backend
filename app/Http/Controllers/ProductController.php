@@ -12,18 +12,23 @@ class ProductController extends Controller
 {
     use GeneralTrait;
 
-    public function index($id=null){
-        if($id==null){
-            $products=Product::with(['attachments','stocks' => function ($query) {
-                $query->select('product_id', 'total_qty', 'remaining_qty')
-                ->orderBy('created_at', 'DESC')->limit(1);
+    public function index($id = null)
+    {
+        if ($id == null) {
+            $products = Product::with(['attachments', 'stocks' => function ($query) {
+                $query->select('id', 'product_id', 'total_qty', 'remaining_qty') // Specify the columns you need for stocks
+                    ->whereIn('id', function($subQuery) {
+                        $subQuery->select(DB::raw('MAX(id)'))->from('stocks')->groupBy('product_id');
+                });
             }])->orderBy('id', 'DESC')->get();
             return response()->json(['data' => $products]);
-        }else{
-            $product=Product::with(['attachments','stocks' => function ($query) {
-                $query->select('product_id', 'total_qty', 'remaining_qty')
-                ->orderBy('created_at', 'DESC')->limit(1);
-            }])->where('id',$id)->first();
+        } else {
+            $product = Product::with(['attachments', 'stocks' => function ($query) use ($id){
+                $query->select('id', 'product_id', 'total_qty', 'remaining_qty') // Specify the columns you need for stocks
+                    ->whereIn('id', function($subQuery) use ($id) {
+                        $subQuery->select(DB::raw('MAX(id)'))->from('stocks')->where('product_id', $id)->groupBy('product_id');
+                });
+            }])->where('id', $id)->first();
             return response()->json(['data' => $product]);
         }
     }

@@ -206,7 +206,7 @@ class QuoteController extends Controller
                 
                 foreach ($uniqueServiceDates as $serviceDate) {
                     // Fetch service dates for this particular date
-                    $serviceDates = $quote->quoteServiceDates()->get();
+                    $serviceDates = $quote->quoteServiceDates()->where('service_date',$serviceDate->service_date)->get();
                     $service_ids = [];
                     $service_rates = [];
                     
