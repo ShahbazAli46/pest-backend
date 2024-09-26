@@ -6,6 +6,9 @@ use App\Models\Job;
 use App\Models\Quote;
 use App\Models\QuoteService;
 use App\Models\QuoteServiceDate;
+use App\Models\Service;
+use App\Models\ServiceInvoice;
+use App\Models\ServiceInvoiceDetail;
 use App\Models\Vendor;
 use App\Traits\GeneralTrait;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -209,7 +212,6 @@ class QuoteController extends Controller
                     $serviceDates = $quote->quoteServiceDates()->where('service_date',$serviceDate->service_date)->get();
                     $service_ids = [];
                     $service_rates = [];
-                    
                     foreach ($serviceDates as $s_date) {
                         $relatedQuoteService = $s_date->quoteService; // This gives the related model, not the relationship
                         if ($relatedQuoteService) {
@@ -230,6 +232,43 @@ class QuoteController extends Controller
                         return response()->json(['status' => 'error','message' => 'Failed to Create Job,Please Try Again Later.'],500);
                     }
                 }
+                
+                //create invoices
+                $installments=0;
+                if($quote->billing_method == 'installments'){
+                    $installments=$quote->duration_in_months/$quote->no_of_installments;
+                }else if($quote->billing_method == 'service'){
+                    $installments = $quote->jobs()->count();
+                }else if($quote->billing_method == 'monthly'){
+                    $installments=$quote->duration_in_months;
+                }else{
+                    $installments=1;
+                }
+                $inst_total=$quote->grand_total;
+                for($i=1; $i<=$installments; $i++){
+                    $invoice=ServiceInvoice::create([
+                        'invoiceable_id'=>$quote->id,
+                        'invoiceable_type'=>Quote::class,
+                        'user_id'=>$quote->user_id,
+                        'issued_date'=>now(),
+                        'total_amt'=>$inst_total/$installments,
+                        'paid_amt'=>0.00,
+                    ]);
+                    if($invoice){
+                        $quot_services=$quote->quoteServices;
+                        foreach($quot_services as $service){
+                            ServiceInvoiceDetail::create([
+                                'service_invoice_id'=>$invoice->id,
+                                'itemable_id'=>$service->service_id,
+                                'itemable_type'=>Service::class,
+                                'job_type'=>$service->job_type,
+                                'rate'=>$service->rate,
+                                'sub_total'=>$service->sub_total
+                            ]);
+                        }
+                    }
+                }
+
                 DB::commit();
                 return response()->json(['status' => 'success','message' => 'Quote Moved to Contract Successfully']);
             }else{

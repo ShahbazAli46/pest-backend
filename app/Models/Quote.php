@@ -42,5 +42,9 @@ class Quote extends Model
         return $this->hasMany(QuoteServiceDate::class);
     }
 
+    public function jobs()
+    {
+        return $this->hasMany(Job::class);
+    }
 
 }

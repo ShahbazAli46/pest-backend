@@ -7,6 +7,9 @@ use App\Models\JobService;
 use App\Models\JobServiceReport;
 use App\Models\JobServiceReportArea;
 use App\Models\JobServiceReportProduct;
+use App\Models\Product;
+use App\Models\ServiceInvoice;
+use App\Models\ServiceInvoiceDetail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -15,7 +18,7 @@ class JobServiceReportController extends Controller
     //
     public function index($id)
     {
-        if ($id == 'all') {
+        if($id == 'all'){
             $job_service_reports=JobServiceReport::orderBy('id', 'DESC')->get();
             return response()->json(['data' => $job_service_reports]);
         }else{
@@ -72,6 +75,8 @@ class JobServiceReportController extends Controller
                 // Create the job service report
                 $job_report = JobServiceReport::create($requestData);
                 if($job_report){
+                    $inv_products=[];
+                    $total_extra=0;
                     // Insert addresses into JobServiceReportArea
                     foreach ($request->input('addresses') as $address) {
                         JobServiceReportArea::create([
@@ -96,7 +101,35 @@ class JobServiceReportController extends Controller
                             'price' => $product['price'],
                             'is_extra' => $product['is_extra'] ?? 0,
                         ]);
+
+                        if($product['is_extra']==1){
+                            array_push($inv_products,$product);
+                            $total_extra+=$product['price'];
+                        }
                     }
+
+                    //create invoices
+                    $invoice=ServiceInvoice::create([
+                        'invoiceable_id'=>$job->id,
+                        'invoiceable_type'=>Job::class,
+                        'user_id'=>$job->user_id,
+                        'issued_date'=>now(),
+                        'total_amt'=>$total_extra,
+                        'paid_amt'=>0.00,
+                    ]);
+                    if($invoice){
+                        foreach($inv_products as $product){
+                            ServiceInvoiceDetail::create([
+                                'service_invoice_id'=>$invoice->id,
+                                'itemable_id'=>$product['product_id'],
+                                'itemable_type'=>Product::class,
+                                'job_type'=>'one_time',
+                                'rate'=>$product['price'],
+                                'sub_total'=>$product['price']
+                            ]);
+                        }
+                    }
+                    
 
                     DB::commit();
                     return response()->json(['status' => 'success','message' => 'Job Service Report Added Successfully']);

@@ -3,6 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Job;
+use App\Models\JobService;
+use App\Models\Service;
+use App\Models\ServiceInvoice;
+use App\Models\ServiceInvoiceDetail;
 use App\Traits\GeneralTrait;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
@@ -51,7 +55,33 @@ class JobController extends Controller
             'service_rates' => explode(',', $request->input('service_rates')),
             'tm_ids' => explode(',', $request->input('tm_ids')),
         ]);
-        return $this->createJob($request);
+        $res=$this->createJob($request);
+        if($res->original['status']=='success'){
+            //create invoices
+            $data=$res->original['data'];
+            $invoice=ServiceInvoice::create([
+                'invoiceable_id'=>$data['job_id'],
+                'invoiceable_type'=>Job::class,
+                'user_id'=>$request->user_id,
+                'issued_date'=>now(),
+                'total_amt'=>$res->original['data']['grand_total'],
+                'paid_amt'=>0.00,
+            ]);
+            if($invoice){
+                $job_services=JobService::where('job_id',$data['job_id'])->get();
+                foreach($job_services as $service){
+                    ServiceInvoiceDetail::create([
+                        'service_invoice_id'=>$invoice->id,
+                        'itemable_id'=>$service->service_id,
+                        'itemable_type'=>Service::class,
+                        'job_type'=>'one_time',
+                        'rate'=>$service->rate,
+                        'sub_total'=>$service->sub_total
+                    ]);
+                }
+            }
+        }
+        return $res;
     }
 
     public function rescheduleJob(Request $request)

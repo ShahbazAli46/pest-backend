@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\{AdminController, BankController, BrandController,ClientController,EmployeeController, ExpenseCategoryController, ExpenseController, JobController, JobServiceReportController, ProductController, PurchaseOrderController, QuoteController, ServiceController,SupplierController, TermsAndConditionController, TreatmentMethodController, UserAuthController, VehicleController, VehicleExpenseController, VendorController};
+use App\Http\Controllers\{AdminController, BankController, BrandController,ClientController,EmployeeController, ExpenseCategoryController, ExpenseController, JobController, JobServiceReportController, ProductController, PurchaseOrderController, QuoteController, ServiceController, ServiceInvoiceController, SupplierController, TermsAndConditionController, TreatmentMethodController, UserAuthController, VehicleController, VehicleExpenseController, VendorController};
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -113,7 +113,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('job/service_report/{id}',[JobServiceReportController::class,'index']);
     Route::post('job/service_report/create',[JobServiceReportController::class,'store']);
-
+    
+    Route::get('service_invoices/{id?}',[ServiceInvoiceController::class,'index']);
 
     Route::post('logout',[UserAuthController::class,'logout']);
 });

@@ -16,7 +16,6 @@ class EmployeeController extends Controller
     public function index($id=null){
         if($id==null){
             $employees=User::with(['employee','role:id,name'])->whereIn('role_id',[2,3,4,6])->orderBy('id', 'DESC')->get();
-
             //sales manager only
             // foreach($employees as $key=>$employee){
             //     if($employee->role_id==4){
@@ -28,6 +27,18 @@ class EmployeeController extends Controller
         }else{
             $employee=User::with('employee')->where('id',$id)->whereIn('role_id',[2,3,4,6])->first();
             if ($employee && $employee->role_id == 4) {
+                $employee->load([
+                    'captainJobs', 
+                    'captainJobs.captain.employee' ,
+                    'captainJobs.user.client.referencable', 
+                    'captainJobs.termAndCondition', 
+                    'captainJobs.jobServices.service',
+                    'captainJobs.clientAddress' ,
+                ]);
+
+                foreach ($employee->captainJobs as $job) {
+                    $job->team_members = $job->getTeamMembers(); // Assign team_members to each job
+                }
                 $employee->stocks = Stock::with(['product:id,product_name'])->where(['person_id' => $employee->id, 'person_type' => 'App\Models\User'])
                     ->latest()->get(['id','product_id','total_qty','remaining_qty','created_at'])->unique('product_id');
             }

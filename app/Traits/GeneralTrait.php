@@ -188,7 +188,7 @@ trait GeneralTrait
                 ]);                
             }
             DB::commit();
-            return response()->json(['status' => 'success','message' => 'Job Added Successfully']);
+            return response()->json(['status' => 'success','message' => 'Job Added Successfully','data'=>['job_id'=>$job->id,'grand_total'=>$grandTotal]]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
             return response()->json(['status'=>'error','message' => $e->validator->errors()->first()], 422);

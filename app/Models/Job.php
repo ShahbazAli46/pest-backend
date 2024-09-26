@@ -46,4 +46,19 @@ class Job extends Model
     {
         return $this->hasOne(JobServiceReport::class, 'job_id');
     }
+
+    public function captain()
+    {
+        return $this->belongsTo(User::class,'captain_id');
+    }
+
+    public function clientAddress()
+    {
+        return $this->belongsTo(ClientAddress::class,'client_address_id');
+    }
+
+    public function quote()
+    {
+        return $this->belongsTo(Quote::class);
+    }
 }

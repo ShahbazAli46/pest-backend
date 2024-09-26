@@ -22,7 +22,7 @@ class UserAuthController extends Controller
 			return response()->json(['status' => 'error','message' => $validator->errors()->first()],422);
 		}
 
-		$user = User::with('role:id,name')->where('email',$request->email)->first();
+		$user = User::with(['role:id,name','employee'])->where('email',$request->email)->first();
 		if(!$user || !Hash::check($request->password,$user->password)){
 			return response()->json([
 				'status' => 'error',
