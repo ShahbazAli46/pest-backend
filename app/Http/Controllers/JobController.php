@@ -17,29 +17,39 @@ class JobController extends Controller
 {
     use GeneralTrait;
     //
-    public function index($id)
+    public function index(Request $request,$id)
     {
         $is_int = filter_var($id, FILTER_VALIDATE_INT);
         $type=$id;
         if ($is_int === false) {
-            if($type=='pending' || $type=='completed'){
-                $is_completed=$type=='pending'?0:1;
-                $jobs = Job::with(['user.client.referencable'])
-                ->where('is_completed',$is_completed)
-                ->orderBy('id', 'DESC')->get();
-                // ->map(function ($job) {
-                //     $job->treatment_methods = $job->getTreatmentMethods();    
-                //     return $job; 
-                // });
-            }else {
-                $jobs = Job::with(['user.client.referencable'])
-                ->orderBy('id', 'DESC')->get();
-                // ->map(function ($job) {
-                //     $job->treatment_methods = $job->getTreatmentMethods(); 
-                //     return $job; 
-                // });
+            if ($type == 'pending' || $type == 'completed') {
+                $is_completed = $type == 'pending' ? 0 : 1;
+                $jobs = Job::with(['user.client.referencable'])->where('is_completed', $is_completed);
+                    
+                // Check if date filters are present
+                if ($request->has('start_date') && $request->has('end_date')) {
+                    $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
+                    $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay(); // Use endOfDay to include the entire day
+                    $jobs = $jobs->whereBetween('job_date', [$startDate, $endDate]);
+                }
+                $jobs = $jobs->orderBy('id', 'DESC')->get();
+            } else {
+                $jobs = Job::with(['user.client.referencable']);
+
+                // Check if date filters are present
+                if ($request->has('start_date') && $request->has('end_date')) {
+                    $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
+                    $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay(); // Use endOfDay to include the entire day
+                    $jobs = $jobs->whereBetween('job_date', [$startDate, $endDate]);
+                }
+                $jobs = $jobs->orderBy('id', 'DESC')->get();
             }
-            return response()->json(['type'=>$type,'data' => $jobs]);
+
+            if($request->has('start_date') && $request->has('end_date')){
+                return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $jobs]);
+            }else{
+                return response()->json(['type'=>$type,'data' => $jobs]);
+            }
         }else{
             $job = Job::with(['user.client.referencable', 'termAndCondition', 'jobServices.service','rescheduleDates'])->find($id);
             if ($job) {

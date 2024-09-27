@@ -11,10 +11,19 @@ use Illuminate\Support\Facades\DB;
 class ServiceInvoiceController extends Controller
 {
     //
-    public function index($id=null){
+    public function index(Request $request,$id=null){
         if($id==null){
-            $invoices=ServiceInvoice::with(['user'])->get();
-            return response()->json(['data' => $invoices]);
+            // Check if date filters are present
+            if ($request->has('start_date') && $request->has('end_date')) {
+                $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
+                $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay(); // Use endOfDay to include the entire day
+                // it should apply due_date not issue_date so this is pending
+                $invoices=ServiceInvoice::with(['user'])->whereBetween('issued_date', [$startDate, $endDate])->get();
+                return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $invoices]);
+            }else{
+                $invoices=ServiceInvoice::with(['user'])->get();
+                return response()->json(['data' => $invoices]);
+            }
         }else{
             $invoice=ServiceInvoice::with(['invoiceable','details','amountHistory','user'])->where('id',$id)->first();
             return response()->json(['data' => $invoice]);
