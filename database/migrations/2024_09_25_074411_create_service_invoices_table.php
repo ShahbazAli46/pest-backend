@@ -14,7 +14,8 @@ return new class extends Migration
         Schema::create('service_invoices', function (Blueprint $table) {
             $table->id();
             $table->string('service_invoice_id',50)->nullable();
-            $table->morphs('invoiceable');
+            $table->unsignedBigInteger('invoiceable_id'); // Morph id
+            $table->string('invoiceable_type', 191); // Limit to 191 characters
             $table->unsignedBigInteger('user_id')->comment('for client user_id');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->date('issued_date')->nullable();

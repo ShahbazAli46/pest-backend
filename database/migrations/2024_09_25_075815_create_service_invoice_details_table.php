@@ -13,7 +13,8 @@ return new class extends Migration
     {
         Schema::create('service_invoice_details', function (Blueprint $table) {
             $table->id();
-            $table->morphs('itemable');
+            $table->unsignedBigInteger('itemable_id'); // Morph id
+            $table->string('itemable_type', 191); // Limit to 191 characters
             $table->unsignedBigInteger('service_invoice_id');
             $table->foreign('service_invoice_id')->references('id')->on('service_invoices')->onDelete('cascade');
             $table->string('job_type',50)->nullable();

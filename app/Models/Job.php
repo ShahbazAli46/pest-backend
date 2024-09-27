@@ -28,13 +28,21 @@ class Job extends Model
     public function getTreatmentMethods()
     {
         $tmIds = json_decode($this->tm_ids);
-        return TreatmentMethod::whereIn('id', $tmIds)->get();
+        if($tmIds){
+            return TreatmentMethod::whereIn('id', $tmIds)->get();
+        }else{
+            return [];
+        }
     }
 
     public function getTeamMembers()
     {
         $tmIds = json_decode($this->team_member_ids);
-        return User::with(['employee'])->whereIn('id', $tmIds)->get();
+        if($tmIds){
+            return User::with(['employee'])->whereIn('id', $tmIds)->get();
+        }else{
+            return [];
+        }
     }
 
     public function jobServices()
@@ -60,5 +68,10 @@ class Job extends Model
     public function quote()
     {
         return $this->belongsTo(Quote::class);
+    }
+
+    public function rescheduleDates()
+    {
+        return $this->hasMany(JobRescheduleDetail::class);
     }
 }

@@ -115,7 +115,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('job/service_report/create',[JobServiceReportController::class,'store']);
     
     Route::get('service_invoices/{id?}',[ServiceInvoiceController::class,'index']);
-
+    Route::post('service_invoices/add_payment',[ServiceInvoiceController::class,'addPayment']);
+    
     Route::post('logout',[UserAuthController::class,'logout']);
 });
 

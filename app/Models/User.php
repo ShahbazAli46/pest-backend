@@ -51,17 +51,17 @@ class User extends Authenticatable
 
     public function captainJobs()
     {
-        return $this->hasMany(Job::class,'captain_id')->where('role', 4);
+        return $this->hasMany(Job::class,'captain_id');
     }
 
     public function serviceInvoices()
     {
-        return $this->hasMany(ServiceInvoice::class)->where('role', 4);
+        return $this->hasMany(ServiceInvoice::class);
     }
 
     public function serviceInvoiceAmtHistories()
     {
-        return $this->hasMany(ServiceInvoiceAmtHistory::class)->where('role', 4);
+        return $this->hasMany(ServiceInvoiceAmtHistory::class);
     }
 
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Job;
+use App\Models\JobRescheduleDetail;
 use App\Models\JobService;
 use App\Models\Service;
 use App\Models\ServiceInvoice;
@@ -40,7 +41,7 @@ class JobController extends Controller
             }
             return response()->json(['type'=>$type,'data' => $jobs]);
         }else{
-            $job = Job::with(['user.client.referencable', 'termAndCondition', 'jobServices.service'])->find($id);
+            $job = Job::with(['user.client.referencable', 'termAndCondition', 'jobServices.service','rescheduleDates'])->find($id);
             if ($job) {
                 $job->treatment_methods = $job->getTreatmentMethods();
                 $job->team_members = $job->getTeamMembers(); 
@@ -91,6 +92,7 @@ class JobController extends Controller
             $request->validate([     
                 'job_id' => 'required|exists:jobs,id',
                 'job_date' => 'required|date',
+                'reason' => 'nullable|max:1000',
             ]);
 
             $job=Job::find($request->job_id);
@@ -98,6 +100,7 @@ class JobController extends Controller
                 if($job->is_completed==0){
                     if($job->job_date!=$request->job_date){
                         $job->update(['job_date'=>$request->job_date,'is_modified'=>1,'captain_id'=>null,'team_member_ids'=>null]);
+                        JobRescheduleDetail::create(['job_id'=>$job->id,'job_date'=>$request->job_date,'reason'=>$request->reason]);
                         DB::commit();
                         return response()->json(['status' => 'success', 'message' => 'Job Rescheduled Successfully']);
                     }else{
