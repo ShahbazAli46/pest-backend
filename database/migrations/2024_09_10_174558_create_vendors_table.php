@@ -24,6 +24,7 @@ return new class extends Migration
             $table->string('acc_contact')->nullable();
             $table->string('acc_email')->nullable();
             $table->decimal('percentage')->nullable();
+            $table->string('tag')->nullable();
             $table->softDeletes();
             $table->timestamps();
         });

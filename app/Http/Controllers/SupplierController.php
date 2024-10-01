@@ -34,16 +34,15 @@ class SupplierController extends Controller
                 'company_name' => 'nullable|string|max:255',
                 'email' => 'required|string|email|max:255|unique:suppliers,email',
                 'number' => 'nullable|string|max:50',
-                'vat' => 'nullable|string|max:50',
                 'trn_no' => 'nullable|string|max:50',
                 'item_notes' => 'nullable|string|max:500',
                 'address' => 'nullable|string|max:255',
                 'country' => 'nullable|string|max:100',
                 'state' => 'nullable|string|max:100',
-                'hsn' => 'nullable|string|max:50',
                 'city' => 'nullable|string|max:100',
                 'zip' => 'nullable|string|max:20',
                 'opening_balance' => 'required|numeric|min:0',
+                'tag' => 'nullable|string|max:255',
             ]);
 
             $supplier=Supplier::create($validateData);

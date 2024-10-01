@@ -10,7 +10,7 @@ class Vendor extends Model
     use HasFactory;
     public $table="vendors";
 
-    protected $fillable = ['name','email','contact','firm_name','mng_name','mng_contact','mng_email','acc_name','acc_contact','acc_email','percentage'];
+    protected $fillable = ['name','email','contact','firm_name','mng_name','mng_contact','mng_email','acc_name','acc_contact','acc_email','percentage','tag'];
 
     public function clients()
     {

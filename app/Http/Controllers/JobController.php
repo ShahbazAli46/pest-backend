@@ -51,7 +51,7 @@ class JobController extends Controller
                 return response()->json(['type'=>$type,'data' => $jobs]);
             }
         }else{
-            $job = Job::with(['user.client.referencable', 'termAndCondition', 'jobServices.service','rescheduleDates'])->find($id);
+            $job = Job::with(['user.client.referencable', 'termAndCondition', 'jobServices.service','rescheduleDates','clientAddress'])->find($id);
             if ($job) {
                 $job->treatment_methods = $job->getTreatmentMethods();
                 $job->team_members = $job->getTeamMembers(); 
