@@ -35,7 +35,7 @@ class UserAuthController extends Controller
 		$i=0;
 		foreach ($rolePermissions as $rolePermission) {
 			$data = Permission::where('id', $rolePermission->permission_id)->first();
-			$permiss['permission'][$i] = [
+			$permiss['permissions'][$i] = [
 				"name" => $data->name,
 				"api_url" => $data->api_url,
 				"frontend_url" => $data->frontend_url,
