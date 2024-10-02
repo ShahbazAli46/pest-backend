@@ -21,4 +21,9 @@ class Supplier extends Model
     {
         return $this->hasMany(PurchaseOrder::class);
     }
+
+    public function bankInfos()
+    {
+        return $this->morphMany(BankInfo::class, 'linkable');
+    }
 }

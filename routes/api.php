@@ -51,6 +51,8 @@ Route::middleware(['auth:sanctum','permission'])->group(function () {
     Route::post('client/create',[ClientController::class,'storeClient'])->name('client.create');
     Route::post('client/address/create',[ClientController::class,'storeClientAddress'])->name('client.address.create');
     Route::post('client/address/update/{id}',[ClientController::class,'updateClientAddress'])->name('client.address.update');
+    Route::post('client/bank_info/add',[ClientController::class,'storeClientBankInfo'])->name('client.bank_info.add');
+    Route::post('client/bank_info/update/{id}',[ClientController::class,'updateClientBankInfo'])->name('client.bank_info.update');
 
     // Products
     Route::get('product/{id?}',[ProductController::class,'index'])->name('product');
@@ -95,6 +97,7 @@ Route::middleware(['auth:sanctum','permission'])->group(function () {
 
     // Treatment Method
     Route::get('treatment_method/{id?}',[TreatmentMethodController::class,'index'])->name('treatment_method');
+    Route::post('treatment_method/create',[TreatmentMethodController::class,'store'])->name('treatment_method.create');
     Route::post('treatment_method/update/{id}',[TreatmentMethodController::class,'update'])->name('treatment_method.update');
 
     //Quote & Contracts

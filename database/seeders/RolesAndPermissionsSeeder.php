@@ -69,12 +69,14 @@ class RolesAndPermissionsSeeder extends Seeder
                 ['name' => 'Create Service', 'icon'=>'', 'api_route' => 'service.create','frontend_url'=>'service/create', 'is_main'=>0, 'parent_api_route'=>'service'],
                 ['name' => 'Update Service', 'icon'=>'', 'api_route' => 'service.update','frontend_url'=>'service/update', 'is_main'=>0, 'parent_api_route'=>'service'],
 
-            // Clients & Addresses
+            // Clients & Addresses & Bank info
             ['name' => 'View Client & Addresses', 'icon'=>'', 'api_route' => 'client','frontend_url'=>'client', 'is_main'=>1],
                 ['name' => 'Create Client', 'icon'=>'', 'api_route' => 'client.create','frontend_url'=>'client/create', 'is_main'=>0, 'parent_api_route'=>'client'],
                 ['name' => 'Create Client Address', 'icon'=>'', 'api_route' => 'client.address.create','frontend_url'=>'client/address/create', 'is_main'=>0, 'parent_api_route'=>'client'],
                 ['name' => 'Update Client Address', 'icon'=>'', 'api_route' => 'client.address.update','frontend_url'=>'client/address/update', 'is_main'=>0, 'parent_api_route'=>'client'],
-
+                ['name' => 'Create Client Bank Info', 'icon'=>'', 'api_route' => 'client.bank_info.add','frontend_url'=>'client/bank_info/add', 'is_main'=>0, 'parent_api_route'=>'client'],
+                ['name' => 'Update Client Bank Info', 'icon'=>'', 'api_route' => 'client.bank_info.update','frontend_url'=>'client/bank_info/update', 'is_main'=>0, 'parent_api_route'=>'client'],
+                
             //References
             ['name' => 'View References', 'icon'=>'', 'api_route' => 'client.references.get','frontend_url'=>'client/references/get', 'is_main'=>1],
 

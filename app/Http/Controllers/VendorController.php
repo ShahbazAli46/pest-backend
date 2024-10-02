@@ -37,6 +37,8 @@ class VendorController extends Controller
                 'acc_email' => 'nullable|email|max:255',
                 'percentage' => 'nullable|numeric|min:0|max:100', 
                 'tag' => 'nullable|string|max:255',
+                'opening_balance' => 'required|numeric|min:0',
+                'vat' => 'nullable|numeric|min:0|max:100',
             ]);
 
             $vendor=Vendor::create($validateData);

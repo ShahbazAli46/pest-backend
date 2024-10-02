@@ -37,9 +37,9 @@ class UserAuthController extends Controller
 			$data = Permission::where('id', $rolePermission->permission_id)->first();
 			$permiss['permissions'][$i] = [
 				"name" => $data->name,
-				"api_url" => $data->api_url,
+				"api_route" => $data->api_route,
 				"frontend_url" => $data->frontend_url,
-				"parent_id" => $data->parent_id,
+				"parent_api_route" => $data->parent_api_route,
 				"is_main" => $data->is_main,
 				"icon" => env('APP_URL').'/upload/icons/'.$data->icon
 			];

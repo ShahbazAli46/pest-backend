@@ -10,10 +10,15 @@ class Vendor extends Model
     use HasFactory;
     public $table="vendors";
 
-    protected $fillable = ['name','email','contact','firm_name','mng_name','mng_contact','mng_email','acc_name','acc_contact','acc_email','percentage','tag'];
+    protected $fillable = ['name','email','contact','firm_name','mng_name','mng_contact','mng_email','acc_name','acc_contact','acc_email','percentage','tag','vat','opening_balance'];
 
     public function clients()
     {
         return $this->morphMany(Client::class, 'referencable');
+    }
+
+    public function bankInfos()
+    {
+        return $this->morphMany(BankInfo::class, 'linkable');
     }
 }
