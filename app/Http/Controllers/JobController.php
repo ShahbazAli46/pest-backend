@@ -117,9 +117,12 @@ class JobController extends Controller
                         DB::rollBack();
                         return response()->json(['status' => 'error', 'message' => 'The job date is the same. No changes were made.'], 422);
                     }
-                }else{
+                }else if($job->is_completed==1){
                     DB::rollBack();
                     return response()->json(['status' => 'error', 'message' => 'The Job has Already been Completed. You Cannot Modify it.'], 422);
+                }else{
+                    DB::rollBack();
+                    return response()->json(['status' => 'error', 'message' => 'The Job has Already been Started. You Cannot Modify it.'], 422);
                 }
             }else{
                 DB::rollBack();
@@ -174,6 +177,40 @@ class JobController extends Controller
         }
     }
 
+    public function startJob($job_id){
+        try {
+            DB::beginTransaction();
+
+            // Find by ID
+            $job = Job::findOrFail($job_id);
+            if($job->is_completed==1){
+                DB::rollBack();
+                return response()->json(['status' => 'error','message' => 'The Job has Already been Completed.'],500);
+            }else if($job->is_completed==2){
+                DB::rollBack();
+                return response()->json(['status' => 'error','message' => 'The Job has Already been Started.'],500);
+            }
+            
+            $job->update(['is_completed'=>2]);
+            if($job){
+                DB::commit();
+                return response()->json(['status' => 'success','message' => 'Job Moved to Started Successfully']);
+            }else{
+                DB::rollBack();
+                return response()->json(['status' => 'error','message' => 'Failed to Move Start,Please Try Again Later.'],500);
+            }
+        } catch (ModelNotFoundException $e) {
+            DB::rollBack();
+            return response()->json(['status'=>'error', 'message' => 'Job Not Found.'], 404);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return response()->json(['status'=>'error','message' => $e->validator->errors()->first()], 422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['status'=>'error','message' => 'Failed to Move Start. ' . $e->getMessage(),500]);
+        } 
+    }
+
     //
     public function moveToComplete($job_id){
         try {
@@ -184,6 +221,9 @@ class JobController extends Controller
             if($job->is_completed==1){
                 DB::rollBack();
                 return response()->json(['status' => 'error','message' => 'The Job has Already been Completed.'],500);
+            }else if($job->is_completed==0){
+                DB::rollBack();
+                return response()->json(['status' => 'error', 'message' => 'Please Start This Job Before Proceeding.'], 500);
             }
             
             $job->update(['is_completed'=>1]);

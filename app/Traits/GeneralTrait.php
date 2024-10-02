@@ -4,6 +4,7 @@ namespace App\Traits;
 
 use App\Models\Attachment;
 use App\Models\Job;
+use App\Models\JobRescheduleDetail;
 use App\Models\JobService;
 use App\Models\Role;
 use App\Models\Stock;
@@ -187,6 +188,7 @@ trait GeneralTrait
                     'sub_total' => $subTotal, 
                 ]);                
             }
+            JobRescheduleDetail::create(['job_id'=>$job->id,'job_date'=>$requestData['job_date'],'reason'=>'Initial Date']);
             DB::commit();
             return response()->json(['status' => 'success','message' => 'Job Added Successfully','data'=>['job_id'=>$job->id,'grand_total'=>$grandTotal]]);
         } catch (\Illuminate\Validation\ValidationException $e) {

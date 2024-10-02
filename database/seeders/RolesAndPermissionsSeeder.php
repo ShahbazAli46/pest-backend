@@ -135,6 +135,7 @@ class RolesAndPermissionsSeeder extends Seeder
                 ['name' => 'Create Job', 'icon'=>'', 'api_route' => 'job.create','frontend_url'=>'job/create', 'is_main'=>0, 'parent_api_route'=>'job'],
                 ['name' => 'Reschedule Job', 'icon'=>'', 'api_route' => 'job.reschedule','frontend_url'=>'job/reschedule', 'is_main'=>0, 'parent_api_route'=>'job'],
                 ['name' => 'Assign Job', 'icon'=>'', 'api_route' => 'job.sales_manager.assign','frontend_url'=>'job/sales_manager/assign', 'is_main'=>0, 'parent_api_route'=>'job'],
+                ['name' => 'Start Job', 'icon'=>'', 'api_route' => 'job.start','frontend_url'=>'job/start', 'is_main'=>0, 'parent_api_route'=>'job'],
                 ['name' => 'Move Job to Complete', 'icon'=>'', 'api_route' => 'job.move.complete','frontend_url'=>'job/move/complete', 'is_main'=>0, 'parent_api_route'=>'job'],
 
                 //Jobs Service Report 
