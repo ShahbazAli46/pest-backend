@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bank;
+use App\Models\BankInfo;
 use App\Models\Ledger;
 use App\Models\Supplier;
 use App\Traits\LedgerTrait;
@@ -19,7 +20,7 @@ class SupplierController extends Controller
             $suppliers=Supplier::orderBy('id', 'DESC')->get();
             return response()->json(['data' => $suppliers]);
         }else{
-            $supplier=Supplier::find($id);
+            $supplier=Supplier::with(['bankInfos'])->where('id',$id)->first();
             return response()->json(['data' => $supplier]);
         }
     }
@@ -205,6 +206,62 @@ class SupplierController extends Controller
                 return response()->json(['status'=>'error', 'message' => 'Supplier Not Found.'], 404);
             }
         }
+    }
+
+    /* ================= Supplier Bank Info =============*/ 
+    public function storeSupplierBankInfo(Request $request)
+    {
+        try {
+            DB::beginTransaction();
+            $request->validate([
+                'supplier_id' => 'required|exists:suppliers,id',
+                'bank_name' => 'required|string|max:100',
+                'iban' => 'nullable|string|max:100',
+                'account_number' => 'nullable|string|max:100',
+                'address' => 'nullable|string|max:255',
+            ]);
+            
+            $request->merge(['linkable_id' => $request->supplier_id, 'linkable_type' => Supplier::class]);
+            BankInfo::create($request->all());
+
+            DB::commit();
+            return response()->json(['status' => 'success','message' => 'Supplier Bank Info Added Successfully']);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return response()->json(['status'=>'error','message' => $e->validator->errors()->first()], 422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['status' => 'error','message' => 'Failed to Add Supplier Bank Info,Please Try Again Later.'.$e->getMessage()],500);
+        } 
+    }
+    
+    public function updateSupplierBankInfo(Request $request, $id)
+    {
+        try {
+            DB::beginTransaction();
+            $validateData=$request->validate([        
+                'supplier_id' => 'required|exists:suppliers,id',
+                'bank_name' => 'required|string|max:100',
+                'iban' => 'nullable|string|max:100',
+                'account_number' => 'nullable|string|max:100',
+                'address' => 'nullable|string|max:255',
+            ]);
+
+            // Find the bank by ID
+            $bank_info = BankInfo::findOrFail($id);
+            $bank_info->update($validateData);
+            DB::commit();
+            return response()->json(['status' => 'success','message' => 'Supplier Bank Info Updated Successfully']);
+        } catch (ModelNotFoundException $e) {
+            DB::rollBack();
+            return response()->json(['status'=>'error', 'message' => 'Supplier Bank Info Not Found.'], 404);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return response()->json(['status'=>'error','message' => $e->validator->errors()->first()], 422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['status'=>'error','message' => 'Failed to Update Supplier Bank Info. ' . $e->getMessage()],500);
+        } 
     }
 
 }

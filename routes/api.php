@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\{AdminController, BankController, BrandController,ClientController,EmployeeController, ExpenseCategoryController, ExpenseController, JobController, JobServiceReportController, ProductController, PurchaseOrderController, QuoteController, ServiceController, ServiceInvoiceController, SupplierController, TermsAndConditionController, TreatmentMethodController, UserAuthController, VehicleController, VehicleExpenseController, VendorController};
+use App\Http\Controllers\{AdminController, BankController, BrandController,ClientController, CustomerController, EmployeeController, ExpenseCategoryController, ExpenseController, JobController, JobServiceReportController, ProductController, PurchaseOrderController, QuoteController, ServiceController, ServiceInvoiceController, SupplierController, TermsAndConditionController, TreatmentMethodController, UserAuthController, VehicleController, VehicleExpenseController, VendorController};
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -17,7 +17,8 @@ use Illuminate\Support\Facades\Route;
 Route::post('login',[UserAuthController::class,'login']);
 
 // Protected routes
-Route::middleware(['auth:sanctum','permission'])->group(function () {
+Route::middleware(['auth:sanctum'])->group(function () {
+    // Route::middleware(['auth:sanctum','permission'])->group(function () {
   
     // Employee
     Route::get('employee/{id?}',[EmployeeController::class,'index'])->name('employee');
@@ -28,6 +29,8 @@ Route::middleware(['auth:sanctum','permission'])->group(function () {
     // Vendors
     Route::get('vendor/{id?}',[VendorController::class,'index'])->name('vendor');
     Route::post('vendor/create',[VendorController::class,'store'])->name('vendor.create');
+    Route::post('vendor/bank_info/add',[VendorController::class,'storeVendorBankInfo'])->name('vendor.bank_info.add');
+    Route::post('vendor/bank_info/update/{id}',[VendorController::class,'updateVendorBankInfo'])->name('vendor.bank_info.update');
 
     // Brands
     Route::get('brand/{id?}',[BrandController::class,'index'])->name('brand');
@@ -39,6 +42,8 @@ Route::middleware(['auth:sanctum','permission'])->group(function () {
     Route::post('supplier/create',[SupplierController::class,'store'])->name('supplier.create');
     Route::post('supplier/add_payment',[SupplierController::class,'addPayment'])->name('supplier.add_payment');
     Route::get('supplier/ledger/get/{id?}',[SupplierController::class,'getSupplierLedger'])->name('supplier.ledger.get');
+    Route::post('supplier/bank_info/add',[SupplierController::class,'storeSupplierBankInfo'])->name('supplier.bank_info.add');
+    Route::post('supplier/bank_info/update/{id}',[SupplierController::class,'updateSupplierBankInfo'])->name('supplier.bank_info.update');
 
     // Services
     Route::get('service/{id?}',[ServiceController::class,'index'])->name('service');
@@ -113,12 +118,18 @@ Route::middleware(['auth:sanctum','permission'])->group(function () {
     Route::get('job/start/{id}',[JobController::class,'startJob'])->name('job.start');
     Route::get('job/move/complete/{id}',[JobController::class,'moveToComplete'])->name('job.move.complete');
 
+    //service report
     Route::get('job/service_report/{id}',[JobServiceReportController::class,'index'])->name('job.service_report');
     Route::post('job/service_report/create',[JobServiceReportController::class,'store'])->name('job.service_report.create');
     
+    //service invoices
     Route::get('service_invoices/{id?}',[ServiceInvoiceController::class,'index'])->name('service_invoices');
     Route::post('service_invoices/add_payment',[ServiceInvoiceController::class,'addPayment'])->name('service_invoices.add_payment');
     
+    //customers
+    Route::get('customer/{id?}',[CustomerController::class,'index'])->name('customer');
+    Route::post('customer/create',[CustomerController::class,'store'])->name('customer.create');
+
     Route::post('logout',[UserAuthController::class,'logout'])->name('logout');
 });
 

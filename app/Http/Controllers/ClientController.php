@@ -23,7 +23,7 @@ class ClientController extends Controller
             $clients=User::with(['client.referencable','client.addresses'])->where('role_id',5)->orderBy('id', 'DESC')->get();
             return response()->json(['data' => $clients]);
         }else{
-            $client=User::with(['client.referencable','client.addresses'])->where('role_id',5)->where('id',$id)->first();
+            $client=User::with(['client.referencable','client.addresses','client.bankInfos'])->where('role_id',5)->where('id',$id)->first();
             return response()->json(['data' => $client]);
         }
     }
@@ -181,7 +181,7 @@ class ClientController extends Controller
             return response()->json(['status'=>'error','message' => $e->validator->errors()->first()], 422);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['status'=>'error','message' => 'Failed to Update Client Address. ' . $e->getMessage(),]);
+            return response()->json(['status'=>'error','message' => 'Failed to Update Client Address. ' . $e->getMessage()],500);
         } 
     }
 
@@ -237,11 +237,8 @@ class ClientController extends Controller
             return response()->json(['status'=>'error','message' => $e->validator->errors()->first()], 422);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['status'=>'error','message' => 'Failed to Update Client  Bank Info. ' . $e->getMessage(),]);
+            return response()->json(['status'=>'error','message' => 'Failed to Update Client  Bank Info. ' . $e->getMessage()],500);
         } 
     }
- 
-
-    
-    
+     
 }

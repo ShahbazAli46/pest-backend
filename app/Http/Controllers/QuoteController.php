@@ -24,7 +24,7 @@ class QuoteController extends Controller
         $type=$id;
         if ($is_int === false) {
             $is_contracted=$type=='contracted'?1:0;
-            $quotes = Quote::with(['user.client.referencable'])
+            $quotes = Quote::with(['user.client.referencable','quoteServices.service','quoteServices.quoteServiceDates'])
             ->where('is_contracted',$is_contracted)
             ->orderBy('id', 'DESC')->get()
             ->map(function ($quote) {
@@ -100,7 +100,6 @@ class QuoteController extends Controller
                 $quote->quoteServices()->delete();
                 $quote->quoteServiceDates()->delete();
             }
-
             // Extract service IDs
             $serviceIds = array_column($request->input('services'), 'service_id');
             $requestData = $request->all(); 
@@ -136,8 +135,10 @@ class QuoteController extends Controller
             // Create the quote
             if ($request->input('manage_type') == 'create') {
                 $quote = Quote::create($requestData);
+            }else{
+                $quote->update($requestData);
             }
-
+            
             // Insert into quote_services table
             foreach ($request->input('services') as $service) {
                 foreach ($service['detail'] as $detail) {
