@@ -32,7 +32,7 @@ return new class extends Migration
             $table->unsignedBigInteger('person_id');
             $table->string('person_type');
             $table->unsignedBigInteger('link_id')->nullable();
-            $table->enum('link_name',['purchase','supplier_ledger','expense','vehicle_expense'])->nullable();
+            $table->enum('link_name',['purchase','supplier_ledger','expense','vehicle_expense','sale','customer_ledger'])->nullable();
             $table->timestamps();
         });
     }

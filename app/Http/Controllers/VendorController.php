@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\BankInfo;
+use App\Models\Ledger;
 use App\Models\Vendor;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
@@ -42,9 +43,22 @@ class VendorController extends Controller
                 'opening_balance' => 'required|numeric|min:0',
                 'vat' => 'nullable|numeric|min:0|max:100',
             ]);
-
+            $openingBalance = is_numeric($request->opening_balance)?$request->opening_balance:0.00;
+            $validateData['opening_balance']=$openingBalance;
             $vendor=Vendor::create($validateData);
             if($vendor){
+                // Add vendor ledger entry
+                Ledger::create([
+                    'bank_id' => null,  // Assuming null if no specific bank is involved
+                    'description' => 'Opening balance for vendor ' . $request->name,
+                    'dr_amt' => $openingBalance,
+                    'payment_type' => 'opening_balance',
+                    'entry_type' => 'dr',  // Debit entry for opening balance
+                    'cash_balance' => $openingBalance,
+                    'person_id' => $vendor->id,
+                    'person_type' => Vendor::class,
+                ]);
+
                 DB::commit();
                 return response()->json(['status' => 'success','message' => 'Vendor Added Successfully']);
             }else{

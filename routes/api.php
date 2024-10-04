@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\{AdminController, BankController, BrandController,ClientController, CustomerController, EmployeeController, ExpenseCategoryController, ExpenseController, JobController, JobServiceReportController, ProductController, PurchaseOrderController, QuoteController, ServiceController, ServiceInvoiceController, SupplierController, TermsAndConditionController, TreatmentMethodController, UserAuthController, VehicleController, VehicleExpenseController, VendorController};
+use App\Http\Controllers\{AdminController, BankController, BrandController,ClientController, CustomerController, EmployeeController, ExpenseCategoryController, ExpenseController, JobController, JobServiceReportController, ProductController, PurchaseOrderController, QuoteController, SaleOrderController, ServiceController, ServiceInvoiceController, SupplierController, TermsAndConditionController, TreatmentMethodController, UserAuthController, VehicleController, VehicleExpenseController, VendorController};
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -129,6 +129,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
     //customers
     Route::get('customer/{id?}',[CustomerController::class,'index'])->name('customer');
     Route::post('customer/create',[CustomerController::class,'store'])->name('customer.create');
+    Route::post('customer/add_payment',[CustomerController::class,'addPayment'])->name('customer.add_payment');
+    Route::get('customer/ledger/get/{id?}',[CustomerController::class,'getCustomerLedger'])->name('customer.ledger.get');
+
+    // Sale Orders
+    Route::get('sale_order/{id?}',[SaleOrderController::class,'index'])->name('sale_order');
+    Route::post('sale_order/create',[SaleOrderController::class,'store'])->name('sale_order.create');
+  
 
     Route::post('logout',[UserAuthController::class,'logout'])->name('logout');
 });

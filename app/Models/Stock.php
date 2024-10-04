@@ -18,5 +18,9 @@ class Stock extends Model
     {
         return $this->belongsTo(Product::class,'product_id');
     }
-
+    
+    public function person()
+    {
+        return $this->morphTo();
+    }
 }
