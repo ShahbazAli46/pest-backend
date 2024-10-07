@@ -36,4 +36,9 @@ class Client extends Model
     {
         return $this->morphMany(Ledger::class, 'personable');
     }
+    
+    public function bankInfos()
+    {
+        return $this->morphMany(BankInfo::class, 'linkable');
+    }
 }

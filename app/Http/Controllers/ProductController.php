@@ -19,11 +19,17 @@ class ProductController extends Controller
                 ->orderBy('created_at', 'DESC')->limit(1);
             }])->orderBy('id', 'DESC')->get();
             return response()->json(['data' => $products]);
-        }else{
-            $product=Product::with(['attachments','stocks' => function ($query) {
-                $query->select('product_id', 'total_qty', 'remaining_qty')
-                ->orderBy('created_at', 'DESC')->limit(1);
-            }])->where('id',$id)->first();
+        } else {
+            $product = Product::with(['attachments', 'stocks' => function ($query) use ($id){
+                $query->select('id', 'product_id', 'total_qty', 'remaining_qty') // Specify the columns you need for stocks
+                    ->whereIn('id', function($subQuery) use ($id) {
+                        $subQuery->select(DB::raw('MAX(id)'))->from('stocks')->where('product_id', $id)->groupBy('product_id');
+                });
+            }])->where('id', $id)->first();
+
+            $product1 = Product::with(['stocks.person'])->where('id', $id)->first();
+
+            $product->stock_history=$product1->stocks;
             return response()->json(['data' => $product]);
         }
     }

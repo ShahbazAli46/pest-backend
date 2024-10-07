@@ -26,10 +26,15 @@ class Product extends Model
     {
         return $this->hasMany(PurchaseOrderDetail::class);
     }
+
+    public function saleOrderDetails()
+    {
+        return $this->hasMany(SaleOrderDetail::class);
+    }
     
     public function stocks()
     {
-        return $this->hasMany(Stock::class);
+        return $this->hasMany(Stock::class,'product_id');
     }
 
     // Accessor for the product_picture attribute

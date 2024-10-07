@@ -44,6 +44,26 @@ class User extends Authenticatable
         return $this->morphMany(Ledger::class, 'personable')->where('role', 1);
     }
 
+    public function quotes()
+    {
+        return $this->hasMany(Quote::class)->where('role', 5);
+    }
+
+    public function captainJobs()
+    {
+        return $this->hasMany(Job::class,'captain_id');
+    }
+
+    public function serviceInvoices()
+    {
+        return $this->hasMany(ServiceInvoice::class);
+    }
+
+    public function serviceInvoiceAmtHistories()
+    {
+        return $this->hasMany(ServiceInvoiceAmtHistory::class);
+    }
+
 
     // Define a local query scope to filter active users
     public function scopeActive($query)

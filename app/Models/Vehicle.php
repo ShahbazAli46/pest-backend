@@ -11,7 +11,7 @@ class Vehicle extends Model
 
     public $table="vehicles";
 
-    protected $fillable = ['vehicle_number'];
+    protected $fillable = ['modal_name','vehicle_number','user_id','condition','expiry_date','oil_change_limit'];
 
     public function vehicleExpenses()
     {

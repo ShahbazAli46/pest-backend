@@ -10,7 +10,7 @@ class Supplier extends Model
     use HasFactory;
     public $table="suppliers";
 
-    protected $fillable = ['supplier_name','company_name','email','number','vat','trn_no','item_notes','address','country','state','hsn','city','zip','opening_balance'];
+    protected $fillable = ['supplier_name','company_name','email','number','trn_no','item_notes','address','country','state','tag','city','zip','opening_balance'];
 
     public function ledgers()
     {
@@ -20,5 +20,10 @@ class Supplier extends Model
     public function purchaseOrders()
     {
         return $this->hasMany(PurchaseOrder::class);
+    }
+
+    public function bankInfos()
+    {
+        return $this->morphMany(BankInfo::class, 'linkable');
     }
 }
