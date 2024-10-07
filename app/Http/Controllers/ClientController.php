@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BankInfo;
 use App\Models\Client;
 use App\Models\ClientAddress;
+use App\Models\Employee;
 use App\Models\Ledger;
 use App\Models\User;
 use App\Models\Vendor;
@@ -18,10 +20,10 @@ class ClientController extends Controller
 
     public function index($id=null){
         if($id==null){
-            $clients=User::with(['client','client.addresses'])->where('role_id',5)->orderBy('id', 'DESC')->get();
+            $clients=User::with(['client.referencable','client.addresses'])->where('role_id',5)->orderBy('id', 'DESC')->get();
             return response()->json(['data' => $clients]);
         }else{
-            $client=User::with(['client','client.addresses'])->where('role_id',5)->where('id',$id)->first();
+            $client=User::with(['client.referencable','client.addresses','client.bankInfos'])->where('role_id',5)->where('id',$id)->first();
             return response()->json(['data' => $client]);
         }
     }
@@ -37,7 +39,7 @@ class ClientController extends Controller
                 return [
                     'id' => $user->id,
                     'name' => $user->name,
-                    'type' => 'Employee' 
+                    'type' => User::class 
                 ];
             });
     
@@ -47,7 +49,7 @@ class ClientController extends Controller
                 return [
                     'id' => $vendor->id,
                     'name' => $vendor->name,
-                    'type' => 'Vendor' // Add type identifier
+                    'type' => Vendor::class // Add type identifier
                 ];
             });
     
@@ -68,7 +70,7 @@ class ClientController extends Controller
                 'phone_number' => 'nullable|string|max:50',
                 'mobile_number' => 'nullable|string|max:50',
                 'industry_name' => 'nullable|string|max:255',
-                'referencable_type' => 'required|string|in:Employee,Vendor',
+                'referencable_type' => 'required|string|in:App\Models\User,App\Models\Employee,App\Models\Vendor',
                 'referencable_id' => 'required|integer',
                 'opening_balance' => 'required|numeric|min:0',
             ]);
@@ -95,7 +97,7 @@ class ClientController extends Controller
                     'entry_type' => 'dr',  // Debit entry for opening balance
                     'cash_balance' => $request->opening_balance,
                     'person_id' => $client->id,
-                    'person_type' => 'Client',
+                    'person_type' => Client::class,
                 ]);
 
                 DB::commit();
@@ -131,8 +133,8 @@ class ClientController extends Controller
             $user=User::active()->with(['client'])->where('id',$request->user_id)->where('role_id',5)->first();
           
             // Check if the user has a client record
-            if (!$user->client->isEmpty()) {
-                $client = $user->client->first();
+            if ($user && $user->client) {
+                $client = $user->client;
             } else {
                 return response()->json(['status' => 'error', 'message' => 'Client Not Found.'], 404);
             }
@@ -179,8 +181,64 @@ class ClientController extends Controller
             return response()->json(['status'=>'error','message' => $e->validator->errors()->first()], 422);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['status'=>'error','message' => 'Failed to Update Client Address. ' . $e->getMessage(),]);
+            return response()->json(['status'=>'error','message' => 'Failed to Update Client Address. ' . $e->getMessage()],500);
+        } 
+    }
+
+    /* ================= Client Bank Info =============*/ 
+    public function storeClientBankInfo(Request $request)
+    {
+        try {
+            DB::beginTransaction();
+            $request->validate([
+                'client_id' => 'required|exists:clients,id',
+                'bank_name' => 'required|string|max:100',
+                'iban' => 'nullable|string|max:100',
+                'account_number' => 'nullable|string|max:100',
+                'address' => 'nullable|string|max:255',
+            ]);
+            
+            $request->merge(['linkable_id' => $request->client_id, 'linkable_type' => Client::class]);
+            BankInfo::create($request->all());
+
+            DB::commit();
+            return response()->json(['status' => 'success','message' => 'Client Bank Info Added Successfully']);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return response()->json(['status'=>'error','message' => $e->validator->errors()->first()], 422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['status' => 'error','message' => 'Failed to Add Client Bank Info,Please Try Again Later.'.$e->getMessage()],500);
         } 
     }
     
+    public function updateClientBankInfo(Request $request, $id)
+    {
+        try {
+            DB::beginTransaction();
+            $validateData=$request->validate([        
+                'client_id' => 'required|exists:clients,id',
+                'bank_name' => 'required|string|max:100',
+                'iban' => 'nullable|string|max:100',
+                'account_number' => 'nullable|string|max:100',
+                'address' => 'nullable|string|max:255',
+            ]);
+
+            // Find the bank by ID
+            $bank_info = BankInfo::findOrFail($id);
+            $bank_info->update($validateData);
+            DB::commit();
+            return response()->json(['status' => 'success','message' => 'Client  Bank Info Updated Successfully']);
+        } catch (ModelNotFoundException $e) {
+            DB::rollBack();
+            return response()->json(['status'=>'error', 'message' => 'Client  Bank Info Not Found.'], 404);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return response()->json(['status'=>'error','message' => $e->validator->errors()->first()], 422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['status'=>'error','message' => 'Failed to Update Client  Bank Info. ' . $e->getMessage()],500);
+        } 
+    }
+     
 }

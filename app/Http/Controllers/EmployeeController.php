@@ -16,7 +16,6 @@ class EmployeeController extends Controller
     public function index($id=null){
         if($id==null){
             $employees=User::with(['employee','role:id,name'])->whereIn('role_id',[2,3,4,6])->orderBy('id', 'DESC')->get();
-
             //sales manager only
             // foreach($employees as $key=>$employee){
             //     if($employee->role_id==4){
@@ -28,7 +27,19 @@ class EmployeeController extends Controller
         }else{
             $employee=User::with('employee')->where('id',$id)->whereIn('role_id',[2,3,4,6])->first();
             if ($employee && $employee->role_id == 4) {
-                $employee->stocks = Stock::with(['product:id,product_name'])->where(['person_id' => $employee->id, 'person_type' => 'User'])
+                $employee->load([
+                    'captainJobs', 
+                    'captainJobs.captain.employee' ,
+                    'captainJobs.user.client.referencable', 
+                    'captainJobs.termAndCondition', 
+                    'captainJobs.jobServices.service',
+                    'captainJobs.clientAddress' ,
+                ]);
+
+                foreach ($employee->captainJobs as $job) {
+                    $job->team_members = $job->getTeamMembers(); // Assign team_members to each job
+                }
+                $employee->stocks = Stock::with(['product:id,product_name'])->where(['person_id' => $employee->id, 'person_type' => 'App\Models\User'])
                     ->latest()->get(['id','product_id','total_qty','remaining_qty','created_at'])->unique('product_id');
             }
             return response()->json(['data' => $employee]);
@@ -129,7 +140,7 @@ class EmployeeController extends Controller
             }
 
             // Add sales manager stock entry
-            $stock = Stock::where(['product_id'=> $request->product_id,'person_id'=>$request->sales_manager_id,'person_type'=>'User'])->latest()->first();
+            $stock = Stock::where(['product_id'=> $request->product_id,'person_id'=>$request->sales_manager_id,'person_type'=>'App\Models\User'])->latest()->first();
             $old_total_qty=$stock?$stock->total_qty:0;
             $old_remaining_qty=$stock?$stock->remaining_qty:0;
             $saleStock=Stock::create([
@@ -138,20 +149,20 @@ class EmployeeController extends Controller
                 'stock_in' => $request->quantity,  
                 'remaining_qty' => $old_remaining_qty+$request->quantity, 
                 'person_id' => $request->sales_manager_id,
-                'person_type' => 'User',  
+                'person_type' => 'App\Models\User',  
             ]);
 
             // Add company stock entry
-            $stock = Stock::where(['product_id'=> $request->product_id,'person_id'=>1,'person_type'=>'User'])->latest()->first();
+            $stock = Stock::where(['product_id'=> $request->product_id,'person_id'=>1,'person_type'=>'App\Models\User'])->latest()->first();
             $old_total_qty=$stock?$stock->total_qty:0;
             $old_remaining_qty=$stock?$stock->remaining_qty:0;
             Stock::create([
                 'product_id' => $request->product_id,
-                'total_qty' => $old_total_qty-$request->quantity, 
+                'total_qty' => $old_total_qty, 
                 'stock_out' => $request->quantity,  
                 'remaining_qty' => $old_remaining_qty-$request->quantity, 
                 'person_id' => 1,
-                'person_type' => 'User',   
+                'person_type' => 'App\Models\User',   
                 'link_id' => $saleStock->id,
                 'link_name' => 'assign_stock', 
             ]);

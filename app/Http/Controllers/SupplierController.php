@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bank;
+use App\Models\BankInfo;
 use App\Models\Ledger;
 use App\Models\Supplier;
 use App\Traits\LedgerTrait;
@@ -19,7 +20,7 @@ class SupplierController extends Controller
             $suppliers=Supplier::orderBy('id', 'DESC')->get();
             return response()->json(['data' => $suppliers]);
         }else{
-            $supplier=Supplier::find($id);
+            $supplier=Supplier::with(['bankInfos'])->where('id',$id)->first();
             return response()->json(['data' => $supplier]);
         }
     }
@@ -34,16 +35,15 @@ class SupplierController extends Controller
                 'company_name' => 'nullable|string|max:255',
                 'email' => 'required|string|email|max:255|unique:suppliers,email',
                 'number' => 'nullable|string|max:50',
-                'vat' => 'nullable|string|max:50',
                 'trn_no' => 'nullable|string|max:50',
                 'item_notes' => 'nullable|string|max:500',
                 'address' => 'nullable|string|max:255',
                 'country' => 'nullable|string|max:100',
                 'state' => 'nullable|string|max:100',
-                'hsn' => 'nullable|string|max:50',
                 'city' => 'nullable|string|max:100',
                 'zip' => 'nullable|string|max:20',
                 'opening_balance' => 'required|numeric|min:0',
+                'tag' => 'nullable|string|max:255',
             ]);
 
             $supplier=Supplier::create($validateData);
@@ -59,7 +59,7 @@ class SupplierController extends Controller
                     'entry_type' => 'dr',  // Debit entry for opening balance
                     'cash_balance' => $openingBalance,
                     'person_id' => $supplier->id,
-                    'person_type' => 'Supplier',
+                    'person_type' => 'App\Models\Supplier',
                 ]);
 
                 DB::commit();
@@ -126,7 +126,7 @@ class SupplierController extends Controller
 
         
             // Update the supplier ledger
-            $lastSupLedger = Ledger::where(['person_type' => 'Supplier', 'person_id' => $request->supplier_id])->latest()->first();
+            $lastSupLedger = Ledger::where(['person_type' => 'App\Models\Supplier', 'person_id' => $request->supplier_id])->latest()->first();
             $oldSupCashBalance = $lastSupLedger ? $lastSupLedger->cash_balance : 0;
             $newSupCashBalance = $oldSupCashBalance - $requestData['total_amount'];
             $supplier=Supplier::find($request->supplier_id);
@@ -138,13 +138,14 @@ class SupplierController extends Controller
                 'entry_type' => 'cr',  
                 'cash_balance' => $newSupCashBalance,
                 'person_id' => $request->supplier_id,
-                'person_type' => 'Supplier',
+                'person_type' => 'App\Models\Supplier',
             ]);
 
             // Update the company ledger
-            $lastLedger = Ledger::where(['person_type' => 'User', 'person_id' => 1])->latest()->first();
+            $lastLedger = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->latest()->first();
             $oldBankBalance = $lastLedger ? $lastLedger->bank_balance : 0;
             $oldCashBalance = $lastLedger ? $lastLedger->cash_balance : 0;
+            $newBankBalance=$oldBankBalance;
             if($request->input('payment_type') !== 'cash'){
                 $newBankBalance = $request->input('payment_type') !== 'cash' ? ($oldBankBalance - $requestData['total_amount']) : $oldBankBalance;
                 $bank=Bank::find($request->bank_id);
@@ -164,7 +165,7 @@ class SupplierController extends Controller
                 'cash_balance' => $newCashBalance,
                 'entry_type' => 'dr',
                 'person_id' => 1, // Admin or Company 
-                'person_type' => 'User', 
+                'person_type' => 'App\Models\User', 
                 'link_id' => $sup_ledger->id, 
                 'link_name' => 'supplier_ledger',
             ]);
@@ -185,10 +186,10 @@ class SupplierController extends Controller
             if($request->has('start_date') && $request->has('end_date')){
                 $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
                 $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
-                $ledgers = Ledger::with(['personable'])->whereBetween('created_at', [$startDate, $endDate])->where(['person_type' => 'Supplier'])->get();
+                $ledgers = Ledger::with(['personable'])->whereBetween('created_at', [$startDate, $endDate])->where(['person_type' => 'App\Models\Supplier'])->get();
                 return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $ledgers]);
             }else{
-                $ledgers = Ledger::with(['personable'])->where(['person_type' => 'Supplier'])->get();
+                $ledgers = Ledger::with(['personable'])->where(['person_type' => 'App\Models\Supplier'])->get();
                 return response()->json(['data' => $ledgers]);
             }
         }else{
@@ -196,16 +197,72 @@ class SupplierController extends Controller
                 if($request->has('start_date') && $request->has('end_date')){
                     $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
                     $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
-                    $ledgers = Ledger::with(['personable'])->whereBetween('created_at', [$startDate, $endDate])->where(['person_type' => 'Supplier','person_id' => $id])->get();
+                    $ledgers = Ledger::with(['personable'])->whereBetween('created_at', [$startDate, $endDate])->where(['person_type' => 'App\Models\Supplier','person_id' => $id])->get();
                     return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $ledgers]);
                 }else{
-                    $ledgers = Ledger::with(['personable'])->where(['person_type' => 'Supplier','person_id' => $id])->get();
+                    $ledgers = Ledger::with(['personable'])->where(['person_type' => 'App\Models\Supplier','person_id' => $id])->get();
                     return response()->json(['data' => $ledgers]);
                 }
             } catch (ModelNotFoundException $e) {
                 return response()->json(['status'=>'error', 'message' => 'Supplier Not Found.'], 404);
             }
         }
+    }
+
+    /* ================= Supplier Bank Info =============*/ 
+    public function storeSupplierBankInfo(Request $request)
+    {
+        try {
+            DB::beginTransaction();
+            $request->validate([
+                'supplier_id' => 'required|exists:suppliers,id',
+                'bank_name' => 'required|string|max:100',
+                'iban' => 'nullable|string|max:100',
+                'account_number' => 'nullable|string|max:100',
+                'address' => 'nullable|string|max:255',
+            ]);
+            
+            $request->merge(['linkable_id' => $request->supplier_id, 'linkable_type' => Supplier::class]);
+            BankInfo::create($request->all());
+
+            DB::commit();
+            return response()->json(['status' => 'success','message' => 'Supplier Bank Info Added Successfully']);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return response()->json(['status'=>'error','message' => $e->validator->errors()->first()], 422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['status' => 'error','message' => 'Failed to Add Supplier Bank Info,Please Try Again Later.'.$e->getMessage()],500);
+        } 
+    }
+    
+    public function updateSupplierBankInfo(Request $request, $id)
+    {
+        try {
+            DB::beginTransaction();
+            $validateData=$request->validate([        
+                'supplier_id' => 'required|exists:suppliers,id',
+                'bank_name' => 'required|string|max:100',
+                'iban' => 'nullable|string|max:100',
+                'account_number' => 'nullable|string|max:100',
+                'address' => 'nullable|string|max:255',
+            ]);
+
+            // Find the bank by ID
+            $bank_info = BankInfo::findOrFail($id);
+            $bank_info->update($validateData);
+            DB::commit();
+            return response()->json(['status' => 'success','message' => 'Supplier Bank Info Updated Successfully']);
+        } catch (ModelNotFoundException $e) {
+            DB::rollBack();
+            return response()->json(['status'=>'error', 'message' => 'Supplier Bank Info Not Found.'], 404);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return response()->json(['status'=>'error','message' => $e->validator->errors()->first()], 422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['status'=>'error','message' => 'Failed to Update Supplier Bank Info. ' . $e->getMessage()],500);
+        } 
     }
 
 }

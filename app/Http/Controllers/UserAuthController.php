@@ -22,7 +22,7 @@ class UserAuthController extends Controller
 			return response()->json(['status' => 'error','message' => $validator->errors()->first()],422);
 		}
 
-		$user = User::with('role:id,name')->where('email',$request->email)->first();
+		$user = User::with(['role:id,name','employee'])->where('email',$request->email)->first();
 		if(!$user || !Hash::check($request->password,$user->password)){
 			return response()->json([
 				'status' => 'error',
@@ -35,11 +35,11 @@ class UserAuthController extends Controller
 		$i=0;
 		foreach ($rolePermissions as $rolePermission) {
 			$data = Permission::where('id', $rolePermission->permission_id)->first();
-			$permiss['permission'][$i] = [
+			$permiss['permissions'][$i] = [
 				"name" => $data->name,
-				"api_url" => $data->api_url,
+				"api_route" => $data->api_route,
 				"frontend_url" => $data->frontend_url,
-				"parent_id" => $data->parent_id,
+				"parent_api_route" => $data->parent_api_route,
 				"is_main" => $data->is_main,
 				"icon" => env('APP_URL').'/upload/icons/'.$data->icon
 			];

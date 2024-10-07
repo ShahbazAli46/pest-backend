@@ -19,7 +19,8 @@ class VehicleController extends Controller
             return response()->json(['data' => $vehicle]);
         }
     }
-    
+
+
     //Store
     public function store(Request $request)
     {
@@ -27,6 +28,11 @@ class VehicleController extends Controller
             DB::beginTransaction();
             $validateData=$request->validate([        
                 'vehicle_number' => 'required|string|max:100|unique:vehicles,vehicle_number',
+                'modal_name'         => 'nullable|string|max:255',
+                'user_id'            => 'required|exists:users,id', 
+                'condition'          => 'nullable|string|max:100',  
+                'expiry_date'        => 'nullable|date',            
+                'oil_change_limit'   => 'nullable|string|max:50',   
             ]);
 
             Vehicle::create($validateData);
@@ -48,6 +54,11 @@ class VehicleController extends Controller
             DB::beginTransaction();
             $validateData=$request->validate([        
                 'vehicle_number' => 'required|string|max:100|unique:vehicles,vehicle_number,'.$id,
+                'modal_name'         => 'nullable|string|max:255',
+                'user_id'            => 'required|exists:users,id', 
+                'condition'          => 'nullable|string|max:100',  
+                'expiry_date'        => 'nullable|date',            
+                'oil_change_limit'   => 'nullable|string|max:50',   
             ]);
 
              // Find the bank by ID

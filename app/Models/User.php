@@ -63,7 +63,11 @@ class User extends Authenticatable
     {
         return $this->hasMany(ServiceInvoiceAmtHistory::class);
     }
-
+    
+    public function stocks()
+    {
+        return $this->morphMany(Stock::class, 'person');
+    }
 
     // Define a local query scope to filter active users
     public function scopeActive($query)

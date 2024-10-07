@@ -21,5 +21,8 @@ class Customer extends Model
         return $this->hasMany(SaleOrder::class);
     }
 
-
+    public function stocks()
+    {
+        return $this->morphMany(Stock::class, 'person');
+    }
 }

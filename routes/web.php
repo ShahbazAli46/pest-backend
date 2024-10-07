@@ -52,3 +52,14 @@ Route::get('clear', function(){
         echo "Failed to execute migrations: " . $e->getMessage();
     }
 });
+
+// Route for running database seeders
+Route::get('seed', function(){
+    try {
+        Artisan::call('db:seed');
+        $output = Artisan::output();
+        echo "Database seeding successfully executed:\n$output";
+    } catch (\Exception $e) {
+        echo "Failed to execute seeding: " . $e->getMessage();
+    }
+});

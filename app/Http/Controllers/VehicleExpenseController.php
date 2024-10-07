@@ -89,7 +89,7 @@ class VehicleExpenseController extends Controller
             $vehicle_expense=VehicleExpense::create($requestData);
 
             // Update the company ledger
-            $lastLedger = Ledger::where(['person_type' => 'User', 'person_id' => 1])->latest()->first();
+            $lastLedger = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->latest()->first();
             $oldBankBalance = $lastLedger ? $lastLedger->bank_balance : 0;
             $oldCashBalance = $lastLedger ? $lastLedger->cash_balance : 0;
             if($request->input('payment_type') !== 'cash'){
@@ -111,7 +111,7 @@ class VehicleExpenseController extends Controller
                 'cash_balance' => $newCashBalance,
                 'entry_type' => 'dr',
                 'person_id' => 1, // Admin or Company 
-                'person_type' => 'User', 
+                'person_type' => 'App\Models\User', 
                 'link_id' => $vehicle_expense->id, 
                 'link_name' => 'vehicle_expense',
             ]);

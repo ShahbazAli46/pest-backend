@@ -12,7 +12,7 @@ trait LedgerTrait
 {  
     public function addPersonLedgerTransaction($req,$ledger_type,$person_data,$link_data,$total_amt,$des=null)
     {
-        $person_data['type']='User';
+        $person_data['type']='App\Models\User';
 
         // $lastLedger = Ledger::orderBy('id', 'desc')->first();
         // $previousBalance=0.00;
@@ -33,7 +33,7 @@ trait LedgerTrait
             $newBankBalanc=0;
             $newCashBalance=0;
             if($ledger_type=='dr'){
-                if($person_data['type']=='User'){
+                if($person_data['type']=='App\Models\User'){
                     $newBankBalance = $req->payment_type !== 'cash' ? ($oldBankBalance - $total_amt) : $oldBankBalance;
                     $newCashBalance = $req->payment_type == 'cash' ? ($oldCashBalance - $total_amt) : $oldCashBalance;
                 }else{
@@ -44,7 +44,7 @@ trait LedgerTrait
 
             }
 
-            if($person_data['type']=='User'){
+            if($person_data['type']=='App\Models\User'){
             }
             $newCashBalance = $request->input('payment_type') === 'cash' ? ($oldCashBalance - $total_amt) : $oldCashBalance;
             Ledger::create([
@@ -60,7 +60,7 @@ trait LedgerTrait
                 'cash_balance' => $newCashBalance,
                 'entry_type' => 'dr',
                 'person_id' => 1, // Admin or Company 
-                'person_type' => 'User', 
+                'person_type' => 'App\Models\User', 
                 'link_id' => $vehicle_expense->id, 
                 'link_name' => 'vehicle_expense',
             ]);
@@ -84,7 +84,7 @@ trait LedgerTrait
 
     public function checkCompanyBalance($paymentType, $amount, $bankId = null)
     {
-        $latestLedger = Ledger::where(['person_type' => 'User', 'person_id' => 1])->latest()->first();
+        $latestLedger = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->latest()->first();
         $companyCashBalance = $latestLedger ? $latestLedger->cash_balance : 0;
 
         if ($paymentType == 'cash') {
@@ -97,7 +97,7 @@ trait LedgerTrait
             if (!$bankId) {
                 return response()->json(['status' => 'error', 'message' => 'Bank ID is required for cheque or online payments.'], 400);
             }
-            $bankLedger = Ledger::where(['bank_id'=> $bankId,'person_type'=>'User','person_id'=>1])->latest()->first();
+            $bankLedger = Ledger::where(['bank_id'=> $bankId,'person_type'=>'App\Models\User','person_id'=>1])->latest()->first();
             $bankBalance = $bankLedger ? $bankLedger->bank_balance : 0;
             if ($bankBalance < $amount) {
                 return response()->json(['status' => 'error', 'message' => 'Insufficient Bank Balance.'], 400);

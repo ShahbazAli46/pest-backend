@@ -12,11 +12,14 @@ class ProductController extends Controller
 {
     use GeneralTrait;
 
-    public function index($id=null){
-        if($id==null){
-            $products=Product::with(['attachments','stocks' => function ($query) {
-                $query->select('product_id', 'total_qty', 'remaining_qty')
-                ->orderBy('created_at', 'DESC')->limit(1);
+    public function index($id = null)
+    {
+        if ($id == null) {
+            $products = Product::with(['attachments', 'stocks' => function ($query) {
+                $query->select('id', 'product_id', 'total_qty', 'remaining_qty') // Specify the columns you need for stocks
+                    ->whereIn('id', function($subQuery) {
+                        $subQuery->select(DB::raw('MAX(id)'))->from('stocks')->groupBy('product_id');
+                });
             }])->orderBy('id', 'DESC')->get();
             return response()->json(['data' => $products]);
         } else {
@@ -45,7 +48,7 @@ class ProductController extends Controller
                 'brand_id' => 'required|exists:brands,id', 
                 'mfg_date' => 'nullable|date|before_or_equal:today', 
                 'exp_date' => 'nullable|date|after:mfg_date', 
-                'product_type' => 'nullable|in:Liquid,Powder,Gel', 
+                'product_type' => 'nullable|in:Liquid,Powder,Gel,Pieces', 
                 'unit' => 'nullable|string|max:50',
                 'active_ingredients' => 'nullable|string|max:255',
                 'others_ingredients' => 'nullable|string|max:255',
@@ -86,10 +89,10 @@ class ProductController extends Controller
     {
         // id==product_id
         if($id==null){
-            $stocks=Stock::with(['product:id,product_name'])->where(['person_id'=>1,'person_type'=>'Admin'])->get();
+            $stocks=Stock::with(['product:id,product_name'])->where(['person_id'=>1,'person_type'=>'App\Models\User'])->get();
             return response()->json(['data' => $stocks]);
         }else{
-            $stocks=Stock::with(['product:id,product_name'])->where(['person_id'=>1,'person_type'=>'Admin','product_id'=>$id])->get();
+            $stocks=Stock::with(['product:id,product_name'])->where(['person_id'=>1,'person_type'=>'App\Models\User','product_id'=>$id])->get();
             return response()->json(['data' => $stocks]);
         }
       
