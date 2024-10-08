@@ -102,9 +102,9 @@ trait GeneralTrait
         return 'upload/' .$folder.'/'. $fileName;    
     }
 
-    public function checkCompanyStock($product_id,$qty)
+    public function checkUserStock($product_id,$qty,$person_id)
     {
-        $stock=Stock::where(['product_id'=> $product_id,'person_id'=>1,'person_type'=>'App\Models\User'])->latest()->first();
+        $stock=Stock::where(['product_id'=> $product_id,'person_id'=>$person_id,'person_type'=>'App\Models\User'])->latest()->first();
         $remainingStock = $stock ? $stock->remaining_qty : 0;
         if ($remainingStock < $qty) {
             return response()->json(['status' => 'error', 'message' => 'Insufficient Stock.'], 400);

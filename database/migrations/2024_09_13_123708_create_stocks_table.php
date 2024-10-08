@@ -22,7 +22,7 @@ return new class extends Migration
             $table->unsignedBigInteger('person_id');
             $table->string('person_type',100)->default('App\Models\User');
             $table->unsignedBigInteger('link_id')->nullable();
-            $table->enum('link_name',['purchase_order_detail','assign_stock','sale_order_detail'])->nullable();
+            $table->enum('link_name',['purchase_order_detail','assign_stock','sale_order_detail','use_stock'])->nullable();
             $table->timestamps();
         });
     }

@@ -9,7 +9,7 @@ class JobServiceReport extends Model
 {
     use HasFactory;
     public $table="job_service_reports";
-    protected $fillable = ['job_id','type_of_visit','pest_found_ids','tm_ids','recommendations_and_remarks'];
+    protected $fillable = ['job_id','type_of_visit','pest_found_ids','tm_ids','recommendations_and_remarks','for_office_use'];
 
     public function job()
     {

@@ -131,7 +131,7 @@ class ClientController extends Controller
                 'state' => 'nullable|string|max:100',
             ]);
             $user=User::active()->with(['client'])->where('id',$request->user_id)->where('role_id',5)->first();
-          
+    
             // Check if the user has a client record
             if ($user && $user->client) {
                 $client = $user->client;

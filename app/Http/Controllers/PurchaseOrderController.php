@@ -56,6 +56,7 @@ class PurchaseOrderController extends Controller
             // Now validate the input
             $validatedData = $request->validate([
                 'supplier_id' => 'required|exists:suppliers,id',
+                'invoice_no' => 'nullable|string|max:50',
                 'purchase_invoice' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120', 
                 'order_date' => 'required|date',
                 'delivery_date' => 'nullable|date|after_or_equal:order_date',

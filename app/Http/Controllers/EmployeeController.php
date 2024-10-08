@@ -134,7 +134,7 @@ class EmployeeController extends Controller
             ]);
             
             // Call the function to check stock
-            $quantityCheck = $this->checkCompanyStock($request->product_id,$request->quantity);
+            $quantityCheck = $this->checkUserStock($request->product_id,$request->quantity,1);
             if ($quantityCheck !== true) {
                 return $quantityCheck;
             }

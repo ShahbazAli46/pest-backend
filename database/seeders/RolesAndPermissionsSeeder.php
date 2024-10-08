@@ -151,13 +151,13 @@ class RolesAndPermissionsSeeder extends Seeder
             ['name' => 'View Service Invoice', 'icon'=>'', 'api_route' => 'service_invoices','frontend_url'=>'service_invoices', 'is_main'=>1],
                 ['name' => 'Service Invoice Add Payment', 'icon'=>'', 'api_route' => 'service_invoices.add_payment','frontend_url'=>'service_invoices/add_payment', 'is_main'=>0, 'parent_api_route'=>'service_invoices'],
 
-            // customers
+            // Customers
             ['name' => 'View Customer', 'icon'=>'', 'api_route' => 'customer','frontend_url'=>'customer', 'is_main'=>1],
             ['name' => 'Create Customer', 'icon'=>'', 'api_route' => 'customer.create','frontend_url'=>'customer/create', 'is_main'=>0, 'parent_api_route'=>'customer'],
             ['name' => 'Customer Add Pyament', 'icon'=>'', 'api_route' => 'customer.add_payment','frontend_url'=>'customer/add_payment', 'is_main'=>0, 'parent_api_route'=>'customer'],
             ['name' => 'Get Customer Leger', 'icon'=>'', 'api_route' => 'customer.ledger.get','frontend_url'=>'customer/ledger/get', 'is_main'=>0, 'parent_api_route'=>'customer'],
             
-            //Service Invoice
+            //Sales Ordre
             ['name' => 'View Sale Order', 'icon'=>'', 'api_route' => 'sale_order','frontend_url'=>'sale_order', 'is_main'=>1],
             ['name' => 'Create Sale Order', 'icon'=>'', 'api_route' => 'sale_order.create','frontend_url'=>'sale_order/create', 'is_main'=>0, 'parent_api_route'=>'sale_order'],
         

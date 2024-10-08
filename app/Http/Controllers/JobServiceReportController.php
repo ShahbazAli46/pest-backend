@@ -10,22 +10,25 @@ use App\Models\JobServiceReportProduct;
 use App\Models\Product;
 use App\Models\ServiceInvoice;
 use App\Models\ServiceInvoiceDetail;
+use App\Models\Stock;
+use App\Traits\GeneralTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class JobServiceReportController extends Controller
 {
     //
+    use GeneralTrait;
     public function index($id)
     {
         if($id == 'all'){
             $job_service_reports=JobServiceReport::orderBy('id', 'DESC')->get();
             return response()->json(['data' => $job_service_reports]);
         }else{
-            $job_service_report=JobServiceReport::with(['areas','usedProducts'])->find($id);
+            $job_service_report=JobServiceReport::with(['areas','usedProducts.product','job.user'])->find($id);
             if ($job_service_report) {
                 $job_service_report->pest_found_services = $job_service_report->getPestFoundServices();
-                $job_service_report->treatment_methods= $job_service_report->getTreatmentMethods(); 
+                $job_service_report->treatment_methods = $job_service_report->getTreatmentMethods(); 
             }
             return response()->json(['data' => $job_service_report]);
         }           
@@ -43,6 +46,7 @@ class JobServiceReportController extends Controller
                 'job_id' => 'required|exists:jobs,id',
                 'type_of_visit' => 'nullable|string|max:255',
                 'recommendations_and_remarks' => 'nullable|string|max:1000',
+                'for_office_use' => 'nullable|string|max:1000',
                 'tm_ids' => 'required|array',
                 'tm_ids.*' => 'integer|exists:treatment_methods,id', 
                 'pest_found_ids' => 'required|array',
@@ -68,6 +72,18 @@ class JobServiceReportController extends Controller
 
             $job=Job::find($request->job_id);
             if($job && !$job->report){
+
+                foreach ($request->input('used_products', []) as $product) {
+                    // Call the function to check stock
+                    $used_qty=$this->calculateUsedProAmt($product['product_id'],$product['dose'],$product['qty']);
+
+                    $quantityCheck = $this->checkUserStock($product['product_id'],$used_qty,$job->captain_id);
+                    if ($quantityCheck !== true) {
+                        return $quantityCheck;
+                    }
+                   
+                }
+
                 $requestData = $request->all(); 
                 $requestData['tm_ids'] = json_encode($tmIds);
                 $requestData['pest_found_ids'] = json_encode($pestFoundIds);
@@ -91,7 +107,7 @@ class JobServiceReportController extends Controller
 
                     // Insert used products into JobServiceReportProduct)
                     foreach ($request->input('used_products', []) as $product) {
-                        JobServiceReportProduct::create([
+                        $jobServiceProduct=JobServiceReportProduct::create([
                             'job_id' => $job->id,
                             'job_service_report_id' => $job_report->id,
                             'product_id' => $product['product_id'],
@@ -106,6 +122,25 @@ class JobServiceReportController extends Controller
                             array_push($inv_products,$product);
                             $total_extra+=$product['price'];
                         }
+
+                        // Add sales manager stock entry 
+                        $stock = Stock::where(['product_id'=> $product['product_id'],'person_id'=>$job->captain_id,'person_type'=>'App\Models\User'])->latest()->first();
+                        $old_total_qty=$stock?$stock->total_qty:0;
+                        $old_remaining_qty=$stock?$stock->remaining_qty:0;
+                        
+                        // // Call the function to check stock
+                        $used_qty=$this->calculateUsedProAmt($product['product_id'],$product['dose'],$product['qty']);
+                        Stock::create([
+                            'product_id' => $product['product_id'],
+                            'total_qty' => $old_total_qty, 
+                            'stock_out' => $used_qty,  
+                            'remaining_qty' => $old_remaining_qty-$used_qty, 
+                            'person_id' => $job->captain_id,
+                            'person_type' => 'App\Models\User',   
+                            'link_id' => $jobServiceProduct->id,
+                            'link_name' => 'use_stock', 
+                        ]);
+            
                     }
 
                     //create invoices
@@ -150,4 +185,13 @@ class JobServiceReportController extends Controller
         }
     }
 
+    public function calculateUsedProAmt($product_id,$dose,$qty){
+        $total_dose=$dose * $qty;
+
+        $productData = Product::find($product_id);
+        $per_item_qty = $productData->per_item_qty;
+
+        $used_qty = $total_dose / $per_item_qty; 
+        return round($used_qty, 2);
+    }
 }

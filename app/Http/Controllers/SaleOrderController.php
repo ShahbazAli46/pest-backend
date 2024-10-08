@@ -82,7 +82,7 @@ class SaleOrderController extends Controller
             // Calculate sub_total and vat_amt from order_details
             for ($i = 0; $i < $maxIndex; $i++) {
                 // Call the function to check stock
-                $quantityCheck = $this->checkCompanyStock($productIds[$i],$quantities[$i]);
+                $quantityCheck = $this->checkUserStock($productIds[$i],$quantities[$i],1);
                 if ($quantityCheck !== true) {
                     return $quantityCheck;
                 }

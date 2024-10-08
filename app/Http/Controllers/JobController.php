@@ -191,7 +191,7 @@ class JobController extends Controller
                 return response()->json(['status' => 'error','message' => 'The Job has Already been Started.'],500);
             }
             
-            $job->update(['is_completed'=>2]);
+            $job->update(['is_completed'=>2,'job_start_time'=>now()]);
             if($job){
                 DB::commit();
                 return response()->json(['status' => 'success','message' => 'Job Moved to Started Successfully']);
@@ -226,7 +226,7 @@ class JobController extends Controller
                 return response()->json(['status' => 'error', 'message' => 'Please Start This Job Before Proceeding.'], 500);
             }
             
-            $job->update(['is_completed'=>1]);
+            $job->update(['is_completed'=>1,'job_end_time'=>now()]);
             if($job){
                 DB::commit();
                 return response()->json(['status' => 'success','message' => 'Job Moved to Completed Successfully']);

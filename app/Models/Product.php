@@ -37,6 +37,11 @@ class Product extends Model
         return $this->hasMany(Stock::class,'product_id');
     }
 
+    public function jobServiceReportProduct()
+    {
+        return $this->hasMany(JobServiceReportProduct::class,'product_id');
+    }
+
     // Accessor for the product_picture attribute
     public function getProductPictureAttribute($value)
     {
