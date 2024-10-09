@@ -126,7 +126,6 @@ class SaleOrderController extends Controller
                     'total' => $total,
                 ]);
                
-        
                 // Add company stock entry
                 $stock = Stock::where(['product_id'=> $productIds[$i],'person_id'=>1,'person_type'=>'App\Models\User'])->latest()->first();
                 $old_total_qty=$stock?$stock->total_qty:0;

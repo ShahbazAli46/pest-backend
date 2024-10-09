@@ -247,27 +247,30 @@ class QuoteController extends Controller
                 }
                 $inst_total=$quote->grand_total;
                 for($i=1; $i<=$installments; $i++){
-                    $invoice=ServiceInvoice::create([
-                        'invoiceable_id'=>$quote->id,
-                        'invoiceable_type'=>Quote::class,
-                        'user_id'=>$quote->user_id,
-                        'issued_date'=>now(),
-                        'total_amt'=>$inst_total/$installments,
-                        'paid_amt'=>0.00,
-                    ]);
-                    if($invoice){
-                        $quot_services=$quote->quoteServices;
-                        foreach($quot_services as $service){
-                            ServiceInvoiceDetail::create([
-                                'service_invoice_id'=>$invoice->id,
-                                'itemable_id'=>$service->service_id,
-                                'itemable_type'=>Service::class,
-                                'job_type'=>$service->job_type,
-                                'rate'=>$service->rate,
-                                'sub_total'=>$service->sub_total
-                            ]);
-                        }
-                    }
+                    
+                    $this->generateServiceInvoice($quote->id,Quote::class,$quote->user_id,$inst_total/$installments,$quote->quoteServices);
+
+                    // $invoice=ServiceInvoice::create([
+                    //     'invoiceable_id'=>$quote->id,
+                    //     'invoiceable_type'=>Quote::class,
+                    //     'user_id'=>$quote->user_id,
+                    //     'issued_date'=>now(),
+                    //     'total_amt'=>$inst_total/$installments,
+                    //     'paid_amt'=>0.00,
+                    // ]);
+                    // if($invoice){
+                    //     $quot_services=$quote->quoteServices;
+                    //     foreach($quot_services as $service){
+                    //         ServiceInvoiceDetail::create([
+                    //             'service_invoice_id'=>$invoice->id,
+                    //             'itemable_id'=>$service->service_id,
+                    //             'itemable_type'=>Service::class,
+                    //             'job_type'=>$service->job_type,
+                    //             'rate'=>$service->rate,
+                    //             'sub_total'=>$service->sub_total
+                    //         ]);
+                    //     }
+                    // }
                 }
 
                 DB::commit();

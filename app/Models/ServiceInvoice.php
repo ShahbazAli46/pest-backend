@@ -32,6 +32,16 @@ class ServiceInvoice extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function getTitleAttribute()
+    {
+        if ($this->invoiceable instanceof Job) {
+            return $this->invoiceable->job_title;
+        } elseif ($this->invoiceable instanceof Quote) {
+            return $this->invoiceable->quote_title;
+        }
+        return 'No Title'; // Default if none exists
+    }
+
     //add custom product id according to id
     protected static function boot()
     {

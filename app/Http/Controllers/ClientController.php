@@ -87,17 +87,16 @@ class ClientController extends Controller
             $client=Client::create($requestData);
 
             if($client){
-
                 // Add supplier ledger entry
                 Ledger::create([
                     'bank_id' => null,  // Assuming null if no specific bank is involved
-                    'description' => 'Opening balance for client ' . $client->supplier_name,
+                    'description' => 'Opening balance for client ' . $user['data']->name,
                     'dr_amt' => $request->opening_balance,
                     'payment_type' => 'opening_balance',
                     'entry_type' => 'dr',  // Debit entry for opening balance
                     'cash_balance' => $request->opening_balance,
-                    'person_id' => $client->id,
-                    'person_type' => Client::class,
+                    'person_id' => $user['data']->id,
+                    'person_type' => User::class,
                 ]);
 
                 DB::commit();
@@ -241,4 +240,32 @@ class ClientController extends Controller
         } 
     }
      
+    /* ================= Client Ledger =============*/ 
+    public function getClientLedger(Request $request,$id=null){
+        if($id==null){
+            if($request->has('start_date') && $request->has('end_date')){
+                $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
+                $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
+                $ledgers = Ledger::with(['personable'])->whereBetween('created_at', [$startDate, $endDate])->where(['person_type' => 'App\Models\User'])->get();
+                return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $ledgers]);
+            }else{
+                $ledgers = Ledger::with(['personable'])->where(['person_type' => 'App\Models\User'])->get();
+                return response()->json(['data' => $ledgers]);
+            }
+        }else{
+            try {
+                if($request->has('start_date') && $request->has('end_date')){
+                    $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
+                    $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
+                    $ledgers = Ledger::with(['personable'])->whereBetween('created_at', [$startDate, $endDate])->where(['person_type' => 'App\Models\User','person_id' => $id])->get();
+                    return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $ledgers]);
+                }else{
+                    $ledgers = Ledger::with(['personable'])->where(['person_type' => 'App\Models\User','person_id' => $id])->get();
+                    return response()->json(['data' => $ledgers]);
+                }
+            } catch (ModelNotFoundException $e) {
+                return response()->json(['status'=>'error', 'message' => 'User Not Found.'], 404);
+            }
+        }
+    }
 }

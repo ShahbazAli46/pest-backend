@@ -25,7 +25,12 @@ class JobController extends Controller
             if ($type == 'pending' || $type == 'completed') {
                 $is_completed = $type == 'pending' ? 0 : 1;
                 $jobs = Job::with(['user.client.referencable'])->where('is_completed', $is_completed);
-                    
+                
+                // Apply client_id filter if present
+                if ($request->has('user_id')) {
+                    $jobs->where('user_id', $request->input('user_id'));
+                }
+                
                 // Check if date filters are present
                 if ($request->has('start_date') && $request->has('end_date')) {
                     $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
@@ -35,6 +40,11 @@ class JobController extends Controller
                 $jobs = $jobs->orderBy('id', 'DESC')->get();
             } else {
                 $jobs = Job::with(['user.client.referencable']);
+
+                // Apply client_id filter if present
+                if ($request->has('user_id')) {
+                    $jobs->where('user_id', $request->input('user_id'));
+                }
 
                 // Check if date filters are present
                 if ($request->has('start_date') && $request->has('end_date')) {
@@ -68,29 +78,33 @@ class JobController extends Controller
         ]);
         $res=$this->createJob($request);
         if($res->original['status']=='success'){
+
             //create invoices
             $data=$res->original['data'];
-            $invoice=ServiceInvoice::create([
-                'invoiceable_id'=>$data['job_id'],
-                'invoiceable_type'=>Job::class,
-                'user_id'=>$request->user_id,
-                'issued_date'=>now(),
-                'total_amt'=>$res->original['data']['grand_total'],
-                'paid_amt'=>0.00,
-            ]);
-            if($invoice){
-                $job_services=JobService::where('job_id',$data['job_id'])->get();
-                foreach($job_services as $service){
-                    ServiceInvoiceDetail::create([
-                        'service_invoice_id'=>$invoice->id,
-                        'itemable_id'=>$service->service_id,
-                        'itemable_type'=>Service::class,
-                        'job_type'=>'one_time',
-                        'rate'=>$service->rate,
-                        'sub_total'=>$service->sub_total
-                    ]);
-                }
-            }
+            $job_services=JobService::where('job_id',$data['job_id'])->get();
+            $this->generateServiceInvoice($data['job_id'],Job::class,$request->user_id,$res->original['data']['grand_total'],$job_services);
+           
+            // $invoice=ServiceInvoice::create([
+            //     'invoiceable_id'=>$data['job_id'],
+            //     'invoiceable_type'=>Job::class,
+            //     'user_id'=>$request->user_id,
+            //     'issued_date'=>now(),
+            //     'total_amt'=>$res->original['data']['grand_total'],
+            //     'paid_amt'=>0.00,
+            // ]);
+            // if($invoice){
+            //     $job_services=JobService::where('job_id',$data['job_id'])->get();
+            //     foreach($job_services as $service){
+            //         ServiceInvoiceDetail::create([
+            //             'service_invoice_id'=>$invoice->id,
+            //             'itemable_id'=>$service->service_id,
+            //             'itemable_type'=>Service::class,
+            //             'job_type'=>'one_time',
+            //             'rate'=>$service->rate,
+            //             'sub_total'=>$service->sub_total
+            //         ]);
+            //     }
+            // }
         }
         return $res;
     }

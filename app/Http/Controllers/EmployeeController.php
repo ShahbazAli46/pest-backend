@@ -39,8 +39,11 @@ class EmployeeController extends Controller
                 foreach ($employee->captainJobs as $job) {
                     $job->team_members = $job->getTeamMembers(); // Assign team_members to each job
                 }
-                $employee->stocks = Stock::with(['product:id,product_name'])->where(['person_id' => $employee->id, 'person_type' => 'App\Models\User'])
-                    ->latest()->get(['id','product_id','total_qty','remaining_qty','created_at'])->unique('product_id');
+                $employee->stocks = Stock::with(['product:id,product_name'])
+                ->where([
+                    'person_id' => $employee->id,
+                    'person_type' => 'App\Models\User'
+                ])->latest()->get(['id', 'product_id', 'total_qty', 'remaining_qty', 'created_at'])->unique('product_id')->values();
             }
             return response()->json(['data' => $employee]);
         }

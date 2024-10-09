@@ -3,10 +3,15 @@
 namespace App\Traits;
 
 use App\Models\Attachment;
+use App\Models\Client;
 use App\Models\Job;
 use App\Models\JobRescheduleDetail;
 use App\Models\JobService;
+use App\Models\Ledger;
 use App\Models\Role;
+use App\Models\Service;
+use App\Models\ServiceInvoice;
+use App\Models\ServiceInvoiceDetail;
 use App\Models\Stock;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -197,6 +202,46 @@ trait GeneralTrait
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['status' => 'error','message' => 'Failed to  Add Job. ' .$e->getMessage()],500);
+        }
+    }
+
+    function generateServiceInvoice($inv_id,$inv_type,$user_id,$total_amt,$ser_details)
+    {
+        $invoice=ServiceInvoice::create([
+            'invoiceable_id'=>$inv_id,
+            'invoiceable_type'=>$inv_type,
+            'user_id'=>$user_id,
+            'issued_date'=>now(),
+            'total_amt'=>$total_amt,
+            'paid_amt'=>0.00,
+        ]);
+        if($invoice){
+            foreach($ser_details as $service){
+                ServiceInvoiceDetail::create([
+                    'service_invoice_id'=>$invoice->id,
+                    'itemable_id'=>$service->service_id,
+                    'itemable_type'=>Service::class,
+                    'job_type'=>$service->job_type,
+                    'rate'=>$service->rate,
+                    'sub_total'=>$service->sub_total
+                ]);
+            }
+
+            // Update the CLIENT ledger
+            $user=User::find($invoice->user_id);
+            $lastClientLedger = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => $invoice->user_id])->latest()->first();
+            $oldCliCashBalance = $lastClientLedger ? $lastClientLedger->cash_balance : 0;
+            $newCliCashBalance = $oldCliCashBalance + $total_amt;
+            $cli_ledger=Ledger::create([
+                'bank_id' => null, 
+                'description' => 'Invoice Payment for client ' . $user->name,
+                'dr_amt' => $total_amt,
+                'payment_type' => 'none',
+                'entry_type' => 'dr',  
+                'cash_balance' => $newCliCashBalance,
+                'person_id' => $invoice->user_id,
+                'person_type' => 'App\Models\User',
+            ]);
         }
     }
     // // Example of a utility method
