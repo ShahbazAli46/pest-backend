@@ -14,16 +14,23 @@ use Illuminate\Support\Facades\DB;
 
 class ServiceInvoiceController extends Controller
 {
-    //
     public function index(Request $request,$id=null){
         if($id==null){
             // Check if date filters are present
             if ($request->has('start_date') && $request->has('end_date')) {
                 $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
                 $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay(); // Use endOfDay to include the entire day
-                // it should apply due_date not issue_date so this is pending
-                $invoices=ServiceInvoice::with(['user','invoiceable'])->whereBetween('issued_date', [$startDate, $endDate])->get();
                 
+                // it should apply due_date not issue_date so this is pending
+                $invoices = ServiceInvoice::with(['user', 'invoiceable'])->whereBetween('issued_date', [$startDate, $endDate]);
+
+                // Apply user_id filter if present
+                if ($request->has('user_id')) {
+                    $invoices->where('user_id', $request->input('user_id'));
+                }
+
+                $invoices = $invoices->get();
+
                 // Add title in the response
                 $invoices->each(function($invoice) {
                     $invoice->title = $invoice->title; 
@@ -31,7 +38,14 @@ class ServiceInvoiceController extends Controller
                 });
                 return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $invoices]);
             }else{
-                $invoices=ServiceInvoice::with(['user','invoiceable'])->get();
+                $invoices=ServiceInvoice::with(['user','invoiceable']);
+                
+                // Apply user_id filter if present
+                if ($request->has('user_id')) {
+                    $invoices->where('user_id', $request->input('user_id'));
+                }
+                $invoices = $invoices->get();
+
                 $invoices->each(function($invoice) {
                     $invoice->title = $invoice->title; 
                     $invoice->makeHidden('invoiceable'); 
@@ -39,7 +53,7 @@ class ServiceInvoiceController extends Controller
                 return response()->json(['data' => $invoices]);
             }
         }else{
-            $invoice=ServiceInvoice::with(['invoiceable','details','amountHistory','user'])->where('id',$id)->first();
+            $invoice=ServiceInvoice::with(['invoiceable','details.itemable','amountHistory','user'])->where('id',$id)->first();
             $invoice->title = $invoice->title; 
             return response()->json(['data' => $invoice]);
         }
@@ -50,12 +64,12 @@ class ServiceInvoiceController extends Controller
             DB::beginTransaction();
             $request->validate([        
                 'service_invoice_id' => 'required|integer|exists:service_invoices,id', 
-                'payment_type' => 'required|in:cash,cheque,online',
+                'payment_type' => 'required|in:cash,cheque,online,pos',
                 'description' => 'nullable|string|max:255',
-                'is_all_amt_pay' =>'nullable|in:1'
+                'is_all_amt_pay' =>'nullable|in:1,0'
             ]);
             
-            if(!$request->has('is_all_amt_pay') || !$request->is_all_amt_pay==1){
+            if(!$request->has('is_all_amt_pay') || $request->is_all_amt_pay!=1){
                 $request->validate([      
                    'paid_amt' => 'required|numeric|min:0.01',
                 ]);
@@ -67,7 +81,7 @@ class ServiceInvoiceController extends Controller
                     'cheque_no' => 'required|string|max:100',
                     'cheque_date' => 'required|date',
                 ]);                
-            }else if($request->input('payment_type') == 'online'){
+            }else if($request->input('payment_type') == 'online' || $request->input('payment_type') == 'pos'){
                 $request->validate([
                     'bank_id' => 'required|exists:banks,id',
                     'transection_id' => 'required|string|max:100',
@@ -137,6 +151,7 @@ class ServiceInvoiceController extends Controller
                     'cash_amt' => $request->input('payment_type') == 'cash' ? $paid_amt : 0.00,
                     'cheque_amt' => $request->input('payment_type') == 'cheque' ? $paid_amt : 0.00,
                     'online_amt' => $request->input('payment_type') == 'online' ? $paid_amt : 0.00,
+                    'pos_amt' => $request->input('payment_type') == 'pos' ? $paid_amt : 0.00,
                     'bank_balance' => $newBankBalance,
                     'cash_balance' => $newCashBalance,
                     'entry_type' => 'cr',

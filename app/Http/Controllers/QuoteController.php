@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Job;
+use App\Models\Ledger;
 use App\Models\Quote;
 use App\Models\QuoteService;
 use App\Models\QuoteServiceDate;
 use App\Models\Service;
 use App\Models\ServiceInvoice;
 use App\Models\ServiceInvoiceDetail;
+use App\Models\User;
 use App\Models\Vendor;
 use App\Traits\GeneralTrait;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -237,7 +239,7 @@ class QuoteController extends Controller
                 //create invoices
                 $installments=0;
                 if($quote->billing_method == 'installments'){
-                    $installments=$quote->duration_in_months/$quote->no_of_installments;
+                    $installments=$quote->no_of_installments;
                 }else if($quote->billing_method == 'service'){
                     $installments = $quote->jobs()->count();
                 }else if($quote->billing_method == 'monthly'){
@@ -272,6 +274,22 @@ class QuoteController extends Controller
                     //     }
                     // }
                 }
+
+                // Update the CLIENT ledger
+                $user=User::find($quote->user_id);
+                $lastClientLedger = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => $quote->user_id])->latest()->first();
+                $oldCliCashBalance = $lastClientLedger ? $lastClientLedger->cash_balance : 0;
+                $newCliCashBalance = $oldCliCashBalance + $quote->grand_total;
+                $cli_ledger=Ledger::create([
+                    'bank_id' => null, 
+                    'description' => 'Quote Payment for client ' . $user->name,
+                    'dr_amt' => $quote->grand_total,
+                    'payment_type' => 'none',
+                    'entry_type' => 'dr',  
+                    'cash_balance' => $newCliCashBalance,
+                    'person_id' => $quote->user_id,
+                    'person_type' => 'App\Models\User',
+                ]);
 
                 DB::commit();
                 return response()->json(['status' => 'success','message' => 'Quote Moved to Contract Successfully']);

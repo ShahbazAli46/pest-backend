@@ -69,6 +69,15 @@ class User extends Authenticatable
         return $this->morphMany(Stock::class, 'person');
     }
 
+    public function getCurrentBalance($person_type)
+    {
+        $lastLedger = Ledger::where([
+            'person_type' => $person_type,
+            'person_id' => $this->id
+        ])->latest()->first();
+        return $lastLedger ? $lastLedger->cash_balance : 0;
+    }
+
     // Define a local query scope to filter active users
     public function scopeActive($query)
     {

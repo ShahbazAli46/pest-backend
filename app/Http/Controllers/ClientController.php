@@ -21,9 +21,13 @@ class ClientController extends Controller
     public function index($id=null){
         if($id==null){
             $clients=User::with(['client.referencable','client.addresses'])->where('role_id',5)->orderBy('id', 'DESC')->get();
+            foreach ($clients as $client) {
+                $client->current_balance = $client->getCurrentBalance(User::class); // Pass the person type
+            }
             return response()->json(['data' => $clients]);
         }else{
             $client=User::with(['client.referencable','client.addresses','client.bankInfos'])->where('role_id',5)->where('id',$id)->first();
+            $client->current_balance = $client->getCurrentBalance(User::class);
             return response()->json(['data' => $client]);
         }
     }

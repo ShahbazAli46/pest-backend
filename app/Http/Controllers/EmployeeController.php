@@ -28,14 +28,17 @@ class EmployeeController extends Controller
             $employee=User::with('employee')->where('id',$id)->whereIn('role_id',[2,3,4,6])->first();
             if ($employee && $employee->role_id == 4) {
                 $employee->load([
-                    'captainJobs', 
-                    'captainJobs.captain.employee' ,
-                    'captainJobs.user.client.referencable', 
-                    'captainJobs.termAndCondition', 
-                    'captainJobs.jobServices.service',
-                    'captainJobs.clientAddress' ,
+                    'captainJobs' => function($query) {
+                        $query->where('is_completed', '!=', 1) // Filter by is_completed != 1
+                            ->with([
+                                'captain.employee',
+                                'user.client.referencable',
+                                'termAndCondition',
+                                'jobServices.service',
+                                'clientAddress',
+                            ]);
+                    }
                 ]);
-
                 foreach ($employee->captainJobs as $job) {
                     $job->team_members = $job->getTeamMembers(); // Assign team_members to each job
                 }

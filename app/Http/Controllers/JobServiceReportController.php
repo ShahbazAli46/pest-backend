@@ -46,7 +46,7 @@ class JobServiceReportController extends Controller
                 'job_id' => 'required|exists:jobs,id',
                 'type_of_visit' => 'nullable|string|max:255',
                 'recommendations_and_remarks' => 'nullable|string|max:1000',
-                'for_office_use' => 'nullable|string|max:1000',
+                // 'for_office_use' => 'nullable|string|max:1000',
                 'tm_ids' => 'required|array',
                 'tm_ids.*' => 'integer|exists:treatment_methods,id', 
                 'pest_found_ids' => 'required|array',
@@ -182,6 +182,33 @@ class JobServiceReportController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['status' => 'error','message' => 'Failed to  Add Service Report. ' .$e->getMessage()],500);
+        }
+    }
+
+    public function storeFeedback(Request $request){
+        try {
+            DB::beginTransaction();
+            $request->validate([     
+                'job_service_report_id' => 'required|exists:job_service_reports,id',
+                'for_office_use' => 'required|string|max:1000',
+            ]);
+
+            $jobServiceReport=JobServiceReport::where('id',$request->job_service_report_id)->first();
+            if($jobServiceReport){
+                $jobServiceReport->for_office_use=$request->for_office_use;
+                $jobServiceReport->update();
+                DB::commit();
+                return response()->json(['status' => 'success','message' => 'Job Service Report Feedback Added Successfully']);
+            }else{
+                DB::rollBack();
+                return response()->json(['status' => 'error','message' => 'Job Service Report Not Found.'],500);
+            }
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return response()->json(['status'=>'error','message' => $e->validator->errors()->first()], 422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['status' => 'error','message' => 'Failed to  Add Service Report Feedback. ' .$e->getMessage()],500);
         }
     }
 

@@ -226,22 +226,23 @@ trait GeneralTrait
                     'sub_total'=>$service->sub_total
                 ]);
             }
-
-            // Update the CLIENT ledger
-            $user=User::find($invoice->user_id);
-            $lastClientLedger = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => $invoice->user_id])->latest()->first();
-            $oldCliCashBalance = $lastClientLedger ? $lastClientLedger->cash_balance : 0;
-            $newCliCashBalance = $oldCliCashBalance + $total_amt;
-            $cli_ledger=Ledger::create([
-                'bank_id' => null, 
-                'description' => 'Invoice Payment for client ' . $user->name,
-                'dr_amt' => $total_amt,
-                'payment_type' => 'none',
-                'entry_type' => 'dr',  
-                'cash_balance' => $newCliCashBalance,
-                'person_id' => $invoice->user_id,
-                'person_type' => 'App\Models\User',
-            ]);
+            if($inv_type!='App\Models\Quote'){
+                // Update the CLIENT ledger
+                $user=User::find($invoice->user_id);
+                $lastClientLedger = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => $invoice->user_id])->latest()->first();
+                $oldCliCashBalance = $lastClientLedger ? $lastClientLedger->cash_balance : 0;
+                $newCliCashBalance = $oldCliCashBalance + $total_amt;
+                $cli_ledger=Ledger::create([
+                    'bank_id' => null, 
+                    'description' => 'Invoice Payment for client ' . $user->name,
+                    'dr_amt' => $total_amt,
+                    'payment_type' => 'none',
+                    'entry_type' => 'dr',  
+                    'cash_balance' => $newCliCashBalance,
+                    'person_id' => $invoice->user_id,
+                    'person_type' => 'App\Models\User',
+                ]);
+            }
         }
     }
     // // Example of a utility method

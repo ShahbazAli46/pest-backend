@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\{AdminController, BankController, BrandController,ClientController, CustomerController, EmployeeController, ExpenseCategoryController, ExpenseController, JobController, JobServiceReportController, ProductController, PurchaseOrderController, QuoteController, SaleOrderController, ServiceController, ServiceInvoiceController, SupplierController, TermsAndConditionController, TreatmentMethodController, UserAuthController, VehicleController, VehicleExpenseController, VendorController};
+use App\Http\Controllers\{AdminController, BankController, BrandController,ClientController, CustomerController, DashboardController, EmployeeController, ExpenseCategoryController, ExpenseController, JobController, JobServiceReportController, ProductController, PurchaseOrderController, QuoteController, SaleOrderController, ServiceController, ServiceInvoiceController, SupplierController, TermsAndConditionController, TreatmentMethodController, UserAuthController, VehicleController, VehicleExpenseController, VendorController};
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -19,7 +19,13 @@ Route::post('login',[UserAuthController::class,'login']);
 // Protected routes
 Route::middleware(['auth:sanctum'])->group(function () {
     // Route::middleware(['auth:sanctum','permission'])->group(function () {
-  
+
+    //Dashboard
+    Route::get('dashboard/count_clients',[DashboardController::class,'getCountClients'])->name('dashboard.count_clients');
+    Route::get('dashboard/count_jobs',[DashboardController::class,'getCountJobs'])->name('dashboard.count_jobs');
+    Route::get('dashboard/cash_collection',[DashboardController::class,'getCashCollection'])->name('dashboard.cash_collection');
+    Route::get('dashboard/pos_collection',[DashboardController::class,'getPosCollection'])->name('dashboard.pos_collection');
+
     // Employee
     Route::get('employee/{id?}',[EmployeeController::class,'index'])->name('employee');
     Route::post('employee/create',[EmployeeController::class,'store'])->name('employee.create');
@@ -122,6 +128,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     //service report
     Route::get('job/service_report/{id}',[JobServiceReportController::class,'index'])->name('job.service_report');
     Route::post('job/service_report/create',[JobServiceReportController::class,'store'])->name('job.service_report.create');
+    Route::post('job/service_report/feedback/create',[JobServiceReportController::class,'storeFeedback'])->name('job.service_report.feedback.create');
     
     //service invoices
     Route::get('service_invoices/{id?}',[ServiceInvoiceController::class,'index'])->name('service_invoices');
