@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Employee;
+use App\Models\Product;
 use App\Models\Stock;
 use App\Models\User;
 use App\Traits\GeneralTrait;
@@ -181,6 +182,34 @@ class EmployeeController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['status' => 'error','message' => 'Failed to Assign Stock. ' .$e->getMessage()],500);
+        }
+    }
+
+    public function historyStock(Request $request)
+    {
+        try {
+            $request->validate([
+                'product_id' => 'required|exists:products,id',
+                'user_id' => 'required|exists:users,id,role_id,4', 
+            ]);
+            
+            $user=User::with('employee')->where('id',$request->user_id)->where('role_id',4)->firstOrFail();
+            $product=Product::findOrFail($request->product_id);
+            $stock_history=Stock::where([
+                'product_id' => $request->product_id,
+                'person_id' => $request->user_id,
+                'person_type' => 'App\Models\User'
+            ])->get();
+
+            $data['user']=$user;
+            $data['product']=$product;
+            $data['stock_history']=$stock_history;
+
+            return response()->json(['data' => $data]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['status'=> 'error','message' => $e->validator->errors()->first()], 422);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error','message' => 'Failed to Get Stock History. ' .$e->getMessage()],500);
         }
     }
 }

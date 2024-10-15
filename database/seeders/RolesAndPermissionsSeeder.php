@@ -47,7 +47,8 @@ class RolesAndPermissionsSeeder extends Seeder
                 ['name' => 'Create Employee', 'icon'=>'', 'api_route' => 'employee.create','frontend_url'=>'employee/create', 'is_main'=>0, 'parent_api_route'=>'employee'],
                 ['name' => 'Assign Stock', 'icon'=>'', 'api_route' => 'employee.stock.assign','frontend_url'=>'employee/stock/assign', 'is_main'=>0, 'parent_api_route'=>'employee'],
                 ['name' => 'Get Sales Managers', 'icon'=>'', 'api_route' => 'employee.sales_manager.get','frontend_url'=>'employee/sales_manager/get', 'is_main'=>0, 'parent_api_route'=>'employee'],
-
+                ['name' => 'Get Employee Stock History', 'icon'=>'', 'api_route' => 'employee.stock.history','frontend_url'=>'employee/stock/history', 'is_main'=>0, 'parent_api_route'=>'employee'],
+                
             //Vendor
             ['name' => 'View Vendor', 'icon'=>'', 'api_route' => 'vendor','frontend_url'=>'vendor', 'is_main'=>1],
                 ['name' => 'Create Vendor', 'icon'=>'', 'api_route' => 'vendor.create','frontend_url'=>'vendor/create', 'is_main'=>0, 'parent_api_route'=>'vendor'],

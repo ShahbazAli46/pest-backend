@@ -28,7 +28,6 @@ return new class extends Migration
             $table->decimal('per_item_qty', 15, 2)->default(0.00);
             $table->text('description')->nullable();
             $table->string('product_picture')->nullable();
-            $table->decimal('vat', 15, 2)->default(0.00);
             $table->foreign('brand_id')->references('id')->on('brands')->onDelete('cascade');
             $table->softDeletes();
             $table->timestamps();

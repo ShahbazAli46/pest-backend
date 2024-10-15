@@ -10,12 +10,43 @@ use Illuminate\Support\Facades\DB;
 class ExpenseCategoryController extends Controller
 {
     //Get
-    public function index($id=null){
+    public function index(Request $request,$id=null){
         if($id==null){
-            $expense_categories=ExpenseCategory::orderBy('id', 'DESC')->get();
+            if ($request->has('start_date') && $request->has('end_date')) {
+                $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
+                $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
+
+                $expense_categories=ExpenseCategory::withSum(['expenses as total_amount' => function ($query) use ($startDate, $endDate) {
+                    if ($startDate && $endDate) {
+                        $query->whereBetween('created_at', [$startDate, $endDate]);
+                    }
+                }], 'total_amount')->orderBy('id', 'DESC')->get()
+                ->map(function ($category) {
+                    $category->total_amount = $category->total_amount ?? "0";
+                    return $category;
+                });
+            }else{
+                
+                $expense_categories = ExpenseCategory::withSum('expenses as total_amount', 'total_amount')
+                ->orderBy('id', 'DESC')->get()
+                ->map(function ($category) {
+                    $category->total_amount = $category->total_amount ?? "0";
+                    return $category;
+                });
+
+            }
             return response()->json(['data' => $expense_categories]);
         }else{
-            $expense_category=ExpenseCategory::find($id);
+            if ($request->has('start_date') && $request->has('end_date')) {
+                $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
+                $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
+            
+                $expense_category = ExpenseCategory::with(['expenses' => function($query) use ($startDate, $endDate) {
+                    $query->whereBetween('created_at', [$startDate, $endDate]);
+                }])->find($id);
+            } else {
+                $expense_category = ExpenseCategory::with('expenses')->find($id);
+            }
             return response()->json(['data' => $expense_category]);
         }
     }
@@ -39,6 +70,7 @@ class ExpenseCategoryController extends Controller
             return response()->json(['status' => 'error','message' => 'Failed to Add Expense Category. ' .$e->getMessage()],500);
         }
     }
+
     //Update
     public function update(Request $request, $id)
     {

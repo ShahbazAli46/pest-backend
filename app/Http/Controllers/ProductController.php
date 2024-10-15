@@ -46,7 +46,7 @@ class ProductController extends Controller
                 'product_name' => 'required|string|max:255',
                 'batch_number' => 'nullable|string|max:100',
                 'brand_id' => 'required|exists:brands,id', 
-                'mfg_date' => 'nullable|date|before_or_equal:today', 
+                'mfg_date' => 'nullable|date',//|before_or_equal:today 
                 'exp_date' => 'nullable|date|after:mfg_date', 
                 'product_type' => 'nullable|in:Liquid,Powder,Gel,Pieces', 
                 'unit' => 'nullable|string|max:50',
@@ -58,7 +58,6 @@ class ProductController extends Controller
                 'per_item_qty' => 'required|numeric|min:0',
                 'description' => 'nullable|string|max:1000', 
                 'product_picture' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048', 
-                'vat' => 'nullable|numeric|min:0|max:100',
                 'attachments' => 'nullable|array', 
                 'attachments.*' => 'file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120', 
             ]);
