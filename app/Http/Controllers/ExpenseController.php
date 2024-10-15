@@ -22,7 +22,7 @@ class ExpenseController extends Controller
                 $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
                 
                 $expense = Expense::with(['expenseCategory:id,expense_category','bank:id,bank_name'])
-                ->whereBetween('created_at', [$startDate, $endDate])->orderBy('id', 'DESC')->get();
+                ->whereBetween('expense_date', [$startDate, $endDate])->orderBy('id', 'DESC')->get();
                 return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $expense]);
             }else{
                 $expense=Expense::with(['expenseCategory:id,expense_category','bank:id,bank_name'])->orderBy('id', 'DESC')->get();
@@ -50,7 +50,8 @@ class ExpenseController extends Controller
                 'description' => 'nullable|string',
                 'amount' => 'required|numeric|min:0',
                 'vat_per' => 'nullable|numeric|min:0|max:100',
-                'expense_file' => 'nullable|file|mimes:jpeg,jpg,png,pdf,doc,docx|max:5120'
+                'expense_file' => 'nullable|file|mimes:jpeg,jpg,png,pdf,doc,docx|max:5120',
+                'expense_date' => 'required|date', 
             ]);
 
             if ($request->input('payment_type') == 'cheque') {

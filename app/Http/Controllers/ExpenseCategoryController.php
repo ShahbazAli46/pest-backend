@@ -18,7 +18,7 @@ class ExpenseCategoryController extends Controller
 
                 $expense_categories=ExpenseCategory::withSum(['expenses as total_amount' => function ($query) use ($startDate, $endDate) {
                     if ($startDate && $endDate) {
-                        $query->whereBetween('created_at', [$startDate, $endDate]);
+                        $query->whereBetween('expense_date', [$startDate, $endDate]);
                     }
                 }], 'total_amount')->orderBy('id', 'DESC')->get()
                 ->map(function ($category) {
@@ -42,7 +42,7 @@ class ExpenseCategoryController extends Controller
                 $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
             
                 $expense_category = ExpenseCategory::with(['expenses' => function($query) use ($startDate, $endDate) {
-                    $query->whereBetween('created_at', [$startDate, $endDate]);
+                    $query->whereBetween('expense_date', [$startDate, $endDate]);
                 }])->find($id);
             } else {
                 $expense_category = ExpenseCategory::with('expenses')->find($id);

@@ -46,7 +46,7 @@ class ProductController extends Controller
                 'product_name' => 'required|string|max:255',
                 'batch_number' => 'nullable|string|max:100',
                 'brand_id' => 'required|exists:brands,id', 
-                'mfg_date' => 'nullable|date',//|before_or_equal:today 
+                'mfg_date' => 'nullable|date|before_or_equal:today',
                 'exp_date' => 'nullable|date|after:mfg_date', 
                 'product_type' => 'nullable|in:Liquid,Powder,Gel,Pieces', 
                 'unit' => 'nullable|string|max:50',

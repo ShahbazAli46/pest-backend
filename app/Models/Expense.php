@@ -10,7 +10,7 @@ class Expense extends Model
     use HasFactory;
     public $table="expenses";
 
-    protected $fillable = ['bank_id','expense_category_id','expense_name','payment_type','amount','cheque_no','cheque_date','transection_id','vat_per','vat_amount','description','total_amount','expense_file'];
+    protected $fillable = ['bank_id','expense_category_id','expense_name','payment_type','amount','cheque_no','cheque_date','transection_id','vat_per','vat_amount','description','total_amount','expense_file','expense_date'];
 
     public function expenseCategory()
     {
