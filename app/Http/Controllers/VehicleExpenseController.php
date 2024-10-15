@@ -92,6 +92,7 @@ class VehicleExpenseController extends Controller
             $lastLedger = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->latest()->first();
             $oldBankBalance = $lastLedger ? $lastLedger->bank_balance : 0;
             $oldCashBalance = $lastLedger ? $lastLedger->cash_balance : 0;
+            $newBankBalance=$oldBankBalance;
             if($request->input('payment_type') !== 'cash'){
                 $newBankBalance = $request->input('payment_type') !== 'cash' ? ($oldBankBalance - $requestData['total_amount']) : $oldBankBalance;
                 $bank=Bank::find($request->bank_id);

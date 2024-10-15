@@ -75,7 +75,7 @@ class User extends Authenticatable
             'person_type' => $person_type,
             'person_id' => $this->id
         ])->latest()->first();
-        return $lastLedger ? $lastLedger->cash_balance : 0;
+        return $lastLedger ? $lastLedger->cash_balance : "0";
     }
 
     // Define a local query scope to filter active users
