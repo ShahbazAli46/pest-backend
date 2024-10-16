@@ -21,7 +21,7 @@ class VehicleExpenseController extends Controller
                 $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
                 
                 $vehicle_expense = VehicleExpense::with(['vehicle:id,vehicle_number','bank:id,bank_name'])
-                ->whereBetween('created_at', [$startDate, $endDate])->orderBy('id', 'DESC')->get();
+                ->whereBetween('expense_date', [$startDate, $endDate])->orderBy('id', 'DESC')->get();
                 return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $vehicle_expense]);
             }else{
                 $vehicle_expense=VehicleExpense::with(['vehicle:id,vehicle_number','bank:id,bank_name'])->orderBy('id', 'DESC')->get();
@@ -49,6 +49,7 @@ class VehicleExpenseController extends Controller
                 'maintenance_amount' => 'required|numeric|min:0',
                 'payment_type' => 'required|in:cash,cheque,online',
                 'vat_per' => 'nullable|numeric|min:0|max:100',
+                'expense_date' => 'required|date', 
             ]);
 
             if ($request->input('payment_type') == 'cheque') {

@@ -31,7 +31,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('employee/create',[EmployeeController::class,'store'])->name('employee.create');
     Route::post('employee/stock/assign',[EmployeeController::class,'assignStock'])->name('employee.stock.assign');
     Route::get('employee/sales_manager/get',[EmployeeController::class,'getSalesManager'])->name('employee.sales_manager.get');
-    Route::post('employee/stock/history',[EmployeeController::class,'historyStock'])->name('employee.stock.history');
+    Route::post('employee/stock/used',[EmployeeController::class,'getUsedStock'])->name('employee.stock.used');
 
     // Vendors
     Route::get('vendor/{id?}',[VendorController::class,'index'])->name('vendor');
@@ -93,7 +93,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Vehicle Expense
     Route::get('vehicle_expense/{id?}',[VehicleExpenseController::class,'index'])->name('vehicle_expense');
-    Route::post('vehicle_expense/',[VehicleExpenseController::class,'store'])->name('vehicle_expense.create');
+    Route::post('vehicle_expense/create',[VehicleExpenseController::class,'store'])->name('vehicle_expense.create');
 
     // Purchase Orders
     Route::get('purchase_order/{id?}',[PurchaseOrderController::class,'index'])->name('purchase_order');

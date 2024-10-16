@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Employee;
+use App\Models\JobServiceReportProduct;
 use App\Models\Product;
 use App\Models\Stock;
 use App\Models\User;
@@ -43,7 +44,7 @@ class EmployeeController extends Controller
                 foreach ($employee->captainJobs as $job) {
                     $job->team_members = $job->getTeamMembers(); // Assign team_members to each job
                 }
-                $employee->stocks = Stock::with(['product:id,product_name'])
+                $employee->stocks = Stock::with(['product:id,product_name,product_picture'])
                 ->where([
                     'person_id' => $employee->id,
                     'person_type' => 'App\Models\User'
@@ -185,25 +186,25 @@ class EmployeeController extends Controller
         }
     }
 
-    public function historyStock(Request $request)
+    public function getUsedStock(Request $request)
     {
         try {
             $request->validate([
                 'product_id' => 'required|exists:products,id',
                 'user_id' => 'required|exists:users,id,role_id,4', 
             ]);
-            
+
             $user=User::with('employee')->where('id',$request->user_id)->where('role_id',4)->firstOrFail();
             $product=Product::findOrFail($request->product_id);
-            $stock_history=Stock::where([
-                'product_id' => $request->product_id,
-                'person_id' => $request->user_id,
-                'person_type' => 'App\Models\User'
-            ])->get();
+
+            $usedProducts = JobServiceReportProduct::with(['job.user.client'])->where('product_id', $request->product_id)
+            ->whereHas('job', function($query) use ($request) {
+                $query->where('captain_id', $request->user_id); // Ensure the job's captain_id matches the user_id
+            })->get();
 
             $data['user']=$user;
             $data['product']=$product;
-            $data['stock_history']=$stock_history;
+            $data['used_stock']=$usedProducts;
 
             return response()->json(['data' => $data]);
         } catch (\Illuminate\Validation\ValidationException $e) {

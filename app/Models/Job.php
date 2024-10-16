@@ -71,6 +71,11 @@ class Job extends Model
         return $this->belongsTo(Quote::class);
     }
 
+    public function JobServiceReportProducts()
+    {
+        return $this->hasMany(JobServiceReportProduct::class);
+    }
+
     public function rescheduleDates()
     {
         return $this->hasMany(JobRescheduleDetail::class);
