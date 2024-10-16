@@ -49,6 +49,7 @@ class VehicleExpenseController extends Controller
                 'maintenance_amount' => 'required|numeric|min:0',
                 'payment_type' => 'required|in:cash,cheque,online',
                 'vat_per' => 'nullable|numeric|min:0|max:100',
+                'oil_change_limit'   => 'nullable|string|max:50',   
                 'expense_date' => 'required|date', 
             ]);
 
