@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\Stock;
+use App\Models\User;
 use App\Traits\GeneralTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -30,9 +31,12 @@ class ProductController extends Controller
                 });
             }])->where('id', $id)->first();
 
-            $product1 = Product::with(['stocks.person'])->where('id', $id)->first();
+            $assigned_stock_history= Stock::with('person')
+            ->where('person_id', '!=', 1)
+            ->whereNull("link_name")
+            ->where('product_id', $id)->get();
 
-            $product->stock_history=$product1->stocks;
+            $product->assigned_stock_history=$assigned_stock_history;
             return response()->json(['data' => $product]);
         }
     }

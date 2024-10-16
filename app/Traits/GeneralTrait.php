@@ -8,6 +8,7 @@ use App\Models\Job;
 use App\Models\JobRescheduleDetail;
 use App\Models\JobService;
 use App\Models\Ledger;
+use App\Models\Product;
 use App\Models\Role;
 use App\Models\Service;
 use App\Models\ServiceInvoice;
@@ -205,7 +206,7 @@ trait GeneralTrait
         }
     }
 
-    function generateServiceInvoice($inv_id,$inv_type,$user_id,$total_amt,$ser_details)
+    function generateServiceInvoice($inv_id,$inv_type,$user_id,$total_amt,$item_details,$item_type='Service')
     {
         $invoice=ServiceInvoice::create([
             'invoiceable_id'=>$inv_id,
@@ -216,16 +217,31 @@ trait GeneralTrait
             'paid_amt'=>0.00,
         ]);
         if($invoice){
-            foreach($ser_details as $service){
-                ServiceInvoiceDetail::create([
-                    'service_invoice_id'=>$invoice->id,
-                    'itemable_id'=>$service->service_id,
-                    'itemable_type'=>Service::class,
-                    'job_type'=>$service->job_type,
-                    'rate'=>$service->rate,
-                    'sub_total'=>$service->sub_total
-                ]);
+            if($item_type=='Service'){
+                foreach($item_details as $item){
+                    ServiceInvoiceDetail::create([
+                        'service_invoice_id'=>$invoice->id,
+                        'itemable_id'=>$item_details->service_id,
+                        'itemable_type'=>Service::class,
+                        'job_type'=>$item_details->job_type,
+                        'rate'=>$item_details->rate,
+                        'sub_total'=>$item_details->sub_total
+                    ]);
+                }
+            }else{
+                //item_details='Product'
+                foreach($item_details as $item){
+                    ServiceInvoiceDetail::create([
+                        'service_invoice_id'=>$invoice->id,
+                        'itemable_id'=>$item['product_id'],
+                        'itemable_type'=>Product::class,
+                        'job_type'=>'one_time',
+                        'rate'=>$item['price'],
+                        'sub_total'=>$item['price']
+                    ]);
+                }
             }
+            
             if($inv_type!='App\Models\Quote'){
                 // Update the CLIENT ledger
                 $user=User::find($invoice->user_id);

@@ -144,27 +144,30 @@ class JobServiceReportController extends Controller
                     }
 
                     //create invoices
-                    $invoice=ServiceInvoice::create([
-                        'invoiceable_id'=>$job->id,
-                        'invoiceable_type'=>Job::class,
-                        'user_id'=>$job->user_id,
-                        'issued_date'=>now(),
-                        'total_amt'=>$total_extra,
-                        'paid_amt'=>0.00,
-                    ]);
-                    if($invoice){
-                        foreach($inv_products as $product){
-                            ServiceInvoiceDetail::create([
-                                'service_invoice_id'=>$invoice->id,
-                                'itemable_id'=>$product['product_id'],
-                                'itemable_type'=>Product::class,
-                                'job_type'=>'one_time',
-                                'rate'=>$product['price'],
-                                'sub_total'=>$product['price']
-                            ]);
-                        }
+                    if(count($inv_products) > 0){
+                        $this->generateServiceInvoice($job->id,Job::class,$job->user_id,$total_extra,$inv_products,'Product');
                     }
-                    
+
+                    // $invoice=ServiceInvoice::create([
+                    //     'invoiceable_id'=>$job->id,
+                    //     'invoiceable_type'=>Job::class,
+                    //     'user_id'=>$job->user_id,
+                    //     'issued_date'=>now(),
+                    //     'total_amt'=>$total_extra,
+                    //     'paid_amt'=>0.00,
+                    // ]);
+                    // if($invoice){
+                    //     foreach($inv_products as $product){
+                    //         ServiceInvoiceDetail::create([
+                    //             'service_invoice_id'=>$invoice->id,
+                    //             'itemable_id'=>$product['product_id'],
+                    //             'itemable_type'=>Product::class,
+                    //             'job_type'=>'one_time',
+                    //             'rate'=>$product['price'],
+                    //             'sub_total'=>$product['price']
+                    //         ]);
+                    //     }
+                    // }
 
                     DB::commit();
                     return response()->json(['status' => 'success','message' => 'Job Service Report Added Successfully','data'=>$job_report]);

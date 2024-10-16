@@ -10,12 +10,43 @@ use Illuminate\Support\Facades\DB;
 class VehicleController extends Controller
 {
     //Get
-    public function index($id=null){
+    public function index(Request $request,$id=null){
         if($id==null){
-            $vehicles=Vehicle::orderBy('id', 'DESC')->get();
+
+            if ($request->has('start_date') && $request->has('end_date')) {
+                $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
+                $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
+
+                $vehicles=Vehicle::withSum(['vehicleExpenses as total_amount' => function ($query) use ($startDate, $endDate) {
+                    if ($startDate && $endDate) {
+                        $query->whereBetween('expense_date', [$startDate, $endDate]);
+                    }
+                }], 'total_amount')->orderBy('id', 'DESC')->get()
+                ->map(function ($category) {
+                    $category->total_amount = $category->total_amount ?? "0";
+                    return $category;
+                });
+            }else{
+                $vehicles = Vehicle::withSum('vehicleExpenses as total_amount', 'total_amount')
+                ->orderBy('id', 'DESC')->get()
+                ->map(function ($category) {
+                    $category->total_amount = $category->total_amount ?? "0";
+                    return $category;
+                });
+
+            }
             return response()->json(['data' => $vehicles]);
         }else{
-            $vehicle=Vehicle::find($id);
+            if ($request->has('start_date') && $request->has('end_date')) {
+                $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
+                $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
+            
+                $vehicle = Vehicle::with(['vehicleExpenses' => function($query) use ($startDate, $endDate) {
+                    $query->whereBetween('expense_date', [$startDate, $endDate]);
+                }])->find($id);
+            } else {
+                $vehicle = Vehicle::with('vehicleExpenses')->find($id);
+            }
             return response()->json(['data' => $vehicle]);
         }
     }
