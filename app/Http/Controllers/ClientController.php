@@ -36,7 +36,7 @@ class ClientController extends Controller
     public function getReference(Request $request)
     {
         // Get active employees with role filtering
-        $all_active_employees = User::active()
+        $all_active_employees = User::notFired()
             ->whereIn('role_id', ['2', '3', '4', '6'])
             ->get()
             ->map(function ($user) {
@@ -89,6 +89,7 @@ class ClientController extends Controller
 
             $requestData['user_id'] = $user['data']->id;
             $client=Client::create($requestData);
+            $user['data']->client=$client;
 
             if($client){
                 // Add supplier ledger entry
@@ -104,7 +105,7 @@ class ClientController extends Controller
                 ]);
 
                 DB::commit();
-                return response()->json(['status' => 'success','message' => 'Client Added Successfully']);
+                return response()->json(['status' => 'success','message' => 'Client Added Successfully','data'=>$user['data']]);
             }else{
                 DB::rollBack();
                 return response()->json(['status' => 'error','message' => 'Failed to Add Client,Please Try Again Later.'],500);
@@ -133,7 +134,7 @@ class ClientController extends Controller
                 'country' => 'nullable|string|max:100',
                 'state' => 'nullable|string|max:100',
             ]);
-            $user=User::active()->with(['client'])->where('id',$request->user_id)->where('role_id',5)->first();
+            $user=User::with(['client'])->where('id',$request->user_id)->where('role_id',5)->first();
     
             // Check if the user has a client record
             if ($user && $user->client) {

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Employee;
+use App\Models\EmployeeAdvancePayment;
+use App\Models\EmployeeSalary;
 use App\Models\JobServiceReportProduct;
 use App\Models\Product;
 use App\Models\Stock;
@@ -17,7 +19,7 @@ class EmployeeController extends Controller
     
     public function index($id=null){
         if($id==null){
-            $employees=User::with(['employee','role:id,name'])->whereIn('role_id',[2,3,4,6])->orderBy('id', 'DESC')->get();
+            $employees=User::notFired()->with(['employee','role:id,name'])->whereIn('role_id',[2,3,4,6])->orderBy('id', 'DESC')->get();
             //sales manager only
             // foreach($employees as $key=>$employee){
             //     if($employee->role_id==4){
@@ -89,6 +91,8 @@ class EmployeeController extends Controller
                 'allowance' => 'nullable|numeric|min:0',
                 'other' => 'nullable|numeric|min:0',
                 'total_salary' => 'nullable|numeric|min:0',
+                'commission_per' => 'required|numeric|min:0|max:100',
+                'labour_card_expiry' => 'nullable|date',
             ]);
 
             $requestData = $request->all(); 
@@ -108,6 +112,23 @@ class EmployeeController extends Controller
             $employee=Employee::create($requestData);
 
             if($employee){
+                // Check if salary already generated for this month
+                $currentMonth = now()->format('Y-m'); // Get current month (e.g., "2024-10")
+                $existingSalary = EmployeeSalary::where('user_id', $user['data']->id)->where('month', $currentMonth)->first();
+                if (!$existingSalary) {
+                    // Create salary entry for the current month
+                    EmployeeSalary::create([
+                        'user_id' => $user['data']->id,
+                        'employee_id' => $employee->id,
+                        'basic_salary' => $employee->basic_salary,
+                        'allowance' => $employee->allowance,
+                        'other' => $employee->other,
+                        'total_salary' => $employee->total_salary,
+                        'month' => $currentMonth,
+                        'status' => 'unpaid',
+                    ]);
+                }
+
                 // $message="A employee has been added into system by ".$user['data']->name;
                 DB::commit();
                 return response()->json(['status' => 'success','message' => 'Employee Added Successfully']);
@@ -126,7 +147,7 @@ class EmployeeController extends Controller
 
     //
     public function getSalesManager(){
-        $sales_managers=User::with(['employee','role:id,name'])->where('role_id',4)->orderBy('id', 'DESC')->get();
+        $sales_managers=User::notFired()->with(['employee','role:id,name'])->where('role_id',4)->orderBy('id', 'DESC')->get();
         return response()->json(['data' => $sales_managers]);
     }
 
@@ -213,4 +234,122 @@ class EmployeeController extends Controller
             return response()->json(['status' => 'error','message' => 'Failed to Get Stock History. ' .$e->getMessage()],500);
         }
     }
+
+    public function fireEmployee($user_id){
+        try {
+            $employee_user=User::where('id',$user_id)->whereIn('role_id',[2,3,4,6])->first();
+            if($employee_user){
+                if($employee_user->fired_at==null){
+                    $employee_user->fired_at=now();
+                    $employee_user->save();
+                    return response()->json(['status' => 'success','message' => 'Employee has been fired.']);
+                }else{
+                    return response()->json(['status' => 'error','message' => 'Employee already fired.'],500);
+                }
+            }else{
+                return response()->json(['status' => 'error','message' => 'User Not Found.'],500);
+            }
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['status'=> 'error','message' => $e->validator->errors()->first()], 422);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error','message' => 'Failed to Get Stock History. ' .$e->getMessage()],500);
+        }
+    }
+
+    public function getEmployeeSalary(Request $request){
+        try {
+            $request->validate([
+                'salary_month' => 'nullable|date_format:Y-m',
+            ]);
+            if($request->filled('salary_month')){
+                $employee_salary=EmployeeSalary::with(['employeeAdvancePayment'])->where('month',$request->salary_month)->get();
+            }else{
+                $employee_salary=EmployeeSalary::with(['employeeAdvancePayment'])->get();
+            }
+            return response()->json(['data' => $employee_salary]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['status'=> 'error','message' => $e->validator->errors()->first()], 422);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error','message' => 'Failed to Employee Salary. ' .$e->getMessage()],500);
+        }
+    }
+
+    public function paidAdvanceEmployee(Request $request)
+    {
+        try {
+            $request->validate([
+                'employee_salary_id' => 'required|exists:employee_salaries,id', 
+                'adv_paid' => 'required|numeric', 
+            ]);
+            
+            // Find the employee salary record
+            $employee_salary = EmployeeSalary::find($request->employee_salary_id);
+    
+            if ($employee_salary) {
+                if($employee_salary->status=='unpaid'){
+                    $total_salary = $employee_salary->total_salary; // Total salary to be paid
+                    if($total_salary>($employee_salary->adv_paid+$request->adv_paid)){
+
+                        $adv_payment=new EmployeeAdvancePayment;
+                        $adv_payment->user_id = $employee_salary->user_id; 
+                        $adv_payment->employee_id = $employee_salary->employee_id; 
+                        $adv_payment->employee_salary_id = $employee_salary->id;
+                        $adv_payment->advance_payment = $request->adv_paid; 
+                        $adv_payment->month = $employee_salary->month; 
+                        $adv_payment->save();
+
+                        $employee_salary->adv_paid = ($employee_salary->adv_paid+$request->adv_paid); 
+                        $employee_salary->save();
+            
+                        return response()->json(['status' => 'success','message' => "Advance amount paid Successfully"]);
+                        //working
+                    }else{
+                        return response()->json(['status' => 'error','message' => 'Advance amount should be less then Salary.'], 500);
+                    }
+                }else{
+                    return response()->json(['status' => 'error','message' => 'Employee Salary already Paid.'], 500);
+                }
+            } else {
+                return response()->json(['status' => 'error','message' => 'Employee Salary Not Found.'], 500);
+            }
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['status'=> 'error','message' => $e->validator->errors()->first()], 422);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error','message' => 'Failed to Employee Salary Paid. ' .$e->getMessage()],500);
+        }
+    }
+
+    public function paidEmployeeSalary(Request $request)
+    {
+        try {
+            $request->validate([
+                'employee_salary_id' => 'required|exists:employee_salaries,id', 
+                'attendance_per' => 'required|numeric|min:0|max:100', 
+            ]);
+    
+            // Find the employee salary record
+            $employee_salary = EmployeeSalary::find($request->employee_salary_id);
+    
+            if ($employee_salary) {
+                $total_salary = $employee_salary->total_salary; // Total salary to be paid
+                $attendance_per = $request->attendance_per; // Attendance percentage
+    
+                $paid_total_salary = ($total_salary * $attendance_per) / 100;
+                $employee_salary->paid_total_salary = $paid_total_salary; 
+                $employee_salary->attendance_per = $attendance_per; 
+                $employee_salary->status = 'paid'; 
+                $employee_salary->paid_at = now(); 
+                $employee_salary->save();
+    
+                return response()->json(['status' => 'success','message' => "Salary paid based on $attendance_per% attendance: $paid_total_salary"]);
+            } else {
+                return response()->json(['status' => 'error','message' => 'Employee Salary Not Found.'], 500);
+            }
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['status'=> 'error','message' => $e->validator->errors()->first()], 422);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error','message' => 'Failed to Employee Salary Paid. ' .$e->getMessage()],500);
+        }
+    }
+
 }

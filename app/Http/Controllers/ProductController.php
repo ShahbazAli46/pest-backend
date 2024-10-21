@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\PurchaseOrder;
+use App\Models\PurchaseOrderDetail;
 use App\Models\Stock;
 use App\Models\User;
 use App\Traits\GeneralTrait;
@@ -30,13 +32,10 @@ class ProductController extends Controller
                         $subQuery->select(DB::raw('MAX(id)'))->from('stocks')->where('product_id', $id)->groupBy('product_id');
                 });
             }])->where('id', $id)->first();
-
-            $assigned_stock_history= Stock::with('person')
-            ->where('person_id', '!=', 1)
-            ->whereNull("link_name")
-            ->where('product_id', $id)->get();
-
-            $product->assigned_stock_history=$assigned_stock_history;
+            if($product){
+                $product->assigned_stock_history= Stock::with('person')->where('person_id', '!=', 1)->whereNull("link_name")->where('product_id', $id)->get();
+                $product->purchased_stock_history=PurchaseOrderDetail::with('purchaseOrder.supplier')->where('product_id',$id)->get();
+            }
             return response()->json(['data' => $product]);
         }
     }

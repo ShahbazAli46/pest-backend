@@ -24,7 +24,7 @@ class JobController extends Controller
         if ($is_int === false) {
             if ($type == 'pending' || $type == 'completed') {
                 $is_completed = $type == 'pending' ? 0 : 1;
-                $jobs = Job::with(['user.client.referencable'])->where('is_completed', $is_completed);
+                $jobs = Job::with(['user.client.referencable','captain'])->where('is_completed', $is_completed);
                 
                 // Apply client_id filter if present
                 if ($request->has('user_id')) {
@@ -39,7 +39,7 @@ class JobController extends Controller
                 }
                 $jobs = $jobs->orderBy('id', 'DESC')->get();
             } else {
-                $jobs = Job::with(['user.client.referencable']);
+                $jobs = Job::with(['user.client.referencable','captain']);
 
                 // Apply client_id filter if present
                 if ($request->has('user_id')) {
@@ -61,7 +61,7 @@ class JobController extends Controller
                 return response()->json(['type'=>$type,'data' => $jobs]);
             }
         }else{
-            $job = Job::with(['user.client.referencable', 'termAndCondition', 'jobServices.service','rescheduleDates','clientAddress'])->find($id);
+            $job = Job::with(['user.client.referencable', 'termAndCondition', 'jobServices.service','rescheduleDates','clientAddress','captain'])->find($id);
             if ($job) {
                 $job->treatment_methods = $job->getTreatmentMethods();
                 $job->team_members = $job->getTeamMembers(); 

@@ -79,17 +79,32 @@ class User extends Authenticatable
     }
 
     // Define a local query scope to filter active users
-    public function scopeActive($query)
-    {
-        return $query->where('is_active', 1);
-    }
+    // public function scopeActive($query)
+    // {
+    //     return $query->where('is_active', 1);
+    // }
 
     protected $fillable = [
         'name',
         'email',
         'password',
-        'role_id'
+        'role_id',
+        'fired_at'
     ];
+
+    protected $dates = ['fired_at'];
+    
+    // Scope to get only active (not fired) users
+    public function scopeNotFired($query)
+    {
+        return $query->whereNull('fired_at');
+    }
+
+    // Scope to get only fired users
+    public function scopeFired($query)
+    {
+        return $query->whereNotNull('fired_at');
+    }
 
     /**
      * The attributes that should be hidden for serialization.

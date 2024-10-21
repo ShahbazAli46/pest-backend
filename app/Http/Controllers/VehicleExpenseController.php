@@ -4,11 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Bank;
 use App\Models\Ledger;
+use App\Models\Vehicle;
 use App\Models\VehicleExpense;
 use App\Traits\LedgerTrait;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+
+use function Ramsey\Uuid\v1;
 
 class VehicleExpenseController extends Controller
 {
@@ -90,6 +93,10 @@ class VehicleExpenseController extends Controller
             
             $vehicle_expense=VehicleExpense::create($requestData);
 
+            if($request->filled('oil_change_limit')){
+                Vehicle::where('id', $request->vehicle_id)->update(['oil_change_limit' => $request->oil_change_limit]);
+            }
+            
             // Update the company ledger
             $lastLedger = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->latest()->first();
             $oldBankBalance = $lastLedger ? $lastLedger->bank_balance : 0;
