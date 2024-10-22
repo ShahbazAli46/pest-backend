@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\BankInfo;
+use App\Models\EmployeeCommission;
 use App\Models\Ledger;
 use App\Models\Vendor;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -59,6 +60,17 @@ class VendorController extends Controller
                     'person_type' => Vendor::class,
                 ]);
 
+                // Create commission entry for the current month
+                $currentMonth = now()->format('Y-m'); // Get current month (e.g., "2024-10")
+                EmployeeCommission::create([
+                    'referencable_id' => $vendor->id,
+                    'referencable_type' => Vendor::class,
+                    'target' =>0,
+                    'commission_per' => $vendor->percentage,
+                    'month' => $currentMonth,
+                    'status' => 'unpaid',
+                ]);
+                
                 DB::commit();
                 return response()->json(['status' => 'success','message' => 'Vendor Added Successfully']);
             }else{

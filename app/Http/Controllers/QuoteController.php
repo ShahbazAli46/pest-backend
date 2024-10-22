@@ -21,18 +21,36 @@ class QuoteController extends Controller
 {
     use GeneralTrait;
     //
-    public function index($id){
+    public function index(Request $request,$id){
         $is_int = filter_var($id, FILTER_VALIDATE_INT);
         $type=$id;
         if ($is_int === false) {
-            $is_contracted=$type=='contracted'?1:0;
-            $quotes = Quote::with(['user.client.referencable','quoteServices.service','quoteServices.quoteServiceDates'])
-            ->where('is_contracted',$is_contracted)
-            ->orderBy('id', 'DESC')->get()
-            ->map(function ($quote) {
+            // $is_contracted=$type=='contracted'?1:0;
+            $quotes = Quote::with(['user.client.referencable', 'quoteServices.service', 'quoteServices.quoteServiceDates']);
+            
+            if($type=='contracted'){
+                $quotes->where('is_contracted', 1);
+            }
+
+            // Check if date filters are present
+            if ($request->has('start_date') && $request->has('end_date')) {
+                $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
+                $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay(); // Use endOfDay to include the entire day
+                $quotes = $quotes->whereBetween('created_at', [$startDate, $endDate]);
+            }
+
+            $quotes = $quotes->orderBy('id', 'DESC')->get()->map(function ($quote) {
                 $quote->treatment_methods = $quote->getTreatmentMethods(); // Call your method to get treatment methods
                 return $quote; 
             });
+
+            // $quotes = Quote::with(['user.client.referencable','quoteServices.service','quoteServices.quoteServiceDates'])
+            // ->where('is_contracted',$is_contracted)
+            // ->orderBy('id', 'DESC')->get()
+            // ->map(function ($quote) {
+            //     $quote->treatment_methods = $quote->getTreatmentMethods(); // Call your method to get treatment methods
+            //     return $quote; 
+            // });
             return response()->json(['type'=>$type,'data' => $quotes]);
         }else{
             $quote = Quote::with(['user.client.referencable', 'termAndCondition', 'quoteServices.service','quoteServices.quoteServiceDates'])->find($id);

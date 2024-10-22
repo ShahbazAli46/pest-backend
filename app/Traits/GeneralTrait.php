@@ -221,11 +221,11 @@ trait GeneralTrait
                 foreach($item_details as $item){
                     ServiceInvoiceDetail::create([
                         'service_invoice_id'=>$invoice->id,
-                        'itemable_id'=>$item_details->service_id,
+                        'itemable_id'=>$item->service_id,
                         'itemable_type'=>Service::class,
-                        'job_type'=>$item_details->job_type,
-                        'rate'=>$item_details->rate,
-                        'sub_total'=>$item_details->sub_total
+                        'job_type'=>$item->job_type,
+                        'rate'=>$item->rate,
+                        'sub_total'=>$item->sub_total
                     ]);
                 }
             }else{

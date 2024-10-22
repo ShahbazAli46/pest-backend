@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Bank;
 use App\Models\Client;
+use App\Models\EmployeeCommission;
 use App\Models\Ledger;
 use App\Models\ServiceInvoice;
 use App\Models\ServiceInvoiceAmtHistory;
 use App\Models\User;
+use App\Models\Vendor;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -160,6 +162,24 @@ class ServiceInvoiceController extends Controller
                     'link_id' => $cli_ledger->id, 
                     'link_name' => 'client_ledger',
                 ]);
+                //calculate commision
+                $currentMonth = now()->format('Y-m'); // Get current month (e.g., "2024-10")
+                $client=User::with(['client'])->find($invoice->user_id);
+                $employee_com=EmployeeCommission::where('referencable_id',$client->client->referencable_id)
+                ->where('referencable_type',$client->client->referencable_type)
+                ->where('month',$currentMonth)->first();
+                
+                if($employee_com){
+                    $total_sale=$employee_com->sale+$paid_amt;
+                    $employee_com->sale=$total_sale;
+                    
+                    if($total_sale>$employee_com->target){
+                        $rem_amt=$total_sale-$employee_com->target;
+                        $com_paid_amt = ($employee_com->commission_per / 100) * $rem_amt;
+                        $employee_com->paid_amt=$com_paid_amt;
+                    }
+                    $employee_com->update();
+                }
 
                 DB::commit();
                 return response()->json(['status' => 'success','message' => 'Invoice Amount Added Successfully']);

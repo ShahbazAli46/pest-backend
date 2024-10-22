@@ -13,7 +13,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         // $schedule->command('inspire')->hourly();
-        $schedule->command('salaries:generate')->monthlyOn(1, '00:00'); // Runs on the 1st of each month at midnight
+        $schedule->command('sal_com:generate')->monthlyOn(1, '00:00'); // Runs on the 1st of each month at midnight
     }
 
     /**

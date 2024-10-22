@@ -15,7 +15,6 @@ class Quote extends Model
     'billing_method','no_of_installments', 'sub_total', 'dis_per', 'dis_amt', 'vat_per', 'vat_amt', 
     'grand_total','contract_start_date', 'contract_end_date', 'is_contracted', 'term_and_condition_id'];
 
-
     public function user()
     {
         return $this->belongsTo(User::class);

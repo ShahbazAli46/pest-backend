@@ -63,3 +63,13 @@ Route::get('seed', function(){
         echo "Failed to execute seeding: " . $e->getMessage();
     }
 });
+
+Route::get('generate', function(){
+    try {
+        Artisan::call('sal_com:generate');
+        $output = Artisan::output();
+        echo "Salary & Commission Generated successfully executed:\n$output";
+    } catch (\Exception $e) {
+        echo "Failed to Salary & Commission Generating: " . $e->getMessage();
+    }
+});

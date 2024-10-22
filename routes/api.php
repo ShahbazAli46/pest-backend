@@ -37,6 +37,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('employee/salary/paid',[EmployeeController::class,'paidEmployeeSalary'])->name('employee.salary.paid');
     Route::post('employee/salary/advance',[EmployeeController::class,'paidAdvanceEmployee'])->name('employee.salary.advance');
 
+    Route::get('employee/commission/get',[EmployeeController::class,'getEmployeeCommission'])->name('employee.commission.get');
+    Route::post('employee/commission/paid',[EmployeeController::class,'paidEmployeeCommission'])->name('employee.commission.paid');
+
+    
     // Vendors
     Route::get('vendor/{id?}',[VendorController::class,'index'])->name('vendor');
     Route::post('vendor/create',[VendorController::class,'store'])->name('vendor.create');

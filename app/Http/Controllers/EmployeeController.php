@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Employee;
 use App\Models\EmployeeAdvancePayment;
+use App\Models\EmployeeCommission;
 use App\Models\EmployeeSalary;
 use App\Models\JobServiceReportProduct;
 use App\Models\Product;
@@ -112,22 +113,28 @@ class EmployeeController extends Controller
             $employee=Employee::create($requestData);
 
             if($employee){
-                // Check if salary already generated for this month
+                // Create salary entry for the current month
                 $currentMonth = now()->format('Y-m'); // Get current month (e.g., "2024-10")
-                $existingSalary = EmployeeSalary::where('user_id', $user['data']->id)->where('month', $currentMonth)->first();
-                if (!$existingSalary) {
-                    // Create salary entry for the current month
-                    EmployeeSalary::create([
-                        'user_id' => $user['data']->id,
-                        'employee_id' => $employee->id,
-                        'basic_salary' => $employee->basic_salary,
-                        'allowance' => $employee->allowance,
-                        'other' => $employee->other,
-                        'total_salary' => $employee->total_salary,
-                        'month' => $currentMonth,
-                        'status' => 'unpaid',
-                    ]);
-                }
+                EmployeeSalary::create([
+                    'user_id' => $user['data']->id,
+                    'employee_id' => $employee->id,
+                    'basic_salary' => $employee->basic_salary,
+                    'allowance' => $employee->allowance,
+                    'other' => $employee->other,
+                    'total_salary' => $employee->total_salary,
+                    'month' => $currentMonth,
+                    'status' => 'unpaid',
+                ]);
+                
+                // Create commission entry for the current month
+                EmployeeCommission::create([
+                    'user_id' => $user['data']->id,
+                    'employee_id' => $employee->id,
+                    'target' => $employee->target,
+                    'commission_per' => $employee->commission_per,
+                    'month' => $currentMonth,
+                    'status' => 'unpaid',
+                ]);
 
                 // $message="A employee has been added into system by ".$user['data']->name;
                 DB::commit();
@@ -352,4 +359,52 @@ class EmployeeController extends Controller
         }
     }
 
+    public function getEmployeeCommission(Request $request){
+        try {
+            $request->validate([
+                'commission_month' => 'nullable|date_format:Y-m',
+            ]);
+            if($request->filled('commission_month')){
+                $employee_commission=EmployeeCommission::where('month',$request->commission_month)->get();
+            }else{
+                $employee_commission=EmployeeCommission::all();
+            }
+            return response()->json(['data' => $employee_commission]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['status'=> 'error','message' => $e->validator->errors()->first()], 422);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error','message' => 'Failed to Employee Commission. ' .$e->getMessage()],500);
+        }
+    }
+
+    public function paidEmployeeCommission(Request $request)
+    {
+        try {
+            $request->validate([
+                'employee_commission_id' => 'required|exists:employee_salaries,id', 
+            ]);
+    
+            // Find the employee commission record
+            $employee_commission = EmployeeCommission::find($request->employee_commission_id);
+    
+            if ($employee_commission) {
+                $paid_amt = $employee_commission->paid_amt; // Total salary to be paid
+                if($paid_amt>0){
+                    $employee_commission->status = 'paid'; 
+                    $employee_commission->paid_at = now(); 
+                    $employee_commission->save();
+        
+                    return response()->json(['status' => 'success','message' => "Commission paid Successfully"]);
+                }else{
+                    return response()->json(['status' => 'error','message' => 'You do not have commission for this month'], 500);
+                }
+            } else {
+                return response()->json(['status' => 'error','message' => 'Employee Commission Not Found.'], 500);
+            }
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['status'=> 'error','message' => $e->validator->errors()->first()], 422);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error','message' => 'Failed to Employee Commission Paid. ' .$e->getMessage()],500);
+        }
+    }
 }
