@@ -265,10 +265,11 @@ class QuoteController extends Controller
                 }else{
                     $installments=1;
                 }
+                
                 $inst_total=$quote->grand_total;
+                $installmentDatesArr=$this->generateInstallmentDates($quote->duration_in_months,$installments);
                 for($i=1; $i<=$installments; $i++){
-                    
-                    $this->generateServiceInvoice($quote->id,Quote::class,$quote->user_id,$inst_total/$installments,$quote->quoteServices);
+                    $this->generateServiceInvoice($quote->id,Quote::class,$quote->user_id,$inst_total/$installments,$installmentDatesArr[$i-1],$quote->quoteServices);
 
                     // $invoice=ServiceInvoice::create([
                     //     'invoiceable_id'=>$quote->id,

@@ -82,7 +82,7 @@ class JobController extends Controller
             //create invoices
             $data=$res->original['data'];
             $job_services=JobService::where('job_id',$data['job_id'])->get();
-            $this->generateServiceInvoice($data['job_id'],Job::class,$request->user_id,$res->original['data']['grand_total'],$job_services);
+            $this->generateServiceInvoice($data['job_id'],Job::class,$request->user_id,$res->original['data']['grand_total'],now(),$job_services);
            
             // $invoice=ServiceInvoice::create([
             //     'invoiceable_id'=>$data['job_id'],
@@ -123,7 +123,7 @@ class JobController extends Controller
             if($job){
                 if($job->is_completed==0){
                     if($job->job_date!=$request->job_date){
-                        $job->update(['job_date'=>$request->job_date,'is_modified'=>1,'captain_id'=>null,'team_member_ids'=>null]);
+                        $job->update(['job_date'=>$request->job_date,'is_modified'=>1,'captain_id'=>null,'team_member_ids'=>null,'assigned_at'=>null]);
                         JobRescheduleDetail::create(['job_id'=>$job->id,'job_date'=>$request->job_date,'reason'=>$request->reason]);
                         DB::commit();
                         return response()->json(['status' => 'success', 'message' => 'Job Rescheduled Successfully']);
@@ -171,7 +171,7 @@ class JobController extends Controller
             $job = Job::find($request->job_id);
             if($job){
                 if($job->is_completed==0){
-                    $job->update(['captain_id'=>$request->captain_id,'team_member_ids'=>$teamMemberIds,'job_instructions'=>$request->job_instructions]);
+                    $job->update(['captain_id'=>$request->captain_id,'team_member_ids'=>$teamMemberIds,'job_instructions'=>$request->job_instructions,'assigned_at'=>now()]);
                     DB::commit();
                     return response()->json(['status' => 'success','message' => 'Job has been Assigned Successfully']);
                 }else{

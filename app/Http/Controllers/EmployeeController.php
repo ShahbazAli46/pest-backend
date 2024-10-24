@@ -6,6 +6,7 @@ use App\Models\Employee;
 use App\Models\EmployeeAdvancePayment;
 use App\Models\EmployeeCommission;
 use App\Models\EmployeeSalary;
+use App\Models\Job;
 use App\Models\JobServiceReportProduct;
 use App\Models\Product;
 use App\Models\Stock;
@@ -35,18 +36,23 @@ class EmployeeController extends Controller
                 $employee->load([
                     'captainJobs' => function($query) {
                         $query->where('is_completed', '!=', 1) // Filter by is_completed != 1
-                            ->with([
-                                'captain.employee',
-                                'user.client.referencable',
-                                'termAndCondition',
-                                'jobServices.service',
-                                'clientAddress',
-                            ]);
+                            ->with(['captain.employee','user.client.referencable','termAndCondition','jobServices.service','clientAddress']);
                     }
                 ]);
-                foreach ($employee->captainJobs as $job) {
-                    $job->team_members = $job->getTeamMembers(); // Assign team_members to each job
+               
+                $teamMemberJobs = Job::whereJsonContains('team_member_ids', (string) $employee->id)  // Fetch jobs where the user is a team member
+                    ->with(['captain.employee','user.client.referencable','termAndCondition','jobServices.service','clientAddress'])
+                    ->where('is_completed', '!=', 1)->get();
+                      
+                $allJobs = $employee->captainJobs->merge($teamMemberJobs);
+                
+                 
+                foreach ($allJobs as $job) {
+                    $job->team_members = $job->getTeamMembers(); // Add team_members to each job
                 }
+               
+                $employee->makeHidden(['captainJobs']);
+                $employee->captain_all_jobs=$allJobs;
                 $employee->stocks = Stock::with(['product:id,product_name,product_picture'])
                 ->where([
                     'person_id' => $employee->id,
@@ -126,16 +132,17 @@ class EmployeeController extends Controller
                     'status' => 'unpaid',
                 ]);
                 
+                
                 // Create commission entry for the current month
                 EmployeeCommission::create([
-                    'user_id' => $user['data']->id,
-                    'employee_id' => $employee->id,
+                    'referencable_id' => $user['data']->id,
+                    'referencable_type' => User::class,
                     'target' => $employee->target,
                     'commission_per' => $employee->commission_per,
                     'month' => $currentMonth,
                     'status' => 'unpaid',
                 ]);
-
+             
                 // $message="A employee has been added into system by ".$user['data']->name;
                 DB::commit();
                 return response()->json(['status' => 'success','message' => 'Employee Added Successfully']);
@@ -153,8 +160,14 @@ class EmployeeController extends Controller
     }
 
     //
-    public function getSalesManager(){
-        $sales_managers=User::notFired()->with(['employee','role:id,name'])->where('role_id',4)->orderBy('id', 'DESC')->get();
+    public function getSalesManager(Request $request){
+        $sales_managers=User::notFired()->with(['employee','role:id,name'])->withCount('captainJobs')->where('role_id',4)->orderBy('id', 'DESC')->get();
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
+            $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay(); // Use endOfDay to include the entire day
+            // $jobs = $jobs->whereBetween('job_date', [$startDate, $endDate]);
+        }
+
         return response()->json(['data' => $sales_managers]);
     }
 
@@ -365,9 +378,9 @@ class EmployeeController extends Controller
                 'commission_month' => 'nullable|date_format:Y-m',
             ]);
             if($request->filled('commission_month')){
-                $employee_commission=EmployeeCommission::where('month',$request->commission_month)->get();
+                $employee_commission=EmployeeCommission::with(['referencable'])->where('month',$request->commission_month)->get();
             }else{
-                $employee_commission=EmployeeCommission::all();
+                $employee_commission=EmployeeCommission::with(['referencable'])->get();
             }
             return response()->json(['data' => $employee_commission]);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -407,4 +420,31 @@ class EmployeeController extends Controller
             return response()->json(['status' => 'error','message' => 'Failed to Employee Commission Paid. ' .$e->getMessage()],500);
         }
     }
+
+    public function getEmployeeJobHistory(Request $request,$emp_id)
+    {
+        $jobs = Job::with(['user.client.referencable','captain','report:id,job_id'])->where('is_completed', 1)->where('captain_id', $emp_id);
+        $teamMemberJobs = Job::whereJsonContains('team_member_ids', (string) $emp_id)  // Fetch jobs where the user is a team member
+                    ->with(['user.client.referencable','captain','report:id,job_id'])->where('is_completed', 1);      
+       
+        $response_arr=[];
+        // Check if date filters are present
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
+            $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay(); // Use endOfDay to include the entire day
+            $jobs = $jobs->whereBetween('job_date', [$startDate, $endDate]);
+            $teamMemberJobs = $teamMemberJobs->whereBetween('job_date', [$startDate, $endDate]);
+            $response_arr['start_date']=$startDate;
+            $response_arr['end_date']=$endDate;
+        }
+        $jobs=$jobs->orderBy('job_date', 'DESC')->get();
+        $teamMemberJobs=$teamMemberJobs->orderBy('job_date', 'DESC')->get();
+
+        $response_arr['data'] =$jobs->merge($teamMemberJobs);
+        return response()->json($response_arr);
+    }
+
+
+    //get all sales managers and its number of assign job and complete jobs
+
 }

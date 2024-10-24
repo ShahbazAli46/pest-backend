@@ -45,7 +45,7 @@ class Job extends Model
             return [];
         }
     }
-
+    
     public function jobServices()
     {
         return $this->hasMany(JobService::class);

@@ -15,6 +15,7 @@ use App\Models\ServiceInvoice;
 use App\Models\ServiceInvoiceDetail;
 use App\Models\Stock;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -206,13 +207,13 @@ trait GeneralTrait
         }
     }
 
-    function generateServiceInvoice($inv_id,$inv_type,$user_id,$total_amt,$item_details,$item_type='Service')
+    function generateServiceInvoice($inv_id,$inv_type,$user_id,$total_amt,$issued_date,$item_details,$item_type='Service')
     {
         $invoice=ServiceInvoice::create([
             'invoiceable_id'=>$inv_id,
             'invoiceable_type'=>$inv_type,
             'user_id'=>$user_id,
-            'issued_date'=>now(),
+            'issued_date'=>$issued_date,
             'total_amt'=>$total_amt,
             'paid_amt'=>0.00,
         ]);
@@ -261,6 +262,34 @@ trait GeneralTrait
             }
         }
     }
+
+    function generateInstallmentDates($durationInMonths, $installments)
+    {
+        // Calculate the interval in months (this can be a decimal)
+        $intervalInMonths = $durationInMonths / $installments;
+        $issueDates = [];
+
+        // Start from today's date for the first invoice
+        $currentDate = Carbon::now();
+
+        // Generate installment dates
+        for ($i = 0; $i < $installments; $i++) {
+            // Push the current installment date to the array
+            $issueDates[] = $currentDate->copy()->toDateString();
+
+            // Move to the next installment date by adding the interval in months (even if it's fractional)
+            $currentDate->addMonthsWithNoOverflow(floor($intervalInMonths));
+
+            // Handle any fractional leftover part by adjusting the day manually
+            $fractionalPart = $intervalInMonths - floor($intervalInMonths);
+            if ($fractionalPart > 0) {
+                $currentDate->addDays($fractionalPart * 30); // Approximate days for the fractional month
+            }
+        }
+
+        return $issueDates;
+    }
+
     // // Example of a utility method
     // public function formatDate($date)
     // {

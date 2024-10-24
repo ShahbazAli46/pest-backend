@@ -145,7 +145,7 @@ class JobServiceReportController extends Controller
 
                     //create invoices
                     if(count($inv_products) > 0){
-                        $this->generateServiceInvoice($job->id,Job::class,$job->user_id,$total_extra,$inv_products,'Product');
+                        $this->generateServiceInvoice($job->id,Job::class,$job->user_id,$total_extra,now(),$inv_products,'Product');
                     }
 
                     // $invoice=ServiceInvoice::create([

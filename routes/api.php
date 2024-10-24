@@ -31,11 +31,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('employee/create',[EmployeeController::class,'store'])->name('employee.create');
     Route::post('employee/stock/assign',[EmployeeController::class,'assignStock'])->name('employee.stock.assign');
     Route::get('employee/sales_manager/get',[EmployeeController::class,'getSalesManager'])->name('employee.sales_manager.get');
+    Route::get('employee/sales_manager/job/history/{id}',[EmployeeController::class,'getEmployeeJobHistory'])->name('employee.sales_manager.job.history');
     Route::post('employee/stock/used',[EmployeeController::class,'getUsedStock'])->name('employee.stock.used');
     Route::get('employee/fired_at/{id}',[EmployeeController::class,'fireEmployee'])->name('employee.fired_at');
     Route::get('employee/salary/get',[EmployeeController::class,'getEmployeeSalary'])->name('employee.salary.get');
     Route::post('employee/salary/paid',[EmployeeController::class,'paidEmployeeSalary'])->name('employee.salary.paid');
     Route::post('employee/salary/advance',[EmployeeController::class,'paidAdvanceEmployee'])->name('employee.salary.advance');
+    
+    //Sales-Manager
 
     Route::get('employee/commission/get',[EmployeeController::class,'getEmployeeCommission'])->name('employee.commission.get');
     Route::post('employee/commission/paid',[EmployeeController::class,'paidEmployeeCommission'])->name('employee.commission.paid');
@@ -152,7 +155,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Sale Orders
     Route::get('sale_order/{id?}',[SaleOrderController::class,'index'])->name('sale_order');
     Route::post('sale_order/create',[SaleOrderController::class,'store'])->name('sale_order.create');
-  
 
     Route::post('logout',[UserAuthController::class,'logout'])->name('logout');
 });
