@@ -41,4 +41,9 @@ class Client extends Model
     {
         return $this->morphMany(BankInfo::class, 'linkable');
     }
+    
+    public function quotes()
+    {
+        return $this->hasMany(Quote::class)->where('role', 5);
+    }
 }

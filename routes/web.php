@@ -64,12 +64,22 @@ Route::get('seed', function(){
     }
 });
 
-Route::get('generate', function(){
+Route::get('sal_com', function(){
     try {
         Artisan::call('sal_com:generate');
         $output = Artisan::output();
         echo "Salary & Commission Generated successfully executed:\n$output";
     } catch (\Exception $e) {
         echo "Failed to Salary & Commission Generating: " . $e->getMessage();
+    }
+});
+
+Route::get('invoices-monthly', function(){
+    try {
+        Artisan::call('invoices:send-monthly');
+        $output = Artisan::output();
+        echo "Invoice Monthly Generated successfully executed:\n$output";
+    } catch (\Exception $e) {
+        echo "Failed to Invoice Monthly Generating: " . $e->getMessage();
     }
 });

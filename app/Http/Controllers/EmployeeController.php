@@ -162,12 +162,6 @@ class EmployeeController extends Controller
     //
     public function getSalesManager(Request $request){
         $sales_managers=User::notFired()->with(['employee','role:id,name'])->withCount('captainJobs')->where('role_id',4)->orderBy('id', 'DESC')->get();
-        if ($request->has('start_date') && $request->has('end_date')) {
-            $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
-            $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay(); // Use endOfDay to include the entire day
-            // $jobs = $jobs->whereBetween('job_date', [$startDate, $endDate]);
-        }
-
         return response()->json(['data' => $sales_managers]);
     }
 
@@ -282,9 +276,9 @@ class EmployeeController extends Controller
                 'salary_month' => 'nullable|date_format:Y-m',
             ]);
             if($request->filled('salary_month')){
-                $employee_salary=EmployeeSalary::with(['employeeAdvancePayment'])->where('month',$request->salary_month)->get();
+                $employee_salary=EmployeeSalary::with(['user','employeeAdvancePayment'])->where('month',$request->salary_month)->get();
             }else{
-                $employee_salary=EmployeeSalary::with(['employeeAdvancePayment'])->get();
+                $employee_salary=EmployeeSalary::with(['user','employeeAdvancePayment'])->get();
             }
             return response()->json(['data' => $employee_salary]);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -446,5 +440,10 @@ class EmployeeController extends Controller
 
 
     //get all sales managers and its number of assign job and complete jobs
+    // if ($request->has('start_date') && $request->has('end_date')) {
+    //     $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
+    //     $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay(); // Use endOfDay to include the entire day
+    //     // $jobs = $jobs->whereBetween('job_date', [$startDate, $endDate]);
+    // }
 
 }

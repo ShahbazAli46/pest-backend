@@ -7,6 +7,7 @@ use App\Models\Client;
 use App\Models\ClientAddress;
 use App\Models\Employee;
 use App\Models\Ledger;
+use App\Models\Quote;
 use App\Models\User;
 use App\Models\Vendor;
 use App\Traits\GeneralTrait;
@@ -36,9 +37,7 @@ class ClientController extends Controller
     public function getReference(Request $request)
     {
         // Get active employees with role filtering
-        $all_active_employees = User::notFired()
-            ->whereIn('role_id', ['2', '3', '4', '6'])
-            ->get()
+        $all_active_employees = User::notFired()->whereIn('role_id', ['2', '3', '4', '6'])->get()
             ->map(function ($user) {
                 return [
                     'id' => $user->id,
@@ -56,9 +55,39 @@ class ClientController extends Controller
                     'type' => Vendor::class // Add type identifier
                 ];
             });
-    
+
         // Merge the two collections together
         $references = collect($all_active_employees)->merge($all_vendors); 
+
+        // Apply date filtering and quote counting if date range is provided
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
+            $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
+
+            // Map through references to add total_quotes
+            $references = $references->map(function ($reference) use ($startDate, $endDate) {
+                $quoteStats = Quote::whereBetween('created_at', [$startDate, $endDate])
+                ->whereHas('client', function ($query) use ($reference) {
+                    $query->where('referencable_type', $reference['type'])
+                          ->where('referencable_id', $reference['id']);
+                })->selectRaw('COUNT(*) as total_quotes, COALESCE(SUM(grand_total), 0) as grand_total_sum')
+                ->first();
+                $reference['quote_stats'] = $quoteStats;
+
+                $contractStats = Quote::whereBetween('contract_start_date', [$startDate, $endDate])
+                ->where('is_contracted',1)
+                ->whereHas('client', function ($query) use ($reference) {
+                    $query->where('referencable_type', $reference['type'])
+                          ->where('referencable_id', $reference['id']);
+                })->selectRaw('COUNT(*) as total_contracts, COALESCE(SUM(grand_total), 0) as grand_total_sum')
+                ->first();
+                $reference['contract_stats'] = $contractStats;
+
+                return $reference;
+            });
+        }
+
+
         return response()->json($references);
     }
     

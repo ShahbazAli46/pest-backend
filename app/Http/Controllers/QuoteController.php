@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Client;
 use App\Models\Job;
 use App\Models\Ledger;
 use App\Models\Quote;
@@ -151,9 +152,11 @@ class QuoteController extends Controller
 
             $grandTotal = $sub_total + $vatAmount - $discountAmount;
             $requestData['grand_total'] = $grandTotal;
-
+            
             // Create the quote
             if ($request->input('manage_type') == 'create') {
+                $client = Client::where('user_id', $request->user_id)->first();
+                $requestData['client_id'] = $client?$client->id:0;
                 $quote = Quote::create($requestData);
             }else{
                 $quote->update($requestData);
