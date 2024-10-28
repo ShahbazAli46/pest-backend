@@ -21,7 +21,16 @@ class Ledger extends Model
     // Define the morphTo relationship
     public function personable()
     {
-        return $this->morphTo();
+        if ($this->person_type === User::class) {
+            return $this->belongsTo(User::class, 'person_id');
+        }elseif ($this->person_type === Supplier::class) {
+            return $this->belongsTo(Supplier::class, 'person_id');
+        }elseif ($this->person_type === Customer::class) {
+            return $this->belongsTo(Customer::class, 'person_id');
+        }elseif ($this->person_type === Vendor::class) {
+            return $this->belongsTo(Vendor::class, 'person_id');
+        }
+        return $this->morphTo(null, 'person_type', 'person_id');
     }
 
 }

@@ -24,6 +24,7 @@ class ClientController extends Controller
             $clients=User::with(['client.referencable','client.addresses'])->where('role_id',5)->orderBy('id', 'DESC')->get();
             foreach ($clients as $client) {
                 $client->current_balance = $client->getCurrentBalance(User::class); // Pass the person type
+                $client->received_amt = $client->getReceivedAmt(User::class); // Pass the person type
             }
             return response()->json(['data' => $clients]);
         }else{
@@ -277,13 +278,14 @@ class ClientController extends Controller
     /* ================= Client Ledger =============*/ 
     public function getClientLedger(Request $request,$id=null){
         if($id==null){
+            $client_user_arr = User::where('role_id', 5)->pluck('id')->toArray();
             if($request->has('start_date') && $request->has('end_date')){
                 $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
                 $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
-                $ledgers = Ledger::with(['personable'])->whereBetween('created_at', [$startDate, $endDate])->where(['person_type' => 'App\Models\User'])->get();
+                $ledgers = Ledger::with(['personable.client.referencable'])->whereBetween('person_id',$client_user_arr)->whereBetween('created_at', [$startDate, $endDate])->where(['person_type' => 'App\Models\User'])->get();
                 return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $ledgers]);
             }else{
-                $ledgers = Ledger::with(['personable'])->where(['person_type' => 'App\Models\User'])->get();
+                $ledgers = Ledger::with(['personable.client.referencable'])->whereBetween('person_id',$client_user_arr)->where(['person_type' => 'App\Models\User'])->get();
                 return response()->json(['data' => $ledgers]);
             }
         }else{
@@ -291,10 +293,10 @@ class ClientController extends Controller
                 if($request->has('start_date') && $request->has('end_date')){
                     $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
                     $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
-                    $ledgers = Ledger::with(['personable'])->whereBetween('created_at', [$startDate, $endDate])->where(['person_type' => 'App\Models\User','person_id' => $id])->get();
+                    $ledgers = Ledger::with(['personable.client.referencable'])->whereBetween('created_at', [$startDate, $endDate])->where(['person_type' => 'App\Models\User','person_id' => $id])->get();
                     return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $ledgers]);
                 }else{
-                    $ledgers = Ledger::with(['personable'])->where(['person_type' => 'App\Models\User','person_id' => $id])->get();
+                    $ledgers = Ledger::with(['personable.client.referencable'])->where(['person_type' => 'App\Models\User','person_id' => $id])->get();
                     return response()->json(['data' => $ledgers]);
                 }
             } catch (ModelNotFoundException $e) {

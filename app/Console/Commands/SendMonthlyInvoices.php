@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\ServiceInvoice;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Mail;
 
 class SendMonthlyInvoices extends Command
 {
@@ -31,9 +32,7 @@ class SendMonthlyInvoices extends Command
         $unpaidInvoices= ServiceInvoice::where('status', 'unpaid')->where('issued_date', '<=', $endOfMonth)->orderBy('issued_date', 'asc')->get();
 
         foreach ($unpaidInvoices as $invoice) {
-            \Log::info($invoice->id);
-            // Mail::to($invoice->client->email)->send(new \App\Mail\InvoiceMail($invoice));
-            // $this->info("Invoice {$invoice->service_invoice_id} sent to client.");
+            Mail::to($invoice->user->email)->send(new \App\Mail\InvoiceMail($invoice));
         }
     }
 }

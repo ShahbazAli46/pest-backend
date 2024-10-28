@@ -6,6 +6,7 @@ use App\Models\Job;
 use App\Models\ServiceInvoice;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Mail;
 
 class SendDailyInvoices extends Command
 {
@@ -33,7 +34,7 @@ class SendDailyInvoices extends Command
         $unpaidInvoices= ServiceInvoice::where('status', 'unpaid')->where('issued_date', '<=', $endOfMonth)->orderBy('issued_date', 'asc')->whereIn('user_id',$user_ids)->get();
 
         foreach($unpaidInvoices as $invoice){
-            \Log::info($invoice->id);
+            Mail::to($invoice->user->email)->send(new \App\Mail\InvoiceMail($invoice));
         }
     }
 }

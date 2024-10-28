@@ -78,6 +78,16 @@ class User extends Authenticatable
         return $lastLedger ? $lastLedger->cash_balance : "0";
     }
 
+    public function getReceivedAmt($person_type)
+    {
+        $totalReceived = Ledger::where([
+            'person_type' => $person_type,
+            'person_id' => $this->id
+        ])->sum('cr_amt');
+        return $totalReceived > 0 ? $totalReceived : "0";
+    }
+
+
     // Define a local query scope to filter active users
     // public function scopeActive($query)
     // {
