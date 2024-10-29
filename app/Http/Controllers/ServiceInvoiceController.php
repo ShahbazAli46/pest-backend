@@ -6,12 +6,14 @@ use App\Models\Bank;
 use App\Models\Client;
 use App\Models\EmployeeCommission;
 use App\Models\Ledger;
+use App\Models\ReceivedCashRecord;
 use App\Models\ServiceInvoice;
 use App\Models\ServiceInvoiceAmtHistory;
 use App\Models\User;
 use App\Models\Vendor;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class ServiceInvoiceController extends Controller
@@ -61,7 +63,7 @@ class ServiceInvoiceController extends Controller
         }
     }
 
-    public function addPayment(Request $request){
+    public function addPayment(Request $request){  
         try {
             DB::beginTransaction();
             $request->validate([        
@@ -134,34 +136,46 @@ class ServiceInvoiceController extends Controller
                     'person_type' => 'App\Models\User',
                 ]);
 
+                $auth_user = Auth::user();      
                 // Update the company ledger
-                $lastLedger = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->latest()->first();
-                $oldBankBalance = $lastLedger ? $lastLedger->bank_balance : 0;
-                $oldCashBalance = $lastLedger ? $lastLedger->cash_balance : 0;
-                $newBankBalance=$oldBankBalance;
-                if($request->input('payment_type') !== 'cash'){
-                    $newBankBalance = $request->input('payment_type') !== 'cash' ? ($oldBankBalance + $paid_amt) : $oldBankBalance;
-                    $bank=Bank::find($request->bank_id);
-                    $bank->update(['balance'=>$bank->balance+$paid_amt]);
+                if($auth_user->role_id!=6 && $request->input('payment_type') === 'cash'){
+                    ReceivedCashRecord::create([
+                        'client_user_id'=>$invoice->user_id,
+                        'employee_user_id'=>$auth_user->id,
+                        'paid_amt' => $paid_amt,
+                        'service_invoice_id' => $invoice->id,
+                        'client_ledger_id'=>$cli_ledger->id
+                    ]);
+                }else{
+                    $lastLedger = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->latest()->first();
+                    $oldBankBalance = $lastLedger ? $lastLedger->bank_balance : 0;
+                    $oldCashBalance = $lastLedger ? $lastLedger->cash_balance : 0;
+                    $newBankBalance=$oldBankBalance;
+                    if($request->input('payment_type') !== 'cash'){
+                        $newBankBalance = $request->input('payment_type') !== 'cash' ? ($oldBankBalance + $paid_amt) : $oldBankBalance;
+                        $bank=Bank::find($request->bank_id);
+                        $bank->update(['balance'=>$bank->balance+$paid_amt]);
+                    }
+                    $newCashBalance = $request->input('payment_type') === 'cash' ? ($oldCashBalance + $paid_amt) : $oldCashBalance;
+                    Ledger::create([
+                        'bank_id' => $request->input('payment_type') !== 'cash' ? $request->input('bank_id'):null, 
+                        'description' => 'Received Payment',
+                        'cr_amt' => $paid_amt,
+                        'payment_type' => $request->input('payment_type'),
+                        'cash_amt' => $request->input('payment_type') == 'cash' ? $paid_amt : 0.00,
+                        'cheque_amt' => $request->input('payment_type') == 'cheque' ? $paid_amt : 0.00,
+                        'online_amt' => $request->input('payment_type') == 'online' ? $paid_amt : 0.00,
+                        'pos_amt' => $request->input('payment_type') == 'pos' ? $paid_amt : 0.00,
+                        'bank_balance' => $newBankBalance,
+                        'cash_balance' => $newCashBalance,
+                        'entry_type' => 'cr',
+                        'person_id' => 1, // Admin or Company 
+                        'person_type' => 'App\Models\User', 
+                        'link_id' => $cli_ledger->id, 
+                        'link_name' => 'client_ledger',
+                    ]);
                 }
-                $newCashBalance = $request->input('payment_type') === 'cash' ? ($oldCashBalance + $paid_amt) : $oldCashBalance;
-                Ledger::create([
-                    'bank_id' => $request->input('payment_type') !== 'cash' ? $request->input('bank_id'):null, 
-                    'description' => 'Received Payment',
-                    'cr_amt' => $paid_amt,
-                    'payment_type' => $request->input('payment_type'),
-                    'cash_amt' => $request->input('payment_type') == 'cash' ? $paid_amt : 0.00,
-                    'cheque_amt' => $request->input('payment_type') == 'cheque' ? $paid_amt : 0.00,
-                    'online_amt' => $request->input('payment_type') == 'online' ? $paid_amt : 0.00,
-                    'pos_amt' => $request->input('payment_type') == 'pos' ? $paid_amt : 0.00,
-                    'bank_balance' => $newBankBalance,
-                    'cash_balance' => $newCashBalance,
-                    'entry_type' => 'cr',
-                    'person_id' => 1, // Admin or Company 
-                    'person_type' => 'App\Models\User', 
-                    'link_id' => $cli_ledger->id, 
-                    'link_name' => 'client_ledger',
-                ]);
+
                 //calculate commision
                 $currentMonth = now()->format('Y-m'); // Get current month (e.g., "2024-10")
                 $client=User::with(['client'])->find($invoice->user_id);
@@ -195,7 +209,7 @@ class ServiceInvoiceController extends Controller
             return response()->json(['status'=>'error','message' => $e->validator->errors()->first()], 422);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['status' => 'error','message' => 'Failed to Add Service. ' .$e->getMessage()],500);
+            return response()->json(['status' => 'error','message' => 'Failed to Add Amount. ' .$e->getMessage()],500);
         }
     }
 }

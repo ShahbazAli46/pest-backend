@@ -17,6 +17,8 @@ use App\Traits\GeneralTrait;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class QuoteController extends Controller
 {
@@ -192,6 +194,15 @@ class QuoteController extends Controller
 
             if($quote){
                 DB::commit();
+                
+                // Attempt to send the quote mail
+                try {
+                    Mail::to($quote->user->email)->send(new \App\Mail\QuoteMail($quote));
+                } catch (\Exception $e) {
+                    // Log the email error, but do not rollback
+                    Log::error('Failed to send quote email: ' . $e->getMessage());
+                }
+
                 return response()->json(['status' => 'success','message' => 'Quote '.$manage_typed.' Successfully']);
             }else{
                 DB::rollBack();
@@ -314,6 +325,15 @@ class QuoteController extends Controller
                 ]);
 
                 DB::commit();
+                
+                // Attempt to send the quote mail
+                try {
+                    Mail::to($quote->user->email)->send(new \App\Mail\QuoteMail($quote));
+                } catch (\Exception $e) {
+                    // Log the email error, but do not rollback
+                    Log::error('Failed to send quote email: ' . $e->getMessage());
+                }
+
                 return response()->json(['status' => 'success','message' => 'Quote Moved to Contract Successfully']);
             }else{
                 DB::rollBack();
