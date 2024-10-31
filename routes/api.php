@@ -25,6 +25,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('dashboard/count_jobs',[DashboardController::class,'getCountJobs'])->name('dashboard.count_jobs');
     Route::get('dashboard/cash_collection',[DashboardController::class,'getCashCollection'])->name('dashboard.cash_collection');
     Route::get('dashboard/pos_collection',[DashboardController::class,'getPosCollection'])->name('dashboard.pos_collection');
+    Route::get('dashboard/expense_collection',[DashboardController::class,'getExpenseCollection'])->name('dashboard.expense_collection');
+    // Route::get('dashboard/bank_collection',[DashboardController::class,'getBankCollection'])->name('dashboard.bank_collection');
 
     // Employee
     Route::get('employee/{id?}',[EmployeeController::class,'index'])->name('employee');
@@ -128,6 +130,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('quote/{id?}',[QuoteController::class,'index'])->name('quote');
     Route::post('quote/manage',[QuoteController::class,'manage'])->name('quote.manage');
     Route::get('quote/move/contract/{id}',[QuoteController::class,'moveToContract'])->name('quote.move.contract');
+    Route::post('quote/contract/date/update',[QuoteController::class,'updateContractDate'])->name('quote.contract.date.update');
 
     //Jobs
     Route::get('job/{id?}',[JobController::class,'index'])->name('job');

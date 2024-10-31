@@ -350,4 +350,158 @@ class QuoteController extends Controller
             return response()->json(['status'=>'error','message' => 'Failed to Move Contract. ' . $e->getMessage(),500]);
         } 
     }
+    
+    /*
+    public function updateContractDate(Request $request){
+        try {
+            DB::beginTransaction();
+             // Find by ID
+            $contract = Quote::findOrFail($request->contract_id);
+            if($contract->is_contracted !=1){
+                DB::rollBack();
+                return response()->json(['status' => 'error','message' => 'The Contrat is not Started Yet.'],500);
+            }
+
+           
+
+            // $quote->update(['is_contracted'=>1,'contract_start_date'=>now(),'contract_end_date'=>$end_date]);
+            if($contract){
+                // $request->quote_services
+
+                //delete all dates after day next
+                foreach ($request->quote_services as $quote_service) {
+                    $exist_quote_service=$contract->quoteServices()->where('id', $quote_service->quote_service_id)->first();
+                    
+                    // Ensure we get a single instance of QuoteService
+                    $exist_quote_service->quoteServiceDates()->where('service_date', '>', now()->addDay())->delete();
+
+                    foreach($quote_service->quote_service_dates as $date){
+                        QuoteServiceDate::create([
+                            'quote_id' => $contract->id,
+                            'quote_service_id' => $quote_service->quote_service_id,
+                            'service_id' => $exist_quote_service->service_id,
+                            'service_date' => $date,
+                        ]);
+                    }
+                    
+                }
+
+
+                //create jobs
+                $uniqueServiceDates = $quote->quoteServiceDates()->select('service_date')->distinct()->get();
+                $requestData = $quote->toArray(); 
+                $requestData['quote_id'] = $quote->id; 
+                $requestData['job_title'] = $quote->quote_title;
+                $requestData['priority'] = 'high';
+                $requestData['tm_ids'] = json_decode($quote->tm_ids);
+                
+                foreach ($uniqueServiceDates as $serviceDate) {
+                    // Fetch service dates for this particular date
+                    $serviceDates = $quote->quoteServiceDates()->where('service_date',$serviceDate->service_date)->get();
+                    $service_ids = [];
+                    $service_rates = [];
+                    foreach ($serviceDates as $s_date) {
+                        $relatedQuoteService = $s_date->quoteService; // This gives the related model, not the relationship
+                        if ($relatedQuoteService) {
+                            array_push($service_ids, $relatedQuoteService->service_id);
+                            array_push($service_rates, $relatedQuoteService->rate);
+                        }
+                    }
+                    $requestData['service_ids'] = $service_ids;
+                    $requestData['service_rates'] = $service_rates;
+
+                    $requestData['job_date'] = $serviceDate->service_date;
+                
+                    $request = new Request();
+                    $request->merge($requestData);
+
+                    $job = $this->createJob($request);
+                    if($job->original['status']=='error'){
+                        return response()->json(['status' => 'error','message' => 'Failed to Create Job,Please Try Again Later.'],500);
+                    }
+                }
+                
+                //create invoices
+                $installments=0;
+                if($quote->billing_method == 'installments'){
+                    $installments=$quote->no_of_installments;
+                }else if($quote->billing_method == 'service'){
+                    $installments = $quote->jobs()->count();
+                }else if($quote->billing_method == 'monthly'){
+                    $installments=$quote->duration_in_months;
+                }else{
+                    $installments=1;
+                }
+                
+                $inst_total=$quote->grand_total;
+                $installmentDatesArr=$this->generateInstallmentDates($quote->duration_in_months,$installments);
+                for($i=1; $i<=$installments; $i++){
+                    $this->generateServiceInvoice($quote->id,Quote::class,$quote->user_id,$inst_total/$installments,$installmentDatesArr[$i-1],$quote->quoteServices);
+
+                    // $invoice=ServiceInvoice::create([
+                    //     'invoiceable_id'=>$quote->id,
+                    //     'invoiceable_type'=>Quote::class,
+                    //     'user_id'=>$quote->user_id,
+                    //     'issued_date'=>now(),
+                    //     'total_amt'=>$inst_total/$installments,
+                    //     'paid_amt'=>0.00,
+                    // ]);
+                    // if($invoice){
+                    //     $quot_services=$quote->quoteServices;
+                    //     foreach($quot_services as $service){
+                    //         ServiceInvoiceDetail::create([
+                    //             'service_invoice_id'=>$invoice->id,
+                    //             'itemable_id'=>$service->service_id,
+                    //             'itemable_type'=>Service::class,
+                    //             'job_type'=>$service->job_type,
+                    //             'rate'=>$service->rate,
+                    //             'sub_total'=>$service->sub_total
+                    //         ]);
+                    //     }
+                    // }
+                }
+
+                // Update the CLIENT ledger
+                $user=User::find($quote->user_id);
+                $lastClientLedger = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => $quote->user_id])->latest()->first();
+                $oldCliCashBalance = $lastClientLedger ? $lastClientLedger->cash_balance : 0;
+                $newCliCashBalance = $oldCliCashBalance + $quote->grand_total;
+                $cli_ledger=Ledger::create([
+                    'bank_id' => null, 
+                    'description' => 'Quote Payment for client ' . $user->name,
+                    'dr_amt' => $quote->grand_total,
+                    'payment_type' => 'none',
+                    'entry_type' => 'dr',  
+                    'cash_balance' => $newCliCashBalance,
+                    'person_id' => $quote->user_id,
+                    'person_type' => 'App\Models\User',
+                ]);
+
+                DB::commit();
+                
+                // Attempt to send the quote mail
+                try {
+                    Mail::to($quote->user->email)->send(new \App\Mail\QuoteMail($quote));
+                } catch (\Exception $e) {
+                    // Log the email error, but do not rollback
+                    Log::error('Failed to send quote email: ' . $e->getMessage());
+                }
+
+                return response()->json(['status' => 'success','message' => 'Quote Moved to Contract Successfully']);
+            }else{
+                DB::rollBack();
+                return response()->json(['status' => 'error','message' => 'Failed to Update Contract Dates,Please Try Again Later.'],500);
+            }
+        } catch (ModelNotFoundException $e) {
+            DB::rollBack();
+            return response()->json(['status'=>'error', 'message' => 'Contract Not Found.'], 404);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return response()->json(['status'=>'error','message' => $e->validator->errors()->first()], 422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['status'=>'error','message' => 'Failed to Update Contract Dates. ' . $e->getMessage(),500]);
+        } 
+    }
+    */
 }

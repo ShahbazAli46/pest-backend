@@ -73,7 +73,7 @@ trait GeneralTrait
         foreach ($attachments as $attachment) {
             $name = $attachment->getClientOriginalName();
             $name = strtolower(str_replace(' ', '-', $name));
-            $destinationPath = public_path() . 'upload/' . $folder . '/';
+            $destinationPath = public_path() . '/upload/' . $folder . '/';
             if (!file_exists($destinationPath)) {
                 mkdir($destinationPath, 0775, true);
             }

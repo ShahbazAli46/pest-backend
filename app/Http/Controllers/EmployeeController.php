@@ -53,7 +53,7 @@ class EmployeeController extends Controller
                
                 $employee->makeHidden(['captainJobs']);
                 $employee->captain_all_jobs=$allJobs;
-                $employee->stocks = Stock::with(['product:id,product_name,product_picture'])
+                $employee->stocks = Stock::with(['product:id,product_name,product_picture,unit,per_item_qty'])
                 ->where([
                     'person_id' => $employee->id,
                     'person_type' => 'App\Models\User'
