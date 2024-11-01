@@ -116,7 +116,7 @@ class DashboardController extends Controller
             $data['vehicle_expense']['count']=VehicleExpense::whereBetween('created_at', [$startDate, $endDate])->count();
 
             $data['total_expense']=$data['normal_expense']['total']+$data['vehicle_expense']['total'];
-            $data['total_count']=$data['normal_expense']['total']+$data['vehicle_expense']['count'];
+            $data['total_count']=$data['normal_expense']['count']+$data['vehicle_expense']['count'];
 
             return response()->json([
                 'start_date' => $startDate,
@@ -131,7 +131,7 @@ class DashboardController extends Controller
             $data['vehicle_expense']['count']=VehicleExpense::count();
 
             $data['total_expense']=$data['normal_expense']['total']+$data['vehicle_expense']['total'];
-            $data['total_count']=$data['normal_expense']['total']+$data['vehicle_expense']['count'];
+            $data['total_count']=$data['normal_expense']['count']+$data['vehicle_expense']['count'];
 
             return response()->json([
                 'data' => $data,
@@ -140,25 +140,42 @@ class DashboardController extends Controller
     }   
 
     //get bank collection
-    // public function getBankCollection(Request $request) {
-    //     // Check if date filters are present
-    //     if ($request->has('start_date') && $request->has('end_date')) {
-    //         $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
-    //         $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay(); // Use endOfDay to include the entire day
+    public function getBankCollection(Request $request) {
+        // Check if date filters are present
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
+            $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
+            $data['total_pos'] = 
             
-    //         $data['total_pos'] = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->where('entry_type','cr')->where('payment_type','pos')->whereBetween('created_at', [$startDate, $endDate])->sum('pos_amt');
-    //         $data['no_of_transection'] = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->where('entry_type', 'cr')->where('payment_type','pos')->whereBetween('created_at', [$startDate, $endDate])->count();
-    //         return response()->json([
-    //             'start_date' => $startDate,
-    //             'end_date' => $endDate,
-    //             'data' => $data,
-    //         ]);
-    //     } else {
-    //         $data['total_pos'] = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->where('payment_type','pos')->where('entry_type','cr')->sum('cash_amt');
-    //         $data['no_of_transection'] = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->where('payment_type','pos')->where('entry_type', 'cr')->count();
-    //         return response()->json([
-    //             'data' => $data,
-    //         ]);
-    //     }
-    // }
+            $data['cheque_transfer']['total']  = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->where('entry_type','cr')->where('payment_type',['cheque'])->whereBetween('created_at', [$startDate, $endDate])->sum('cheque_amt')??0;
+            $data['cheque_transfer']['count']  = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->where('entry_type','cr')->where('payment_type',['cheque'])->whereBetween('created_at', [$startDate, $endDate])->count();
+            
+            $data['online_transfer']['total']  = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->where('entry_type','cr')->where('payment_type',['online'])->whereBetween('created_at', [$startDate, $endDate])->sum('online_amt')??0;
+            $data['online_transfer']['count']  = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->where('entry_type','cr')->where('payment_type',['online'])->whereBetween('created_at', [$startDate, $endDate])->count();
+            
+
+            $data['total_cheque_transfer']=$data['cheque_transfer']['total']+$data['online_transfer']['total'];
+            $data['total_cheque_count']=$data['cheque_transfer']['count']+$data['online_transfer']['count'];
+
+            return response()->json([
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'data' => $data,
+            ]);
+        } else {
+            $data['cheque_transfer']['total']  = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->where('entry_type','cr')->where('payment_type',['cheque'])->sum('cheque_amt')??0;
+            $data['cheque_transfer']['count']  = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->where('entry_type','cr')->where('payment_type',['cheque'])->count();
+            
+            $data['online_transfer']['total']  = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->where('entry_type','cr')->where('payment_type',['online'])->sum('online_amt')??0;
+            $data['online_transfer']['count']  = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->where('entry_type','cr')->where('payment_type',['online'])->count();
+            
+
+            $data['total_cheque_transfer']=$data['cheque_transfer']['total']+$data['online_transfer']['total'];
+            $data['total_cheque_count']=$data['cheque_transfer']['count']+$data['online_transfer']['count'];
+
+            return response()->json([
+                'data' => $data,
+            ]);
+        }
+    }
 }
