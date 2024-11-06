@@ -132,7 +132,7 @@ class SupplierController extends Controller
             $supplier=Supplier::find($request->supplier_id);
             $sup_ledger=Ledger::create([
                 'bank_id' => null,  // Assuming null if no specific bank is involved
-                'description' => 'Payment',
+                'description' => $request->description,
                 'cr_amt' => $requestData['total_amount'],
                 'payment_type' => $request->input('payment_type'),
                 'entry_type' => 'cr',  

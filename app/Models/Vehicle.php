@@ -18,4 +18,9 @@ class Vehicle extends Model
         return $this->hasMany(VehicleExpense::class);
     }
 
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+    
 }

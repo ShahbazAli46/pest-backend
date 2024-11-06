@@ -79,6 +79,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('client/bank_info/add',[ClientController::class,'storeClientBankInfo'])->name('client.bank_info.add');
     Route::post('client/bank_info/update/{id}',[ClientController::class,'updateClientBankInfo'])->name('client.bank_info.update');
     Route::get('client/ledger/get/{id?}',[ClientController::class,'getClientLedger'])->name('client.ledger.get');
+    Route::get('client/received_amount/get/{id?}',[ClientController::class,'getClientReceivedAmt'])->name('client.received_amount.get');
 
     // Products
     Route::get('product/{id?}',[ProductController::class,'index'])->name('product');
