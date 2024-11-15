@@ -3,11 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Models\EmployeeCommission;
+use App\Models\EmployeeSalary;
 use App\Models\Expense;
 use App\Models\Job;
 use App\Models\Ledger;
+use App\Models\Supplier;
 use App\Models\VehicleExpense;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -101,7 +105,6 @@ class DashboardController extends Controller
             ]);
         }
     }   
-
     //get expense collection
     public function getExpenseCollection(Request $request) {
         // Check if date filters are present
@@ -177,5 +180,31 @@ class DashboardController extends Controller
                 'data' => $data,
             ]);
         }
+    }
+
+    //get financial report  
+    public function getMonthlyFinancialReport(Request $request){
+
+        $data['supplier_balance'] = Ledger::select('cash_balance')
+            ->where('person_type', Supplier::class)
+            ->whereIn('id', function ($query) {
+                $query->select(DB::raw('MAX(id)'))
+                    ->from('ledgers')
+                    ->where('person_type', Supplier::class)
+                    ->groupBy('person_id'); 
+            })->sum('cash_balance');
+        
+        $paid_employee_salary=EmployeeSalary::where('status','paid');
+        $paid_employee_comm=EmployeeCommission::where('status','paid');
+
+        if($request->filled('month')){
+            $paid_employee_salary->where('month',$request->month);
+            $paid_employee_comm->where('month',$request->month);
+        }
+        
+        $data['paid_employee_salary']=$paid_employee_salary->sum('paid_total_salary');
+        $data['paid_employee_comm']=$paid_employee_comm->sum('paid_amt');
+
+        return response()->json(['data' => $data]);
     }
 }

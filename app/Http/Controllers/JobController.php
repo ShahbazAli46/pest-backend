@@ -24,7 +24,7 @@ class JobController extends Controller
         if ($is_int === false) {
             if ($type == 'pending' || $type == 'completed') {
                 $is_completed = $type == 'pending' ? 0 : 1;
-                $jobs = Job::with(['user.client.referencable','captain','report:id,job_id','clientAddress'])->where('is_completed', $is_completed);
+                $jobs = Job::with(['user.client.referencable','captain','report:id,job_id','clientAddress','rescheduleDates'])->where('is_completed', $is_completed);
                 
                 // Apply client_id filter if present
                 if ($request->has('user_id')) {
@@ -39,7 +39,7 @@ class JobController extends Controller
                 }
                 $jobs = $jobs->orderBy('id', 'DESC')->get();
             } else {
-                $jobs = Job::with(['user.client.referencable','captain','report:id,job_id','clientAddress']);
+                $jobs = Job::with(['user.client.referencable','captain','report:id,job_id','clientAddress','rescheduleDates']);
 
                 // Apply client_id filter if present
                 if ($request->has('user_id')) {

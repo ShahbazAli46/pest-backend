@@ -16,6 +16,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('login',[UserAuthController::class,'login']);
 
+Route::get('quote/{id}',[QuoteController::class,'index'])->name('single_quote');
+
 // Protected routes
 Route::middleware(['auth:sanctum'])->group(function () {
     // Route::middleware(['auth:sanctum','permission'])->group(function () {
@@ -27,6 +29,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('dashboard/pos_collection',[DashboardController::class,'getPosCollection'])->name('dashboard.pos_collection');
     Route::get('dashboard/expense_collection',[DashboardController::class,'getExpenseCollection'])->name('dashboard.expense_collection');
     Route::get('dashboard/bank_collection',[DashboardController::class,'getBankCollection'])->name('dashboard.bank_collection');
+    Route::get('dashboard/monthly_financial_report',[DashboardController::class,'getMonthlyFinancialReport'])->name('dashboard.monthly_financial_report');
 
     // Employee
     Route::get('employee/{id?}',[EmployeeController::class,'index'])->name('employee');
@@ -128,7 +131,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('treatment_method/update/{id}',[TreatmentMethodController::class,'update'])->name('treatment_method.update');
 
     //Quote & Contracts
-    Route::get('quote/{id?}',[QuoteController::class,'index'])->name('quote');
+    Route::get('quote',[QuoteController::class,'index'])->name('quote');
     Route::post('quote/manage',[QuoteController::class,'manage'])->name('quote.manage');
     Route::get('quote/move/contract/{id}',[QuoteController::class,'moveToContract'])->name('quote.move.contract');
     Route::post('quote/contract/date/update',[QuoteController::class,'updateContractDate'])->name('quote.contract.date.update');

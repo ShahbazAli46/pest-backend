@@ -19,19 +19,19 @@ class ProductController extends Controller
     {
         if ($id == null) {
             $products = Product::with(['attachments', 'stocks' => function ($query) {
-                $query->select('id', 'product_id', 'total_qty', 'remaining_qty') // Specify the columns you need for stocks
-                    ->whereIn('id', function($subQuery) {
-                        $subQuery->select(DB::raw('MAX(id)'))->from('stocks')->groupBy('product_id');
-                });
+                $query->select('id', 'product_id', 'total_qty', 'remaining_qty')->where('person_id', 1)
+                    ->whereIn('id', function ($subQuery) {
+                        $subQuery->select(DB::raw('MAX(id)'))->from('stocks')->where('person_id', 1)->groupBy('product_id');
+                    });
             }])->orderBy('id', 'DESC')->get();
             return response()->json(['data' => $products]);
         } else {
-            $product = Product::with(['attachments', 'stocks' => function ($query) use ($id){
-                $query->select('id', 'product_id', 'total_qty', 'remaining_qty') // Specify the columns you need for stocks
-                    ->whereIn('id', function($subQuery) use ($id) {
-                        $subQuery->select(DB::raw('MAX(id)'))->from('stocks')->where('product_id', $id)->groupBy('product_id');
-                });
+            $product = Product::with(['attachments','stocks' => function ($query) use ($id) {
+                $query->select('id', 'product_id', 'total_qty', 'remaining_qty')
+                    ->where('product_id', $id)
+                    ->where('person_id', 1)->orderBy('id', 'DESC')->limit(1);
             }])->where('id', $id)->first();
+            
             if($product){
                 $product->assigned_stock_history= Stock::with('person')->where('person_id', '!=', 1)->whereNull("link_name")->where('product_id', $id)->get();
                 $product->purchased_stock_history=PurchaseOrderDetail::with('purchaseOrder.supplier')->where('product_id',$id)->get();

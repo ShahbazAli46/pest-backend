@@ -312,7 +312,7 @@ class ClientController extends Controller
                 $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
                 $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
 
-                $clients=User::with(['client.referencable','client.addresses'])->where('role_id',5)->orderBy('id', 'DESC')->get()
+                $clients=User::with(['client'])->where('role_id',5)->orderBy('id', 'DESC')->get()
                 ->map(function($client) use ($startDate, $endDate) {
                     $crAmtSum = Ledger::where('person_id',$client->id)->whereBetween('created_at', [$startDate, $endDate])->where(['person_type' => 'App\Models\User'])->sum('cr_amt');
                         if ($crAmtSum > 0) {
@@ -323,7 +323,7 @@ class ClientController extends Controller
                     })->filter() ->values();
                 return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $clients]);
             }else{
-                $clients=User::with(['client.referencable','client.addresses'])->where('role_id',5)->orderBy('id', 'DESC')->get()
+                $clients=User::with(['client'])->where('role_id',5)->orderBy('id', 'DESC')->get()
                 ->map(function($client){
                     $crAmtSum = Ledger::where('person_id',$client->id)->where(['person_type' => 'App\Models\User'])->sum('cr_amt');
                         if ($crAmtSum > 0) {
@@ -339,14 +339,14 @@ class ClientController extends Controller
                 $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
                 $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
 
-                $client=User::with(['client.referencable','client.addresses'])->where('role_id',5)->where('id',$id)->first();
+                $client=User::with(['client'])->where('role_id',5)->where('id',$id)->first();
                 $client->ledger_cr_amt_sum = Ledger::where('person_id',$client->id)->whereBetween('created_at', [$startDate, $endDate])->where(['person_type' => 'App\Models\User'])->sum('cr_amt');
                 return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $client]);
             }else{
                 $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
                 $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
 
-                $client=User::with(['client.referencable','client.addresses'])->where('role_id',5)->where('id',$id)->first();
+                $client=User::with(['client'])->where('role_id',5)->where('id',$id)->first();
                 $client->ledger_cr_amt_sum = Ledger::where('person_id',$client->id)->where(['person_type' => 'App\Models\User'])->sum('cr_amt');
                 return response()->json(['data' => $client]);
             }
