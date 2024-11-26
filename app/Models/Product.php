@@ -9,7 +9,7 @@ class Product extends Model
 {
     use HasFactory;
     public $table="products";
-    protected $fillable = ['product_name','batch_number','brand_id','mfg_date','exp_date','product_type','unit','active_ingredients','others_ingredients','moccae_approval','moccae_strat_date','moccae_exp_date','per_item_qty','description','product_picture'];
+    protected $fillable = ['product_name','batch_number','brand_id','mfg_date','exp_date','product_type','unit','active_ingredients','others_ingredients','moccae_approval','moccae_strat_date','moccae_exp_date','per_item_qty','description','product_picture','product_category'];
     
     public function brand()
     {

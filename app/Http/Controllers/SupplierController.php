@@ -17,10 +17,19 @@ class SupplierController extends Controller
     use LedgerTrait;
     public function index($id=null){
         if($id==null){
-            $suppliers=Supplier::orderBy('id', 'DESC')->get();
+            $suppliers = Supplier::orderBy('id', 'DESC')->get();
+            $ledgers = Ledger::where('person_type', Supplier::class)->orderBy('id', 'DESC')->get();
+            foreach ($suppliers as $supplier) {
+                $lastLedger = $ledgers
+                    ->where('person_id', $supplier->id)->first();
+                $supplier->balance = $lastLedger ? $lastLedger->cash_balance : 0.00; 
+            }
+            
             return response()->json(['data' => $suppliers]);
         }else{
             $supplier=Supplier::with(['bankInfos'])->where('id',$id)->first();
+            $ledger = Ledger::where('person_type', Supplier::class)->orderBy('id', 'DESC')->where('person_id', $supplier->id)->first();
+            $supplier->balance = $ledger ? $ledger->cash_balance : 0.00; 
             return response()->json(['data' => $supplier]);
         }
     }
@@ -198,9 +207,15 @@ class SupplierController extends Controller
                     $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
                     $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
                     $ledgers = Ledger::with(['personable'])->whereBetween('created_at', [$startDate, $endDate])->where(['person_type' => 'App\Models\Supplier','person_id' => $id])->get();
+                    foreach($ledgers as $ledger){
+                        $ledger->purchase_order=$ledger->getPurchaseOrder();
+                    }
                     return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $ledgers]);
                 }else{
                     $ledgers = Ledger::with(['personable'])->where(['person_type' => 'App\Models\Supplier','person_id' => $id])->get();
+                    foreach($ledgers as $ledger){
+                        $ledger->purchase_order=$ledger->getPurchaseOrder();
+                    }
                     return response()->json(['data' => $ledgers]);
                 }
             } catch (ModelNotFoundException $e) {

@@ -33,4 +33,13 @@ class Ledger extends Model
         return $this->morphTo(null, 'person_type', 'person_id');
     }
 
+
+    public function getPurchaseOrder()
+    {
+        if ($this->link_name=='purchase') {
+             return PurchaseOrder::find($this->link_id);
+        }
+        return null; 
+    }
+
 }

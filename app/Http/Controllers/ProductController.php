@@ -63,6 +63,7 @@ class ProductController extends Controller
                 'product_picture' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048', 
                 'attachments' => 'nullable|array', 
                 'attachments.*' => 'file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120', 
+                'product_category' => 'nullable|string|max:100',
             ]);
 
             $requestData = $request->all(); 

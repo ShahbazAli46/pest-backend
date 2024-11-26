@@ -31,7 +31,7 @@ class PurchaseOrderController extends Controller
             }
         }else{
             try {
-                $order = PurchaseOrder::with(['supplier:id,supplier_name','orderDetails.product.brand:id,name'])->findOrFail($id);
+                $order = PurchaseOrder::with(['supplier','orderDetails.product.brand:id,name'])->findOrFail($id);
                 return response()->json(['data' => $order]);
             } catch (ModelNotFoundException $e) {
                 return response()->json(['status'=>'error', 'message' => 'Purchase Order Not Found.'], 404);
