@@ -20,6 +20,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
 
 trait GeneralTrait
 {
@@ -97,8 +98,13 @@ trait GeneralTrait
     }
 
 
-    function saveImage($image,$folder){
-       // Generate a unique filename
+    function saveImage($image,$folder,$oldFilePath = null){
+        // Delete the old file if it exists
+        if ($oldFilePath && File::exists(public_path($oldFilePath))) {
+            File::delete(public_path($oldFilePath));
+        }
+
+        // Generate a unique filename
         $extension = $image->getClientOriginalExtension();
         $fileName =  uniqid() . '.' . $extension;
         $destinationPath = public_path('upload/' . $folder . '/');

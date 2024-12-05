@@ -26,7 +26,7 @@ class ServiceInvoiceController extends Controller
                 $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay(); // Use endOfDay to include the entire day
                 
                 // it should apply due_date not issue_date so this is pending
-                $invoices = ServiceInvoice::with(['user', 'invoiceable'])->whereBetween('issued_date', [$startDate, $endDate]);
+                $invoices = ServiceInvoice::with(['user.client.referencable', 'invoiceable'])->whereBetween('issued_date', [$startDate, $endDate]);
 
                 // Apply user_id filter if present
                 if ($request->has('user_id')) {
@@ -42,7 +42,7 @@ class ServiceInvoiceController extends Controller
                 });
                 return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $invoices]);
             }else{
-                $invoices=ServiceInvoice::with(['user','invoiceable']);
+                $invoices=ServiceInvoice::with(['user.client.referencable','invoiceable']);
                 
                 // Apply user_id filter if present
                 if ($request->has('user_id')) {

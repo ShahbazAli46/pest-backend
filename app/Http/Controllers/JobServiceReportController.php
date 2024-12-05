@@ -19,10 +19,18 @@ class JobServiceReportController extends Controller
 {
     //
     use GeneralTrait;
-    public function index($id)
+    public function index(Request $request,$id)
     {
         if($id == 'all'){
-            $job_service_reports=JobServiceReport::orderBy('id', 'DESC')->get();
+            $job_service_report_query=JobServiceReport::orderBy('id', 'DESC');
+
+            // Check if date filters are present
+            if ($request->has('start_date') && $request->has('end_date')) {
+                $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
+                $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay(); // Use endOfDay to include the entire day
+                $job_service_report_query->whereBetween('created_at', [$startDate, $endDate]);
+            }
+            $job_service_reports=$job_service_report_query->get();
             return response()->json(['data' => $job_service_reports]);
         }else{
             $job_service_report=JobServiceReport::with(['areas','usedProducts.product','job.user'])->find($id);
