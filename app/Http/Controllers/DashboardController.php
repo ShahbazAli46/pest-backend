@@ -9,13 +9,61 @@ use App\Models\Expense;
 use App\Models\Job;
 use App\Models\Ledger;
 use App\Models\PurchaseOrder;
+use App\Models\Setting;
 use App\Models\Supplier;
+use App\Models\User;
 use App\Models\VehicleExpense;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
+    public function deviceToken(Request $request){
+        try {
+            DB::beginTransaction();
+            $request->validate([
+                'firebase_token' => 'required',
+                'app_version' => 'required|max:100',
+            ]);
+
+            $auth_user = Auth::user();
+
+            if (!$auth_user) {
+                DB::rollBack();
+                return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 401);
+            }
+
+            $isUpdated = $auth_user->update([
+                'firebase_token' => $request->firebase_token,
+                'app_version' => $request->app_version,
+            ]);
+        
+            if ($isUpdated) {
+                DB::commit();
+                $setting=Setting::first();
+
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Device Token Updated Successfully',
+                    'app_version' => $setting && $setting->app_version!=null?$setting->app_version:null,
+                    'is_app_active' => $setting && $setting->disable_app_reason!=null?0:1,
+                    'disable_app_reason' => $setting && $setting->disable_app_reason!=null?$setting->disable_app_reason:null,
+                ]);
+
+            } else {
+                DB::rollBack();
+                return response()->json(['status' => 'error', 'message' => 'Failed to Update Device Token, Please Try Again Later.'], 500);
+            }
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return response()->json(['status'=> 'error','message' => $e->validator->errors()->first()], 422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['status' => 'error','message' => 'Failed to Update Device Token. ' .$e->getMessage()],500);
+        }
+    }
+
     //get total clients
     public function getCountClients(Request $request) {
         // Check if date filters are present

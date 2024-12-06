@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Traits\GeneralTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Artisan;
 
 class EmployeeController extends Controller
 {
@@ -335,7 +336,30 @@ class EmployeeController extends Controller
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json(['status'=> 'error','message' => $e->validator->errors()->first()], 422);
         } catch (\Exception $e) {
-            return response()->json(['status' => 'error','message' => 'Failed to Get Stock History. ' .$e->getMessage()],500);
+            return response()->json(['status' => 'error','message' => 'Failed to update Employee Status. ' .$e->getMessage()],500);
+        }
+    }
+
+    public function reActiveEmployee($user_id){
+        try {
+            $employee_user=User::where('id',$user_id)->whereIn('role_id',[2,3,4,6])->first();
+            if($employee_user){
+                if($employee_user->fired_at!=null){
+                    $employee_user->fired_at=null;
+                    $employee_user->save();
+
+                    Artisan::call('sal_com:generate');
+                    return response()->json(['status' => 'success','message' => 'Employee has been reactive.']);
+                }else{
+                    return response()->json(['status' => 'error','message' => 'Employee already active.'],500);
+                }
+            }else{
+                return response()->json(['status' => 'error','message' => 'User Not Found.'],500);
+            }
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['status'=> 'error','message' => $e->validator->errors()->first()], 422);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error','message' => 'Failed to update Employee Status. ' .$e->getMessage()],500);
         }
     }
 

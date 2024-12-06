@@ -21,6 +21,7 @@ Route::get('quote/{id}',[QuoteController::class,'index'])->name('single_quote');
 // Protected routes
 Route::middleware(['auth:sanctum'])->group(function () {
     // Route::middleware(['auth:sanctum','permission'])->group(function () {
+    Route::post('device/token',[DashboardController::class,'deviceToken'])->name('device.token');
 
     //Dashboard
     Route::get('dashboard/count_clients',[DashboardController::class,'getCountClients'])->name('dashboard.count_clients');
@@ -40,6 +41,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('employee/sales_manager/job/history/{id}',[EmployeeController::class,'getEmployeeJobHistory'])->name('employee.sales_manager.job.history');
     Route::post('employee/stock/used',[EmployeeController::class,'getUsedStock'])->name('employee.stock.used');
     Route::get('employee/fired_at/{id}',[EmployeeController::class,'fireEmployee'])->name('employee.fired_at');
+    Route::get('employee/reactive/{id}',[EmployeeController::class,'reActiveEmployee'])->name('employee.reactive');
     Route::get('employee/fired/get',[EmployeeController::class,'getFiredEmployees'])->name('employee.fired.get');
     
 
