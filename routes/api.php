@@ -35,7 +35,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Employee
     Route::get('employee/{id?}',[EmployeeController::class,'index'])->name('employee');
     Route::post('employee/create',[EmployeeController::class,'store'])->name('employee.create');
-    Route::post('employee/update',[EmployeeController::class,'update'])->name('employee.create');
+    Route::post('employee/update',[EmployeeController::class,'update'])->name('employee.update');
+    Route::post('employee/update_docs',[EmployeeController::class,'updateDocs'])->name('employee.update_docs');
     Route::post('employee/stock/assign',[EmployeeController::class,'assignStock'])->name('employee.stock.assign');
     Route::get('employee/sales_manager/get',[EmployeeController::class,'getSalesManager'])->name('employee.sales_manager.get');
     Route::get('employee/sales_manager/job/history/{id}',[EmployeeController::class,'getEmployeeJobHistory'])->name('employee.sales_manager.job.history');

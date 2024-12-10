@@ -87,6 +87,10 @@ class User extends Authenticatable
         return $totalReceived > 0 ? $totalReceived : "0";
     }
 
+    public function documents()
+    {
+        return $this->hasMany(EmployeeDocs::class, 'employee_user_id');
+    }
 
     // Define a local query scope to filter active users
     // public function scopeActive($query)

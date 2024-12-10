@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Employee;
 use App\Models\EmployeeAdvancePayment;
 use App\Models\EmployeeCommission;
+use App\Models\EmployeeDocs;
 use App\Models\EmployeeSalary;
 use App\Models\Job;
 use App\Models\JobServiceReportProduct;
@@ -22,7 +23,7 @@ class EmployeeController extends Controller
     
     public function index($id=null){
         if($id==null){
-            $employees=User::notFired()->with(['employee','role:id,name'])->whereIn('role_id',[2,3,4,6])->orderBy('id', 'DESC')->get();
+            $employees=User::notFired()->with(['employee.documents','role:id,name'])->whereIn('role_id',[2,3,4,6])->orderBy('id', 'DESC')->get();
             //sales manager only
             // foreach($employees as $key=>$employee){
             //     if($employee->role_id==4){
@@ -32,7 +33,7 @@ class EmployeeController extends Controller
             // }
             return response()->json(['data' => $employees]);
         }else{
-            $employee=User::with('employee')->where('id',$id)->whereIn('role_id',[2,3,4,6])->first();
+            $employee=User::with('employee.documents')->where('id',$id)->whereIn('role_id',[2,3,4,6])->first();
             if ($employee && $employee->role_id == 4) {
                 $employee->load([
                     'captainJobs' => function($query) {
@@ -80,23 +81,8 @@ class EmployeeController extends Controller
                 'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Max file size 2MB
                 'role_id' => 'required|exists:roles,id|in:2,3,4,6', // Assuming there's a roles table
                 'phone_number' => 'nullable|string|max:50',
-                'eid_no' => 'nullable|string',
                 'target' => 'nullable|numeric|min:0',
-                'eid_start' => 'nullable|date',
-                'eid_expiry' => 'nullable|date|after_or_equal:eid_start',
                 'profession' => 'nullable|string',
-                'passport_no' => 'nullable|string',
-                'passport_start' => 'nullable|date',
-                'passport_expiry' => 'nullable|date|after_or_equal:passport_start',
-                'hi_status' => 'nullable|string',
-                'hi_start' => 'nullable|date',
-                'hi_expiry' => 'nullable|date|after_or_equal:hi_start',
-                'ui_status' => 'nullable|string',
-                'ui_start' => 'nullable|date',
-                'ui_expiry' => 'nullable|date|after_or_equal:ui_start',
-                'dm_card' => 'nullable|string',
-                'dm_start' => 'nullable|date',
-                'dm_expiry' => 'nullable|date|after_or_equal:dm_start',
                 'relative_name' => 'nullable|string',
                 'relation' => 'nullable|string',
                 'emergency_contact' => 'nullable|string|max:50',
@@ -105,7 +91,6 @@ class EmployeeController extends Controller
                 'other' => 'nullable|numeric|min:0',
                 'total_salary' => 'nullable|numeric|min:0',
                 'commission_per' => 'required|numeric|min:0|max:100',
-                'labour_card_expiry' => 'nullable|date',
             ]);
 
             $requestData = $request->all(); 
@@ -173,17 +158,6 @@ class EmployeeController extends Controller
             $request->validate([
                 'user_id' => 'required|exists:users,id',
                 'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Max file size 2MB
-                'eid_start' => 'nullable|date',
-                'eid_expiry' => 'nullable|date|after_or_equal:eid_start',
-                'passport_start' => 'nullable|date',
-                'passport_expiry' => 'nullable|date|after_or_equal:passport_start',
-                'hi_start' => 'nullable|date',
-                'hi_expiry' => 'nullable|date|after_or_equal:hi_start',
-                'ui_start' => 'nullable|date',
-                'ui_expiry' => 'nullable|date|after_or_equal:ui_start',
-                'dm_start' => 'nullable|date',
-                'dm_expiry' => 'nullable|date|after_or_equal:dm_start',
-                'labour_card_expiry' => 'nullable|date',
             ]);
             
             $user=User::find($request->user_id);
@@ -192,19 +166,7 @@ class EmployeeController extends Controller
                 return response()->json(['status'=>'error', 'message' => 'User Not Found'],404);
             }
 
-            $requestData=[ 
-                'eid_start' => $request->eid_start,
-                'eid_expiry' => $request->eid_expiry,
-                'passport_start' => $request->passport_start,
-                'passport_expiry' => $request->passport_expiry,
-                'hi_start' => $request->hi_start,
-                'hi_expiry' => $request->hi_expiry,
-                'ui_start' => $request->ui_start,
-                'ui_expiry' => $request->ui_expiry,
-                'dm_start' => $request->dm_start,
-                'dm_expiry' => $request->dm_expiry,
-                'labour_card_expiry' => $request->labour_card_expiry
-            ];
+            $requestData=[];
 
             if ($request->hasFile('profile_image')) {
                 $employee = $user->employee;
@@ -229,9 +191,64 @@ class EmployeeController extends Controller
         }
     }
 
+    public function updateDocs(Request $request){
+        try {
+            DB::beginTransaction();
+            $request->validate([
+                'user_id' => 'required|exists:users,id',
+                'name' => 'required|max:100',
+                'status' => 'nullable|max:100',
+                'start' => 'nullable|date',
+                'expiry' => 'nullable|date|after_or_equal:start',
+                'desc' => 'nullable|max:255',
+                'file' => 'nullable|mimes:jpeg,png,jpg,gif,pdf,doc,docx|max:5120',
+            ]);
+            
+            $employee = Employee::where('user_id', $request->user_id)->first();
+            if (!$employee) {
+                DB::rollBack();
+                return response()->json(['status' => 'error','message' => 'The specified user does not have an employee record.'], 400);
+            }
+
+            $emp_docs = EmployeeDocs::where('employee_user_id', $request->user_id)->where('name', $request->name)->first();
+    
+            $data = $request->only(['name', 'status', 'start', 'expiry', 'desc']);
+            $data['employee_user_id'] = $request->user_id;
+            $data['employee_id'] = $employee->id;
+        
+            // Handle file upload        
+            if ($request->hasFile('file')) {
+                $oldFilePath = $emp_docs && !empty($emp_docs->file) ? $emp_docs->file : null; // Get old file path if it exists and is not empty
+                $data['file'] = $this->saveImage($request->file('file'), 'docs', $oldFilePath);
+            }
+
+            if ($emp_docs) {
+                $emp_docs->update($data);
+                $message = 'Employee document updated successfully.';
+            } else {
+                EmployeeDocs::create($data);
+                $message = 'Employee document created successfully.';
+            }
+
+            if($employee){
+                DB::commit();
+                return response()->json(['status' => 'success','message' => $message]);
+            }else{
+                DB::rollBack();
+                return response()->json(['status' => 'error','message' => 'Failed to Update Employee Docs,Please Try Again Later.'],500);
+            }
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return response()->json(['status'=> 'error','message' => $e->validator->errors()->first()], 422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['status' => 'error','message' => 'Failed to Update Employee Docs. ' .$e->getMessage()],500);
+        }
+    }
+
     //
     public function getSalesManager(Request $request){
-        $sales_managers=User::notFired()->with(['employee','role:id,name'])->withCount('captainJobs')->where('role_id',4)->orderBy('id', 'DESC')->get();
+        $sales_managers=User::notFired()->with(['employee.documents','role:id,name'])->withCount('captainJobs')->where('role_id',4)->orderBy('id', 'DESC')->get();
         return response()->json(['data' => $sales_managers]);
     }
 

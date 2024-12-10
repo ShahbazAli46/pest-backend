@@ -17,24 +17,8 @@ return new class extends Migration
             $table->unsignedBigInteger('role_id');
             $table->string('profile_image')->nullable();
             $table->string('phone_number',100)->nullable();
-            $table->string('eid_no')->nullable();
             $table->decimal('target', 15, 2)->default(0.00);
-            $table->date('eid_start')->nullable();
-            $table->date('eid_expiry')->nullable();
             $table->string('profession')->nullable();
-            $table->string('passport_no')->nullable();
-            $table->date('passport_start')->nullable();
-            $table->date('passport_expiry')->nullable();
-
-            $table->string('hi_status')->nullable();
-            $table->date('hi_start')->nullable();
-            $table->date('hi_expiry')->nullable();
-            $table->string('ui_status')->nullable();
-            $table->date('ui_start')->nullable();
-            $table->date('ui_expiry')->nullable();
-            $table->string('dm_card')->nullable();
-            $table->date('dm_start')->nullable();
-            $table->date('dm_expiry')->nullable();
 
             $table->string('relative_name')->nullable();
             $table->string('relation')->nullable();
