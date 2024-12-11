@@ -12,6 +12,8 @@ use App\Models\JobServiceReportProduct;
 use App\Models\Product;
 use App\Models\Stock;
 use App\Models\User;
+use App\Models\Vehicle;
+use App\Models\VehicleEmployeeFine;
 use App\Traits\GeneralTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -475,6 +477,100 @@ class EmployeeController extends Controller
             return response()->json(['status' => 'error','message' => 'Failed to Employee Salary Paid. ' .$e->getMessage()],500);
         }
     }
+
+    public function vehicleEmployeeFine(Request $request){
+        try {
+            $request->validate([
+                'vehicle_id' => 'required|exists:vehicles,id', 
+                'fine' => 'required|max:100',
+                'fine_date' => 'required|date',
+            ]);
+            $vehicle = Vehicle::find($request->vehicle_id);
+
+            if ($vehicle && $vehicle->user_id != null) {
+                $employee = Employee::where('user_id', $vehicle->user_id)->first();
+                if (!$employee) {
+                    DB::rollBack();
+                    return response()->json(['status' => 'error','message' => 'The specified user does not have an employee record.'], 400);
+                }
+                $currentMonth = now()->format('Y-m'); // Get current month (e.g., "2024-10")
+                $employee_salary = EmployeeSalary::where('month', $currentMonth)->where('user_id',$vehicle->user_id)->first();
+
+                if (!$employee_salary) {
+                    DB::rollBack();
+                    return response()->json(['status' => 'error','message' => 'The specified user does not have a salary record.'], 400);
+                }
+
+                if($employee_salary->status=='paid'){
+                    DB::rollBack();
+                    return response()->json(['status' => 'error','message' => 'The salary for this month has already been paid.'], 400);
+                }
+
+                $vehicleFine = new VehicleEmployeeFine();
+                $vehicleFine->employee_user_id = $vehicle->user_id;
+                $vehicleFine->vehicle_id = $request->vehicle_id;
+                $vehicleFine->fine = $request->fine;
+                $vehicleFine->fine_date = $request->fine_date;
+                $vehicleFine->employee_id = $employee->id;
+                $vehicleFine->employee_salary_id = $employee_salary->id;
+                $vehicleFine->save();
+
+                $employee_salary->total_fines=($employee_salary->total_fines+$request->fine);
+                $employee_salary->save();
+                
+                DB::commit();
+                return response()->json(['status' => 'success', 'message' => 'Fine added successfully.']);
+            } else {
+                DB::rollBack();
+                return response()->json(['status' => 'error', 'message' => 'Vehicle not assigned yet.'], 400);
+            }
+
+            $employee = Employee::where('user_id', $request->user_id)->first();
+            if (!$employee) {
+                DB::rollBack();
+                return response()->json(['status' => 'error','message' => 'The specified user does not have an employee record.'], 400);
+            }
+
+            $emp_docs = EmployeeDocs::where('employee_user_id', $request->user_id)->where('name', $request->name)->first();
+    
+            $data = $request->only(['name', 'status', 'start', 'expiry', 'desc']);
+            $data['employee_user_id'] = $request->user_id;
+            $data['employee_id'] = $employee->id;
+        
+
+
+
+
+            $request->validate([
+                'employee_user_id' => 'required|exists:users,id', 
+                'attendance_per' => 'required|numeric|min:0|max:100', 
+            ]);
+    
+            // Find the employee salary record
+            $employee_salary = EmployeeSalary::find($request->employee_salary_id);
+    
+            // if ($employee_salary) {
+            //     $total_salary = $employee_salary->total_salary; // Total salary to be paid
+            //     $attendance_per = $request->attendance_per; // Attendance percentage
+    
+            //     $paid_total_salary = ($total_salary * $attendance_per) / 100;
+            //     $employee_salary->paid_total_salary = $paid_total_salary; 
+            //     $employee_salary->attendance_per = $attendance_per; 
+            //     $employee_salary->status = 'paid'; 
+            //     $employee_salary->paid_at = now(); 
+            //     $employee_salary->save();
+    
+            //     return response()->json(['status' => 'success','message' => "Salary paid based on $attendance_per% attendance: $paid_total_salary"]);
+            // } else {
+            //     return response()->json(['status' => 'error','message' => 'Employee Salary Not Found.'], 500);
+            // }
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['status'=> 'error','message' => $e->validator->errors()->first()], 422);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error','message' => 'Failed to Employee Salary Paid. ' .$e->getMessage()],500);
+        }
+    }
+
 
     public function getEmployeeCommission(Request $request){
         try {

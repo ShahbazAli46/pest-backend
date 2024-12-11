@@ -32,5 +32,10 @@ class Employee extends Model
     {
         return $this->hasMany(EmployeeDocs::class, 'employee_id');
     }
+
+    public function vehicleFines()
+    {
+        return $this->hasMany(VehicleEmployeeFine::class, 'employee_id');
+    }
     
 }

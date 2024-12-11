@@ -92,6 +92,11 @@ class User extends Authenticatable
         return $this->hasMany(EmployeeDocs::class, 'employee_user_id');
     }
 
+    public function vehicleFines()
+    {
+        return $this->hasMany(VehicleEmployeeFine::class, 'employee_user_id');
+    }
+    
     // Define a local query scope to filter active users
     // public function scopeActive($query)
     // {
