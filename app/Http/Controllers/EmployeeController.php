@@ -410,44 +410,47 @@ class EmployeeController extends Controller
     public function paidAdvanceEmployee(Request $request)
     {
         try {
+            DB::beginTransaction();
             $request->validate([
                 'employee_salary_id' => 'required|exists:employee_salaries,id', 
                 'adv_paid' => 'required|numeric', 
+                'description' => 'nullable|max:255', 
             ]);
-            
             // Find the employee salary record
             $employee_salary = EmployeeSalary::find($request->employee_salary_id);
-    
             if ($employee_salary) {
                 if($employee_salary->status=='unpaid'){
-                    $total_salary = $employee_salary->total_salary; // Total salary to be paid
-                    if($total_salary>($employee_salary->adv_paid+$request->adv_paid)){
+                    $employee=Employee::find($employee_salary->employee_id);
+                    $current_advance_balance=$employee->current_adv_balance;
 
-                        $adv_payment=new EmployeeAdvancePayment;
-                        $adv_payment->user_id = $employee_salary->user_id; 
-                        $adv_payment->employee_id = $employee_salary->employee_id; 
-                        $adv_payment->employee_salary_id = $employee_salary->id;
-                        $adv_payment->advance_payment = $request->adv_paid; 
-                        $adv_payment->month = $employee_salary->month; 
-                        $adv_payment->save();
+                    $adv_payment=new EmployeeAdvancePayment;
+                    $adv_payment->user_id = $employee_salary->user_id; 
+                    $adv_payment->employee_id = $employee_salary->employee_id; 
+                    $adv_payment->employee_salary_id = $employee_salary->id;
+                    $adv_payment->advance_payment = $request->adv_paid; 
+                    $adv_payment->month = $employee_salary->month; 
+                    $adv_payment->description = $request->description; 
+                    $adv_payment->payment_type = 'cr'; 
+                    $adv_payment->balance = $current_advance_balance+$request->adv_paid; 
+                    $adv_payment->save();
 
-                        $employee_salary->adv_paid = ($employee_salary->adv_paid+$request->adv_paid); 
-                        $employee_salary->save();
-            
-                        return response()->json(['status' => 'success','message' => "Advance amount paid Successfully"]);
-                        //working
-                    }else{
-                        return response()->json(['status' => 'error','message' => 'Advance amount should be less then Salary.'], 500);
-                    }
+                    $employee_salary->adv_paid = ($employee_salary->adv_paid+$request->adv_paid); 
+                    $employee_salary->save();
+                    DB::commit();
+                    return response()->json(['status' => 'success','message' => "Advance amount paid Successfully"]);
                 }else{
+                    DB::rollBack();
                     return response()->json(['status' => 'error','message' => 'Employee Salary already Paid.'], 500);
                 }
             } else {
+                DB::rollBack();
                 return response()->json(['status' => 'error','message' => 'Employee Salary Not Found.'], 500);
             }
         } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
             return response()->json(['status'=> 'error','message' => $e->validator->errors()->first()], 422);
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json(['status' => 'error','message' => 'Failed to Employee Salary Paid. ' .$e->getMessage()],500);
         }
     }
@@ -455,32 +458,70 @@ class EmployeeController extends Controller
     public function paidEmployeeSalary(Request $request)
     {
         try {
+            DB::beginTransaction();
             $request->validate([
                 'employee_salary_id' => 'required|exists:employee_salaries,id', 
                 'attendance_per' => 'required|numeric|min:0|max:100', 
+                'adv_received' => 'nullable|numeric', 
+                'description' => 'nullable|max:255', 
             ]);
     
             // Find the employee salary record
             $employee_salary = EmployeeSalary::find($request->employee_salary_id);
     
             if ($employee_salary) {
+                if($employee_salary->status=='paid'){
+                    DB::rollBack();
+                    return response()->json(['status' => 'error','message' => 'Employee Salary already Paid.'], 500);
+                }
                 $total_salary = $employee_salary->total_salary; // Total salary to be paid
                 $attendance_per = $request->attendance_per; // Attendance percentage
-    
-                $paid_total_salary = ($total_salary * $attendance_per) / 100;
-                $employee_salary->paid_total_salary = $paid_total_salary; 
+                
+                $advance_recv_msg="";
+                $paid_total_amt = ($total_salary * $attendance_per) / 100;
+                if($request->filled('adv_received')){
+                    if($paid_total_amt<=$request->adv_received){
+                        DB::rollBack();
+                        return response()->json(['status' => 'error', 'message' => "Advance received amount should be less than the employee's salary."], 400);
+                    }
+                    $paid_total_amt=$paid_total_amt-$request->adv_received;
+                    $advance_recv_msg=" & Detected advance payment of ".$request->adv_received; 
+                    $employee_salary->adv_received = ($employee_salary->adv_received+$request->adv_received); 
+                }
+
+                $employee_salary->paid_total_salary = $paid_total_amt; 
                 $employee_salary->attendance_per = $attendance_per; 
                 $employee_salary->status = 'paid'; 
                 $employee_salary->paid_at = now(); 
                 $employee_salary->save();
-    
-                return response()->json(['status' => 'success','message' => "Salary paid based on $attendance_per% attendance: $paid_total_salary"]);
+
+                if($request->filled('adv_received')){
+                    $employee=Employee::find($employee_salary->employee_id);
+                    $current_advance_balance=$employee->current_adv_balance;
+
+                    $adv_payment=new EmployeeAdvancePayment;
+                    $adv_payment->user_id = $employee_salary->user_id; 
+                    $adv_payment->employee_id = $employee_salary->employee_id; 
+                    $adv_payment->employee_salary_id = $employee_salary->id;
+                    $adv_payment->received_payment = $request->adv_received; 
+                    $adv_payment->month = $employee_salary->month; 
+                    $adv_payment->description = $request->description; 
+                    $adv_payment->payment_type = 'dr'; 
+                    $adv_payment->balance = $current_advance_balance-$request->adv_received; 
+                    $adv_payment->save();
+                }
+
+                DB::commit();
+                return response()->json(['status' => 'success','message' => "Salary paid based on $attendance_per% attendance$advance_recv_msg: $paid_total_amt"]);
             } else {
+                DB::rollBack();
                 return response()->json(['status' => 'error','message' => 'Employee Salary Not Found.'], 500);
             }
         } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
             return response()->json(['status'=> 'error','message' => $e->validator->errors()->first()], 422);
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json(['status' => 'error','message' => 'Failed to Employee Salary Paid. ' .$e->getMessage()],500);
         }
     }

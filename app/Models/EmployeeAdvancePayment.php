@@ -9,8 +9,8 @@ class EmployeeAdvancePayment extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id','employee_id','employee_salary_id', 'advance_payment','month'];
-   
+    protected $fillable = ['user_id','employee_id','employee_salary_id','advance_payment','month','description','received_payment','payment_type','balance'];
+
     public function user()
     {
         return $this->belongsTo(User::class);
