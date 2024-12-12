@@ -16,12 +16,14 @@ class VehicleEmployeeFine extends Model
         return $this->belongsTo(User::class, 'employee_user_id');
     }
 
-    /**
-     * Relationship with the Employee model.
-     */
     public function employee()
     {
         return $this->belongsTo(Employee::class, 'employee_id');
+    }
+
+    public function employeeSalary()
+    {
+        return $this->belongsTo(EmployeeSalary::class,'employee_salary_id');
     }
 
 }

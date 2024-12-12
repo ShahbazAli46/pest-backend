@@ -386,12 +386,19 @@ class EmployeeController extends Controller
         try {
             $request->validate([
                 'salary_month' => 'nullable|date_format:Y-m',
+                'employee_user_id' => 'nullable|exists:users,id', 
             ]);
+            $employee_salary_query=EmployeeSalary::with(['user','employeeAdvancePayment','vehicleFines']);
+
             if($request->filled('salary_month')){
-                $employee_salary=EmployeeSalary::with(['user','employeeAdvancePayment'])->where('month',$request->salary_month)->get();
-            }else{
-                $employee_salary=EmployeeSalary::with(['user','employeeAdvancePayment'])->get();
+                $employee_salary_query->where('month',$request->salary_month);
             }
+
+            if($request->filled('employee_user_id')){
+                $employee_salary_query->where('user_id',$request->employee_user_id);
+            }
+
+            $employee_salary=$employee_salary_query->get();
             return response()->json(['data' => $employee_salary]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json(['status'=> 'error','message' => $e->validator->errors()->first()], 422);

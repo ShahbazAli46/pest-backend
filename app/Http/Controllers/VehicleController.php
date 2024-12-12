@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Employee;
 use App\Models\Vehicle;
+use App\Models\VehicleAssignedHistory;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -43,9 +45,9 @@ class VehicleController extends Controller
             
                 $vehicle = Vehicle::with(['vehicleExpenses' => function($query) use ($startDate, $endDate) {
                     $query->whereBetween('expense_date', [$startDate, $endDate]);
-                },'user'])->find($id);
+                },'user','assignmentHistory'])->find($id);
             } else {
-                $vehicle = Vehicle::with(['vehicleExpenses','user'])->find($id);
+                $vehicle = Vehicle::with(['vehicleExpenses','user','assignmentHistory'])->find($id);
             }
             return response()->json(['data' => $vehicle]);
         }
@@ -66,7 +68,20 @@ class VehicleController extends Controller
                 'oil_change_limit'   => 'nullable|string|max:50',   
             ]);
 
-            Vehicle::create($validateData);
+            $vehicle=Vehicle::create($validateData);
+            if($request->filled('user_id')){
+                $employee = Employee::where('user_id', $request->user_id)->first();
+                if (!$employee) {
+                    DB::rollBack();
+                    return response()->json(['status' => 'error','message' => 'The specified user does not have an employee record.'], 400);
+                }
+                
+                $vehicle->assignmentHistory()->create([
+                    'employee_id' => $employee->id,
+                    'employee_user_id' => $request->user_id,
+                ]);
+            }
+
             DB::commit();
             return response()->json(['status' => 'success','message' => 'Vehicle Added Successfully']);            
         }catch (\Illuminate\Validation\ValidationException $e) {
@@ -94,6 +109,17 @@ class VehicleController extends Controller
 
              // Find the bank by ID
             $vehicle = Vehicle::findOrFail($id);
+            if($request->filled('user_id') && $vehicle->user_id!= $request->user_id){
+                $employee = Employee::where('user_id', $request->user_id)->first();
+                if (!$employee) {
+                    DB::rollBack();
+                    return response()->json(['status' => 'error','message' => 'The specified user does not have an employee record.'], 400);
+                }
+                $vehicle->assignmentHistory()->create([
+                    'employee_id' => $employee->id,
+                    'employee_user_id' => $request->user_id,
+                ]);
+            }
             $vehicle->update($validateData);
             if($vehicle){
                 DB::commit();

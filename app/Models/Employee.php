@@ -38,4 +38,8 @@ class Employee extends Model
         return $this->hasMany(VehicleEmployeeFine::class, 'employee_id');
     }
     
+    public function assignedVehicles()
+    {
+        return $this->hasMany(VehicleAssignedHistory::class, 'employee_id');
+    }
 }

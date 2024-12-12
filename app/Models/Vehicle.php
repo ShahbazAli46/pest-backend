@@ -23,4 +23,8 @@ class Vehicle extends Model
         return $this->belongsTo(User::class);
     }
     
+    public function assignmentHistory()
+    {
+        return $this->hasMany(VehicleAssignedHistory::class, 'vehicle_id');
+    }
 }
