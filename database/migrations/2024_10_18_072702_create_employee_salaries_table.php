@@ -20,7 +20,7 @@ return new class extends Migration
             $table->decimal('other', 15, 2)->default(0.00);
             $table->decimal('total_salary', 15, 2)->default(0.00);
             $table->decimal('adv_paid', 15, 2)->default(0.00);
-            $table->decimal('paid_total_salary', 15, 2)->default(0.00);
+            $table->decimal('paid_salary', 15, 2)->default(0.00);
             $table->string('month'); // Month (e.g., "2024-10")
             $table->decimal('attendance_per', 15, 2)->default(0.00);
             $table->enum('status', ['paid', 'unpaid'])->default('unpaid'); // Payment status
@@ -39,3 +39,5 @@ return new class extends Migration
         Schema::dropIfExists('employee_salaries');
     }
 };
+// ALTER TABLE `employee_salaries` CHANGE `paid_total_salary` `paid_salary` DECIMAL(15,2) NOT NULL DEFAULT '0.00';
+

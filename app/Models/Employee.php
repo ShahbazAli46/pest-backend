@@ -11,7 +11,7 @@ class Employee extends Model
     public $table="employees";
     protected $appends = ['current_adv_balance'];
 
-    protected $fillable = ['user_id','role_id','profile_image','phone_number','target','profession','relative_name','relation','emergency_contact','basic_salary','allowance','other','total_salary','commission_per'];
+    protected $fillable = ['user_id','role_id','profile_image','phone_number','target','profession','relative_name','relation','emergency_contact','basic_salary','allowance','other','total_salary','commission_per','hold_salary'];
 
     public function user()
     {
