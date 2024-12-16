@@ -512,19 +512,18 @@ class EmployeeController extends Controller
                     }
                     // $paid_salary=$payable_salary-$request->adv_received;
                     $advance_recv_msg=" & Detected advance payment of ".$request->adv_received; 
-                    $employee_salary->adv_received = $request->adv_received; 
+                    $employee_salary->adv_received = $employee_salary->adv_received+$request->adv_received; 
 
                     $adv_payment=new EmployeeAdvancePayment;
                     $adv_payment->user_id = $employee_salary->user_id; 
                     $adv_payment->employee_id = $employee_salary->employee_id; 
                     $adv_payment->employee_salary_id = $employee_salary->id;
-                    $adv_payment->received_payment = $request->adv_received; 
+                    $adv_payment->received_payment = $request->adv_received;
                     $adv_payment->month = $employee_salary->month; 
                     $adv_payment->description = $request->description; 
                     $adv_payment->payment_type = 'dr'; 
                     $adv_payment->balance = $current_adv_balance-$request->adv_received; 
                     $adv_payment->save();
-
                 }
 
                 //if i want to pay hold salary or add hold salary
@@ -558,6 +557,55 @@ class EmployeeController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['status' => 'error','message' => 'Failed to Employee Salary Paid. ' .$e->getMessage()],500);
+        }
+    }
+
+    public function advanceReceived(Request $request)
+    {
+        try{
+            DB::beginTransaction();
+            $request->validate([
+                'user_id' => 'required|exists:users,id', 
+                'adv_received' => 'required|numeric', 
+                'description' => 'nullable|max:255', 
+            ]);
+            $employee = Employee::where('user_id', $request->user_id)->first();
+            if (!$employee) {
+                DB::rollBack();
+                return response()->json(['status' => 'error','message' => 'The specified user does not have an employee record.'], 400);
+            }
+
+            // return $employee;
+            if($employee->current_adv_balance<$request->adv_received){
+                DB::rollBack();
+                return response()->json(['status' => 'error', 'message' => "Advance received amount should be less than or equal to advance amount."], 400);
+            }
+            
+            $currentMonth = now()->format('Y-m'); // Get current month (e.g., "2024-10")
+            $employee_salary = EmployeeSalary::where('month', $currentMonth)->where('user_id',$request->user_id)->first();
+
+            $adv_payment=new EmployeeAdvancePayment;
+            $adv_payment->user_id = $request->user_id; 
+            $adv_payment->employee_id = $employee->id; 
+            $adv_payment->employee_salary_id = $employee_salary->id;
+            $adv_payment->received_payment = $request->adv_received; 
+            $adv_payment->month = $employee_salary->month; 
+            $adv_payment->description = $request->description; 
+            $adv_payment->payment_type = 'dr'; 
+            $adv_payment->balance = $employee->current_adv_balance-$request->adv_received; 
+            $adv_payment->save();
+
+            $employee_salary->adv_received = $employee_salary->adv_received+$request->adv_received; 
+            $employee_salary->save();
+            DB::commit();
+
+            return response()->json(['status' => 'success', 'message' => 'Payment received successfully!']);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return response()->json(['status'=> 'error','message' => $e->validator->errors()->first()], 422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['status' => 'error','message' => 'Failed to Received Amount. ' .$e->getMessage()],500);
         }
     }
 
@@ -726,7 +774,6 @@ class EmployeeController extends Controller
         $response_arr['data'] =$jobs->merge($teamMemberJobs);
         return response()->json($response_arr);
     }
-
 
     //get all sales managers and its number of assign job and complete jobs
     // if ($request->has('start_date') && $request->has('end_date')) {
