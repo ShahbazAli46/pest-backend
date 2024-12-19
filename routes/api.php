@@ -32,6 +32,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('dashboard/bank_collection',[DashboardController::class,'getBankCollection'])->name('dashboard.bank_collection');
     Route::get('dashboard/monthly_financial_report',[DashboardController::class,'getMonthlyFinancialReport'])->name('dashboard.monthly_financial_report');
 
+    
     // Employee
     Route::get('employee/{id?}',[EmployeeController::class,'index'])->name('employee');
     Route::post('employee/create',[EmployeeController::class,'store'])->name('employee.create');
@@ -47,7 +48,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     
 
     Route::get('employee/salary/get',[EmployeeController::class,'getEmployeeSalary'])->name('employee.salary.get');
-    Route::get('employee/salary/calculate_on_per/{id}/{per}',[EmployeeController::class,'calculateSalaryOnPer'])->name('employee.salary.calculate_on_per');
+    Route::get('employee/salary/set_salary_on_per/{id}/{per}',[EmployeeController::class,'setSalaryOnPer'])->name('employee.salary.set_salary_on_per');
     Route::post('employee/salary/paid',[EmployeeController::class,'paidEmployeeSalary'])->name('employee.salary.paid');
     Route::post('employee/salary/advance',[EmployeeController::class,'paidAdvanceEmployee'])->name('employee.salary.advance');
     Route::post('employee/vehicle/fine',[EmployeeController::class,'vehicleEmployeeFine'])->name('employee.vehicle.fine');
@@ -163,6 +164,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('service_invoices/{id?}',[ServiceInvoiceController::class,'index'])->name('service_invoices');
     Route::post('service_invoices/add_payment',[ServiceInvoiceController::class,'addPayment'])->name('service_invoices.add_payment');
     
+    Route::get('outstandings',[ServiceInvoiceController::class,'outstandings'])->name('outstandings');
+
+
     //received cash records
     Route::get('received_cash_record/{id?}',[ReceivedCashRecordController::class,'index'])->name('received_cash_records');
     Route::post('received_cash_record/approve',[ReceivedCashRecordController::class,'approvePayment'])->name('received_cash_record.approve');

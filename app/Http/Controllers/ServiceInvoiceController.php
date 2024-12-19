@@ -212,4 +212,47 @@ class ServiceInvoiceController extends Controller
             return response()->json(['status' => 'error','message' => 'Failed to Add Amount. ' .$e->getMessage()],500);
         }
     }
+
+    public function outstandings(Request $request)
+    {
+        // Get the current date
+        $now = \Carbon\Carbon::now();
+    
+        // Define periods
+        $startOfThisMonth = $now->copy()->startOfMonth(); // Start of the current month
+        $endOfThisMonth = $now->copy()->endOfMonth();
+    
+        $startOfLastMonth = $now->copy()->subMonth()->startOfMonth(); // Start of last month
+        $endOfLastMonth = $now->copy()->subMonth()->endOfMonth();
+    
+        $startOfThreeMonthsAgo = $now->copy()->subMonths(4)->startOfMonth(); // Start of 3 months ago (excluding current and last month)
+        $endOfThreeMonthsAgo = $now->copy()->subMonths(2)->endOfMonth(); // End of October (3 months ago)
+    
+        // $startOfOlderThanThreeMonths = $now->copy()->subMonths(5)->startOfMonth(); // Before 4+ months ago
+    
+        $invoices = [
+            [
+                'title' => 'This Month',
+                'count' => ServiceInvoice::whereBetween('issued_date', [$startOfThisMonth, $endOfThisMonth])->count(),
+                'total_amt' => ServiceInvoice::whereBetween('issued_date', [$startOfThisMonth, $endOfThisMonth])->sum('total_amt'),
+            ],
+            [
+                'title' => 'Last Month',
+                'count' => ServiceInvoice::whereBetween('issued_date', [$startOfLastMonth, $endOfLastMonth])->count(),
+                'total_amt' => ServiceInvoice::whereBetween('issued_date', [$startOfLastMonth, $endOfLastMonth])->sum('total_amt'),
+            ],
+            [
+                'title' => 'Last 3 Months',
+                'count' => ServiceInvoice::whereBetween('issued_date', [$startOfThreeMonthsAgo, $endOfThreeMonthsAgo])->count(),
+                'total_amt' => ServiceInvoice::whereBetween('issued_date', [$startOfThreeMonthsAgo, $endOfThreeMonthsAgo])->sum('total_amt'),
+            ],
+            [
+                'title' => 'Older Than 3 Months',
+                'count' => ServiceInvoice::where('issued_date', '<', $startOfThreeMonthsAgo)->count(),
+                'total_amt' => ServiceInvoice::where('issued_date', '<', $startOfThreeMonthsAgo)->sum('total_amt'),
+            ],
+        ];
+
+        return response()->json(['data' => $invoices]);
+    }
 }

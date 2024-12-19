@@ -389,7 +389,7 @@ class EmployeeController extends Controller
                 'salary_month' => 'nullable|date_format:Y-m',
                 'employee_user_id' => 'nullable|exists:users,id', 
             ]);
-            $employee_salary_query=EmployeeSalary::with(['user','employeeAdvancePayment','vehicleFines']);
+            $employee_salary_query=EmployeeSalary::with(['user.employee','employeeAdvancePayment','vehicleFines']);
 
             if($request->filled('salary_month')){
                 $employee_salary_query->where('month',$request->salary_month);
@@ -408,15 +408,28 @@ class EmployeeController extends Controller
         }
     }
 
-    public function calculateSalaryOnPer($id,$per){
+    public function setSalaryOnPer($id,$per){
         try{
-            $data['employee_salary']=EmployeeSalary::findOrFail($id);
-            $total_salary = ($data['employee_salary']->total_salary * $per) / 100;
-            $data['employee_salary']->payable_salary = strval($total_salary - $data['employee_salary']->total_fines);
-            $employee=Employee::find($data['employee_salary']->employee_id);
-            $data['current_adv_balance']=$employee->current_adv_balance;
-            $data['salary_on_hold']=$employee->hold_salary;
-            return response()->json(['data' => $data]);
+            $employee_salary=EmployeeSalary::findOrFail($id);
+
+            if($employee_salary->status=='unpaid'){
+                $total_salary = ($employee_salary->total_salary * $per) / 100;
+                // $data['employee_salary']->payable_salary = strval($total_salary - $data['employee_salary']->total_fines);
+                $employee_salary->payable_salary=$total_salary - $employee_salary->total_fines;
+                $employee_salary->attendance_per=$per;
+                $employee_salary->save();
+
+                $data['employee_salary']=$employee_salary;
+                $employee=Employee::find($employee_salary->employee_id);
+
+                $data['current_adv_balance']=$employee->current_adv_balance;
+                $data['salary_on_hold']=$employee->hold_salary;
+
+                return response()->json(['data' => $data]);    
+            }else{
+                DB::rollBack();
+                return response()->json(['status' => 'error','message' => 'Employee Salary already Paid.'], 500);
+            }
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
             return response()->json(['status'=>'error', 'message' => 'Employee Salary Not Found.'], 404);

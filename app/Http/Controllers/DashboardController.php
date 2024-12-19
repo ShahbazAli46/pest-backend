@@ -264,6 +264,12 @@ class DashboardController extends Controller
         $data['paid_employee_salary']=($total = $paid_employee_salary->sum('paid_total_salary')) === 0 ? '0' : $total;
         $data['paid_employee_comm']=($total = $paid_employee_comm->sum('paid_amt')) === 0 ? '0' : $total;
 
+        // $data['paid_employee_comm']
+        // 'total_amt' => ServiceInvoice::whereBetween('issued_date', [$startOfThisMonth, $endOfThisMonth])->sum('total_amt'),
+
+
+
+
         return response()->json(['data' => $data]);
     }
 }
