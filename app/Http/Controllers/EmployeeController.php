@@ -136,7 +136,8 @@ class EmployeeController extends Controller
                     'month' => $currentMonth,
                     'status' => 'unpaid',
                 ]);
-             
+                
+
                 // $message="A employee has been added into system by ".$user['data']->name;
                 DB::commit();
                 return response()->json(['status' => 'success','message' => 'Employee Added Successfully']);

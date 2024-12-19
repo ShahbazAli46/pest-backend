@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Mail;
 
 trait GeneralTrait
 {
@@ -43,7 +44,14 @@ trait GeneralTrait
 
             $user_role=Role::where('id',$user->role_id)->first()->name;
             $message="Dear User This is your Password ".$user_password;
-            //should be send through mail
+
+            try {
+                Mail::to($registerUserData['email'])->queue(
+                    new \App\Mail\WelcomeMail($user->name, $user_role, $user_password)
+                );
+            } catch (\Exception $mailException) {
+                \Log::error('Failed to send welcome email: ' . $mailException->getMessage());
+            }
 
             // if($request->image){
             //     saveImage($request->image,$user->id,'App\Models\User','users','Employee Photo');
