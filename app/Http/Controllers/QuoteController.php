@@ -95,8 +95,8 @@ class QuoteController extends Controller
                 'services.*.detail' => 'required|array',
                 'services.*.detail.*.job_type' => 'required|string|in:one_time,yearly,monthly,daily,weekly,custom',
                 'services.*.detail.*.rate' => 'required|numeric|min:1', 
-                'services.*.detail.*.dates' => 'required|array', 
-                'services.*.detail.*.dates.*' => 'required|date', 
+                // 'services.*.detail.*.dates' => 'required|array', 
+                // 'services.*.detail.*.dates.*' => 'required|date', 
             ]);
 
             if ($request->input('billing_method') == 'installments') {
@@ -135,7 +135,8 @@ class QuoteController extends Controller
             // Loop through services to calculate subtotal
             foreach ($request->input('services') as $service) {
                 foreach ($service['detail'] as $detail) {
-                    $dateCount = count($detail['dates']); // Count number of dates
+                    // $dateCount = count($detail['dates']); // Count number of dates
+                    $dateCount=$detail['no_of_jobs'];
                     $rate = $detail['rate']; // Get the rate
                     $subTotal = $dateCount * $rate; // Calculate subtotal for this service detail
                     $sub_total += $subTotal; // Add to total subtotal
@@ -167,10 +168,11 @@ class QuoteController extends Controller
             // Insert into quote_services table
             foreach ($request->input('services') as $service) {
                 foreach ($service['detail'] as $detail) {
-                    $dateCount = count($detail['dates']);
+                    // $dateCount = count($detail['dates']);
+                    $dateCount=$detail['no_of_jobs'];
+                    
                     $rate = $detail['rate']; // Get the rate
                     $subTotal = $dateCount * $rate; 
-
                     $quoteService = QuoteService::create([
                         'quote_id' => $quote->id,
                         'service_id' => $service['service_id'],
@@ -179,16 +181,16 @@ class QuoteController extends Controller
                         'rate' => $rate,
                         'sub_total' => $subTotal, 
                     ]);
-
+                                               
                     // Insert dates into quote_service_dates table
-                    foreach ($detail['dates'] as $date) {
-                        QuoteServiceDate::create([
-                            'quote_id' => $quote->id,
-                            'quote_service_id' => $quoteService->id,
-                            'service_id' => $service['service_id'],
-                            'service_date' => $date,
-                        ]);
-                    }
+                    // foreach ($detail['dates'] as $date) {
+                    //     QuoteServiceDate::create([
+                    //         'quote_id' => $quote->id,
+                    //         'quote_service_id' => $quoteService->id,
+                    //         'service_id' => $service['service_id'],
+                    //         'service_date' => $date,
+                    //     ]);
+                    // }
                 }
             }
 
