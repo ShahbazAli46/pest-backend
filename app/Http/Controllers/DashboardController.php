@@ -261,7 +261,7 @@ class DashboardController extends Controller
             $paid_employee_comm->where('month',$request->month);
         }
         $data['purchase_order'] = ($total = $purchase_order->sum('grand_total')) === 0 ? '0' : $total;
-        $data['paid_employee_salary']=($total = $paid_employee_salary->sum('paid_total_salary')) === 0 ? '0' : $total;
+        $data['paid_employee_salary']=($total = $paid_employee_salary->sum('paid_salary')) === 0 ? '0' : $total;
         $data['paid_employee_comm']=($total = $paid_employee_comm->sum('paid_amt')) === 0 ? '0' : $total;
 
         // $data['paid_employee_comm']

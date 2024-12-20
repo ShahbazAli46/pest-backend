@@ -698,14 +698,14 @@ class EmployeeController extends Controller
             //     $total_salary = $employee_salary->total_salary; // Total salary to be paid
             //     $attendance_per = $request->attendance_per; // Attendance percentage
     
-            //     $paid_total_salary = ($total_salary * $attendance_per) / 100;
-            //     $employee_salary->paid_total_salary = $paid_total_salary; 
+            //     $paid_salary = ($total_salary * $attendance_per) / 100;
+            //     $employee_salary->paid_salary = $paid_salary; 
             //     $employee_salary->attendance_per = $attendance_per; 
             //     $employee_salary->status = 'paid'; 
             //     $employee_salary->paid_at = now(); 
             //     $employee_salary->save();
     
-            //     return response()->json(['status' => 'success','message' => "Salary paid based on $attendance_per% attendance: $paid_total_salary"]);
+            //     return response()->json(['status' => 'success','message' => "Salary paid based on $attendance_per% attendance: $paid_salary"]);
             // } else {
             //     return response()->json(['status' => 'error','message' => 'Employee Salary Not Found.'], 500);
             // }

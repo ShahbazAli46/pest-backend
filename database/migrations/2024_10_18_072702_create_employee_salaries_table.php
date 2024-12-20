@@ -39,5 +39,4 @@ return new class extends Migration
         Schema::dropIfExists('employee_salaries');
     }
 };
-// ALTER TABLE `employee_salaries` CHANGE `paid_total_salary` `paid_salary` DECIMAL(15,2) NOT NULL DEFAULT '0.00';
 
