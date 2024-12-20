@@ -225,7 +225,7 @@ class ServiceInvoiceController extends Controller
         $startOfLastMonth = $now->copy()->subMonth()->startOfMonth(); // Start of last month
         $endOfLastMonth = $now->copy()->subMonth()->endOfMonth();
     
-        $startOfThreeMonthsAgo = $now->copy()->subMonths(4)->startOfMonth(); // Start of 3 months ago (excluding current and last month)
+        $startOfThreeMonthsAgo = $now->copy()->subMonths(2)->startOfMonth(); // Start of 3 months ago (excluding current and last month)
         $endOfThreeMonthsAgo = $now->copy()->subMonths(2)->endOfMonth(); // End of October (3 months ago)
     
         // $startOfOlderThanThreeMonths = $now->copy()->subMonths(5)->startOfMonth(); // Before 4+ months ago
