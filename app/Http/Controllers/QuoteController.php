@@ -220,14 +220,39 @@ class QuoteController extends Controller
     }
 
     //
-    public function moveToContract($quote_id){
+    public function moveToContract(Request $request,$quote_id){
         try {
             DB::beginTransaction();
+            $request->validate([     
+                // Validate the quote_services array
+                'quote_services' => 'required|array',
+                'quote_services.*.quote_service_id' => 'required|integer|exists:quote_services,id', 
+            
+                'quote_services.*.dates' => 'required|array', 
+                'quote_services.*.dates.*' => 'required|date', 
+            ]);
+
+
              // Find by ID
             $quote = Quote::findOrFail($quote_id);
             if($quote->is_contracted==1){
                 DB::rollBack();
                 return response()->json(['status' => 'error','message' => 'The Quote has Already been Contracted.'],500);
+            }
+
+            // Insert into quote_services dates table
+            foreach ($request->input('quote_services') as $quote_service) {
+                $quote_ser=QuoteService::find($quote_service['quote_service_id']);
+
+                // Insert dates into quote_service_dates table
+                foreach ($quote_service['dates'] as $date) {
+                    QuoteServiceDate::create([
+                        'quote_id' => $quote->id,
+                        'quote_service_id' => $quote_ser->id,
+                        'service_id' => $quote_ser->service_id,
+                        'service_date' => $date,
+                    ]);
+                }
             }
 
             // Get the current date

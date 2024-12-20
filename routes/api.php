@@ -144,7 +144,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     //Quote & Contracts
     Route::get('quote',[QuoteController::class,'index'])->name('quote');
     Route::post('quote/manage',[QuoteController::class,'manage'])->name('quote.manage');
-    Route::get('quote/move/contract/{id}',[QuoteController::class,'moveToContract'])->name('quote.move.contract');
+    Route::post('quote/move/contract/{id}',[QuoteController::class,'moveToContract'])->name('quote.move.contract');
     Route::post('quote/contract/date/update',[QuoteController::class,'updateContractDate'])->name('quote.contract.date.update');
 
     //Jobs

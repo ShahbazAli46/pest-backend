@@ -233,23 +233,23 @@ class ServiceInvoiceController extends Controller
         $invoices = [
             [
                 'title' => 'This Month',
-                'count' => ServiceInvoice::whereBetween('issued_date', [$startOfThisMonth, $endOfThisMonth])->count(),
-                'total_amt' => ServiceInvoice::whereBetween('issued_date', [$startOfThisMonth, $endOfThisMonth])->sum('total_amt'),
+                'count' => ServiceInvoice::where('status','unpaid')->whereBetween('issued_date', [$startOfThisMonth, $endOfThisMonth])->count(),
+                'total_amt' => ServiceInvoice::where('status','unpaid')->whereBetween('issued_date', [$startOfThisMonth, $endOfThisMonth])->sum('total_amt'),
             ],
             [
                 'title' => 'Last Month',
-                'count' => ServiceInvoice::whereBetween('issued_date', [$startOfLastMonth, $endOfLastMonth])->count(),
-                'total_amt' => ServiceInvoice::whereBetween('issued_date', [$startOfLastMonth, $endOfLastMonth])->sum('total_amt'),
+                'count' => ServiceInvoice::where('status','unpaid')->whereBetween('issued_date', [$startOfLastMonth, $endOfLastMonth])->count(),
+                'total_amt' => ServiceInvoice::where('status','unpaid')->whereBetween('issued_date', [$startOfLastMonth, $endOfLastMonth])->sum('total_amt'),
             ],
             [
                 'title' => 'Last 3 Months',
-                'count' => ServiceInvoice::whereBetween('issued_date', [$startOfThreeMonthsAgo, $endOfThreeMonthsAgo])->count(),
-                'total_amt' => ServiceInvoice::whereBetween('issued_date', [$startOfThreeMonthsAgo, $endOfThreeMonthsAgo])->sum('total_amt'),
+                'count' => ServiceInvoice::where('status','unpaid')->whereBetween('issued_date', [$startOfThreeMonthsAgo, $endOfThreeMonthsAgo])->count(),
+                'total_amt' => ServiceInvoice::where('status','unpaid')->whereBetween('issued_date', [$startOfThreeMonthsAgo, $endOfThreeMonthsAgo])->sum('total_amt'),
             ],
             [
                 'title' => 'Older Than 3 Months',
-                'count' => ServiceInvoice::where('issued_date', '<', $startOfThreeMonthsAgo)->count(),
-                'total_amt' => ServiceInvoice::where('issued_date', '<', $startOfThreeMonthsAgo)->sum('total_amt'),
+                'count' => ServiceInvoice::where('status','unpaid')->where('issued_date', '<', $startOfThreeMonthsAgo)->count(),
+                'total_amt' => ServiceInvoice::where('status','unpaid')->where('issued_date', '<', $startOfThreeMonthsAgo)->sum('total_amt'),
             ],
         ];
 
