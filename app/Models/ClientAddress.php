@@ -10,7 +10,7 @@ class ClientAddress extends Model
     use HasFactory;
 
     public $table="client_addresses";
-    protected $fillable = ['client_id','user_id','address','city','lat','lang','country','state'];
+    protected $fillable = ['client_id','user_id','address','city','lat','lang','country','state','area'];
 
     public function client()
     {

@@ -163,6 +163,7 @@ class ClientController extends Controller
                 'lang' => 'nullable|numeric|between:-180,180', // Longitude should be between -180 and 180
                 'country' => 'nullable|string|max:100',
                 'state' => 'nullable|string|max:100',
+                'area' => 'nullable|string|max:255',
             ]);
             $user=User::with(['client'])->where('id',$request->user_id)->where('role_id',5)->first();
     
@@ -200,6 +201,7 @@ class ClientController extends Controller
                 'lang' => 'nullable|numeric|between:-180,180', // Longitude should be between -180 and 180
                 'country' => 'nullable|string|max:100',
                 'state' => 'nullable|string|max:100',
+                'area' => 'nullable|string|max:255',
             ]);
 
             // Find the bank by ID
