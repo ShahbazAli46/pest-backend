@@ -9,6 +9,7 @@ use App\Models\Expense;
 use App\Models\Job;
 use App\Models\Ledger;
 use App\Models\PurchaseOrder;
+use App\Models\ServiceInvoice;
 use App\Models\Setting;
 use App\Models\Supplier;
 use App\Models\User;
@@ -108,7 +109,7 @@ class DashboardController extends Controller
             ]);
         }
     }
-    
+
     //get cash collection
     public function getCashCollection(Request $request) {
         // Check if date filters are present
@@ -118,6 +119,10 @@ class DashboardController extends Controller
             
             $data['total_cash'] = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->where('entry_type','cr')->where('payment_type','cash')->whereBetween('created_at', [$startDate, $endDate])->sum('cash_amt')?: '0';
             $data['no_of_transection'] = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->where('entry_type', 'cr')->where('payment_type','cash')->whereBetween('created_at', [$startDate, $endDate])->count();
+           
+            $data['receiveable_invoices_amt'] = ServiceInvoice::where('status','unpaid')->whereBetween('issued_date', [$startDate, $endDate])->sum('total_amt'); 
+            $data['receiveable_invoices_count'] = ServiceInvoice::where('status','unpaid')->whereBetween('issued_date', [$startDate, $endDate])->count();
+   
             return response()->json([
                 'start_date' => $startDate,
                 'end_date' => $endDate,
@@ -126,6 +131,10 @@ class DashboardController extends Controller
         } else {
             $data['total_cash'] = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->where('payment_type','cash')->where('entry_type','cr')->sum('cash_amt')?: '0';
             $data['no_of_transection'] = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->where('payment_type','cash')->where('entry_type', 'cr')->count();
+            
+            $data['receiveable_invoices_amt'] = ServiceInvoice::where('status','unpaid')->sum('total_amt'); 
+            $data['receiveable_invoices_count'] = ServiceInvoice::where('status','unpaid')->count();
+
             return response()->json([
                 'data' => $data,
             ]);
