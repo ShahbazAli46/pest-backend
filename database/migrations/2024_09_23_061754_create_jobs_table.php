@@ -24,7 +24,7 @@ return new class extends Migration
             $table->string('trn')->nullable();
             $table->string('tag')->nullable();
             $table->boolean('is_food_watch_account')->default(0);
-            $table->date('job_date')->nullable();
+            $table->timestamp('job_date')->nullable();
             $table->enum('priority',['high','medium','low']);
             $table->decimal('sub_total', 15, 2)->default(0);
             $table->decimal('dis_per', 15, 2)->default(0);

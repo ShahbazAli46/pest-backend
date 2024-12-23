@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('job_reschedule_details', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('job_id');
-            $table->date('job_date');
+            $table->timestamp('job_date');
             $table->text('reason')->nullable();
             $table->foreign('job_id')->references('id')->on('jobs')->onDelete('cascade');
             $table->timestamps();

@@ -121,7 +121,7 @@ class QuoteController extends Controller
                 $manage_type='Update';
                 //delete old data
                 $quote->quoteServices()->delete();
-                $quote->quoteServiceDates()->delete();
+                // $quote->quoteServiceDates()->delete();
             }
             // Extract service IDs
             $serviceIds = array_column($request->input('services'), 'service_id');

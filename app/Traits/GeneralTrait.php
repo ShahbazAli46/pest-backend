@@ -141,7 +141,7 @@ trait GeneralTrait
                 'user_id' => 'required|exists:users,id,role_id,5',
                 'quote_id' => 'nullable|exists:quotes,id',
                 'job_title' => 'required|string|max:255',
-                'job_date' => 'required|date',
+                'job_date' => 'required|date_format:Y-m-d H:i:s',
                 'client_address_id' => 'required|exists:client_addresses,id',
                 'subject' => 'nullable|string|max:255',
                 'tm_ids' => 'required|array',

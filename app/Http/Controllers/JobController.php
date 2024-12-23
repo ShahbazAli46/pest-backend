@@ -115,7 +115,7 @@ class JobController extends Controller
             DB::beginTransaction();
             $request->validate([     
                 'job_id' => 'required|exists:jobs,id',
-                'job_date' => 'required|date',
+                'job_date' => 'required|date_format:Y-m-d H:i:s',
                 'reason' => 'nullable|max:1000',
             ]);
 
