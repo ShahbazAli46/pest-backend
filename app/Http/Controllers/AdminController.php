@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Expense;
 use App\Models\Ledger;
+use App\Models\User;
 use App\Models\VehicleExpense;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class AdminController extends Controller
 {
@@ -45,6 +48,19 @@ class AdminController extends Controller
             $data['pos_collection']=Ledger::where(['person_type'=> 'App\Models\User','person_id'=>1,'payment_type'=>'pos','entry_type'=>'cr'])->sum('cr_amt');
             $data['bank_transfer']=Ledger::where(['person_type'=> 'App\Models\User','person_id'=>1,'entry_type'=>'cr'])->whereIn('payment_type',['cheque','online'])->sum('cr_amt');
             return response()->json(['data' => $data]);
+        }
+    }
+
+    //get admin current cash balance
+    public function getAdminCashBalance(){
+        try {
+            $user=User::findOrFail(1);
+            $data['cash_balance']=$user->getCurrentBalance(User::class);
+            return response()->json(['data' => $data]);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['status'=>'error', 'message' => 'Admin Not Found.'], 404);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error','message' => 'Failed to Get Admin Balance. ' .$e->getMessage()],500);
         }
     }
 }

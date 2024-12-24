@@ -70,6 +70,7 @@ class BankController extends Controller
         }
     }
 
+
     //Update
     public function update(Request $request, $id)
     {
