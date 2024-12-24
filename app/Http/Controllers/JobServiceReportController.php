@@ -72,6 +72,8 @@ class JobServiceReportController extends Controller
                 'used_products.*.qty' => 'required|integer|min:1',
                 'used_products.*.price' => 'required|numeric|min:0',
                 'used_products.*.is_extra' => 'boolean',
+
+                'signature_img' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120', 
             ]);
 
             // Extract IDs
@@ -96,6 +98,10 @@ class JobServiceReportController extends Controller
                 $requestData['tm_ids'] = json_encode($tmIds);
                 $requestData['pest_found_ids'] = json_encode($pestFoundIds);
 
+                if ($request->hasFile('signature_img')) {
+                    $requestData['signature_img']=$this->saveImage($request->signature_img,'signature_imgs');
+                }
+                
                 // Create the job service report
                 $job_report = JobServiceReport::create($requestData);
                 if($job_report){

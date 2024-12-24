@@ -14,7 +14,7 @@ class Job extends Model
     'service_ids','tm_ids','description','trn','tag','is_food_watch_account',
     'job_date', 'priority', 'sub_total', 'dis_per', 'dis_amt', 'vat_per', 'vat_amt', 
     'grand_total', 'is_completed', 'term_and_condition_id','quote_id','is_modified','captain_id',
-    'team_member_ids','job_instructions','job_start_time','job_end_time','signature_img'];
+    'team_member_ids','job_instructions','job_start_time','job_end_time'];
 
     public function user()
     {
@@ -79,13 +79,5 @@ class Job extends Model
     public function rescheduleDates()
     {
         return $this->hasMany(JobRescheduleDetail::class);
-    }
-
-    public function getSignatureImgAttribute($value)
-    {
-        if ($value) {
-            return url($value);
-        }
-        return null; 
     }
 }

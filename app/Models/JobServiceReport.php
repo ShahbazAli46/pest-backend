@@ -9,7 +9,7 @@ class JobServiceReport extends Model
 {
     use HasFactory;
     public $table="job_service_reports";
-    protected $fillable = ['job_id','type_of_visit','pest_found_ids','tm_ids','recommendations_and_remarks','for_office_use'];
+    protected $fillable = ['job_id','type_of_visit','pest_found_ids','tm_ids','recommendations_and_remarks','for_office_use','signature_img'];
 
     public function job()
     {
@@ -36,5 +36,13 @@ class JobServiceReport extends Model
     {
         $tmIds = json_decode($this->tm_ids);
         return TreatmentMethod::whereIn('id', $tmIds)->get();
+    }
+
+    public function getSignatureImgAttribute($value)
+    {
+        if ($value) {
+            return url($value);
+        }
+        return null; 
     }
 }

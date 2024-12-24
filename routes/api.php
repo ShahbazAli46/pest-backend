@@ -154,7 +154,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('job/reschedule',[JobController::class,'rescheduleJob'])->name('job.reschedule');
     Route::post('job/sales_manager/assign',[JobController::class,'assignJob'])->name('job.sales_manager.assign');
     Route::get('job/start/{id}',[JobController::class,'startJob'])->name('job.start');
-    Route::post('job/move/complete/{id}',[JobController::class,'moveToComplete'])->name('job.move.complete');
+    Route::get('job/move/complete/{id}',[JobController::class,'moveToComplete'])->name('job.move.complete');
 
     //service report
     Route::get('job/service_report/{id}',[JobServiceReportController::class,'index'])->name('job.service_report');
