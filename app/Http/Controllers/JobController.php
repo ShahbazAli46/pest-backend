@@ -226,9 +226,12 @@ class JobController extends Controller
     }
 
     //
-    public function moveToComplete($job_id){
+    public function moveToComplete(Request $request,$job_id){
         try {
             DB::beginTransaction();
+            $request->validate([     
+                'signature_img' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120', 
+            ]);
 
             // Find by ID
             $job = Job::findOrFail($job_id);
@@ -239,8 +242,13 @@ class JobController extends Controller
                 DB::rollBack();
                 return response()->json(['status' => 'error', 'message' => 'Please Start This Job Before Proceeding.'], 500);
             }
+            $requestData=['is_completed'=>1,'job_end_time'=>now()];
             
-            $job->update(['is_completed'=>1,'job_end_time'=>now()]);
+            if ($request->hasFile('signature_img')) {
+                $requestData['signature_img']=$this->saveImage($request->signature_img,'signature_imgs');
+            }
+
+            $job->update($requestData);
             if($job){
                 DB::commit();
                 return response()->json(['status' => 'success','message' => 'Job Moved to Completed Successfully']);
