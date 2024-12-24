@@ -41,7 +41,7 @@ class EmployeeController extends Controller
                 $employee->load([
                     'captainJobs' => function($query) {
                         $query->where('is_completed', '!=', 1) // Filter by is_completed != 1
-                            ->with(['captain.employee','user.client.referencable','termAndCondition','jobServices.service','clientAddress']);
+                            ->with(['captain.employee','user.client.referencable','termAndCondition','jobServices.service','clientAddress','rescheduleDates']);
                     }
                 ]);
                
