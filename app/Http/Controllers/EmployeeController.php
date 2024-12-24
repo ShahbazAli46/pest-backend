@@ -201,13 +201,15 @@ class EmployeeController extends Controller
             $request->validate([
                 'user_id' => 'required|exists:users,id',
                 'name' => 'required|max:100',
-                'status' => 'nullable|max:100',
+                'status' => 'required|max:100',
                 'start' => 'nullable|date',
                 'expiry' => 'nullable|date|after_or_equal:start',
                 'desc' => 'nullable|max:255',
                 'file' => 'nullable|mimes:jpeg,png,jpg,gif,pdf,doc,docx|max:5120',
+                'process_date' => 'nullable|date',
+                'process_amt' => 'nullable|numeric|min:0',
             ]);
-            
+
             $employee = Employee::where('user_id', $request->user_id)->first();
             if (!$employee) {
                 DB::rollBack();
@@ -216,7 +218,8 @@ class EmployeeController extends Controller
 
             $emp_docs = EmployeeDocs::where('employee_user_id', $request->user_id)->where('name', $request->name)->first();
     
-            $data = $request->only(['name', 'status', 'start', 'expiry', 'desc']);
+            $data = $request->only(['name', 'status', 'start', 'expiry', 'desc','process_date','process_amt']);
+
             $data['employee_user_id'] = $request->user_id;
             $data['employee_id'] = $employee->id;
         

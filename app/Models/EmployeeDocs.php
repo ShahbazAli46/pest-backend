@@ -9,8 +9,8 @@ class EmployeeDocs extends Model
 {
     use HasFactory;
     public $table="employee_docs";
-    protected $fillable = ['name','file','status','start','expiry','desc','employee_user_id','employee_id'];
-
+    protected $fillable = ['name','file','status','start','expiry','desc','employee_user_id','employee_id','process_date','process_amt'];
+    
     public function user()
     {
         return $this->belongsTo(User::class, 'employee_user_id');
