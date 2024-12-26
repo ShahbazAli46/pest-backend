@@ -84,7 +84,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('service/create',[ServiceController::class,'store'])->name('service.create');
     Route::post('service/update/{id}',[ServiceController::class,'update'])->name('service.update');
 
-    // Clients & Addresses
+    // Clients & Addresses 
     Route::get('client/{id?}',[ClientController::class,'index'])->name('client');
     Route::get('client/references/get',[ClientController::class,'getReference'])->name('client.references.get');
     Route::post('client/create',[ClientController::class,'storeClient'])->name('client.create');
@@ -94,6 +94,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('client/bank_info/update/{id}',[ClientController::class,'updateClientBankInfo'])->name('client.bank_info.update');
     Route::get('client/ledger/get/{id?}',[ClientController::class,'getClientLedger'])->name('client.ledger.get');
     Route::get('client/received_amount/get/{id?}',[ClientController::class,'getClientReceivedAmt'])->name('client.received_amount.get');
+    //Jobs & Clients
+    Route::get('client/jobs/get/{id}',[ClientController::class,'getClientJobs'])->name('client.jobs.get');
 
     // Products
     Route::get('product/{id?}',[ProductController::class,'index'])->name('product');

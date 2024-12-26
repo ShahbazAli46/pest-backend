@@ -284,10 +284,10 @@ class ClientController extends Controller
             if($request->has('start_date') && $request->has('end_date')){
                 $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
                 $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
-                $ledgers = Ledger::with(['personable.client.referencable'])->whereBetween('person_id',$client_user_arr)->whereBetween('created_at', [$startDate, $endDate])->where(['person_type' => 'App\Models\User'])->get();
+                $ledgers = Ledger::with(['personable.client.referencable'])->whereIn('person_id',$client_user_arr)->whereBetween('created_at', [$startDate, $endDate])->where(['person_type' => 'App\Models\User'])->get();
                 return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $ledgers]);
             }else{
-                $ledgers = Ledger::with(['personable.client.referencable'])->whereBetween('person_id',$client_user_arr)->where(['person_type' => 'App\Models\User'])->get();
+                $ledgers = Ledger::with(['personable.client.referencable'])->whereIn('person_id',$client_user_arr)->where(['person_type' => 'App\Models\User'])->get();
                 return response()->json(['data' => $ledgers]);
             }
         }else{
@@ -354,4 +354,37 @@ class ClientController extends Controller
             }
         }
     }
+
+    
+     /* ================= Client jobs =============*/ 
+     public function getClientJobs(Request $request,$id){
+        if($request->has('start_date') && $request->has('end_date')){
+            $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
+            $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
+            $client=User::with([
+                'client.referencable',
+                'clientJobs' => function ($query) use ($startDate, $endDate) {
+                    $query->whereBetween('job_date', [$startDate, $endDate]);
+                },
+                'clientJobs.rescheduleDates',
+                'clientJobs.termAndCondition',
+                'clientJobs.clientAddress',
+                'clientJobs.captain',
+                'clientJobs.jobServices.service',
+            ])->where('role_id',5)->where('id',$id)->first();
+            return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $client]);
+        }else{
+            $client=User::with([
+                'client.referencable',
+                'clientJobs.rescheduleDates',
+                'clientJobs.termAndCondition',
+                'clientJobs.clientAddress',
+                'clientJobs.captain',
+                'clientJobs.jobServices.service'
+            ])->where('role_id',5)->where('id',$id)->first();
+            return response()->json(['data' => $client]);
+        }
+    }
+
+
 }
