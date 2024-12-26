@@ -78,10 +78,10 @@ class QuoteController extends Controller
                 'tm_ids' => 'required|array',
                 'tm_ids.*' => 'integer|exists:treatment_methods,id', // Assuming team members are in a table
                 'description' => 'nullable|string',
-                'trn' => 'nullable|max:100',
+                // 'trn' => 'nullable|max:100',
                 'tag' => 'nullable|string|max:100',
                 'duration_in_months' => 'required|integer|min:1',
-                'is_food_watch_account' => 'boolean',
+                // 'is_food_watch_account' => 'boolean',
                 'billing_method' => 'required|in:installments,monthly,service,one_time',
                 'dis_per' => 'nullable|numeric|min:0',
                 'vat_per' => 'nullable|numeric|min:0',
@@ -224,6 +224,10 @@ class QuoteController extends Controller
         try {
             DB::beginTransaction();
             $request->validate([     
+                'trn' => 'nullable|max:100',
+                'license_no' => 'nullable|string|max:100',
+                'is_food_watch_account' => 'nullable|boolean',
+
                 // Validate the quote_services array
                 'quote_services' => 'required|array',
                 'quote_services.*.quote_service_id' => 'required|integer|exists:quote_services,id', 
@@ -259,7 +263,8 @@ class QuoteController extends Controller
             $now = \Carbon\Carbon::now();
             $end_date = $now->addMonths($quote->duration_in_months);
 
-            $quote->update(['is_contracted'=>1,'contract_start_date'=>now(),'contract_end_date'=>$end_date]);
+            $quote->update(['is_contracted'=>1,'contract_start_date'=>now(),'contract_end_date'=>$end_date,'trn'=>$request->trn,'license_no'=>$request->license_no,'is_food_watch_account'=>$request->is_food_watch_account]);
+
             if($quote){
                 //create jobs
                 $uniqueServiceDates = $quote->quoteServiceDates()->select('service_date')->distinct()->get();

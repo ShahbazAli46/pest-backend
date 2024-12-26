@@ -75,7 +75,6 @@ class JobServiceReportController extends Controller
 
                 'signature_img' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120', 
             ]);
-
             // Extract IDs
             $tmIds = $request->input('tm_ids');
             $pestFoundIds = $request->input('pest_found_ids');
@@ -101,7 +100,7 @@ class JobServiceReportController extends Controller
                 if ($request->hasFile('signature_img')) {
                     $requestData['signature_img']=$this->saveImage($request->signature_img,'signature_imgs');
                 }
-                
+
                 // Create the job service report
                 $job_report = JobServiceReport::create($requestData);
                 if($job_report){
