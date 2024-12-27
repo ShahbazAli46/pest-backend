@@ -56,8 +56,11 @@ class ServiceInvoice extends Model
 
     public function getJobs()
     {
-        $jobIds = json_decode($this->job_ids);
-        return Job::with(['user.client.referencable', 'termAndCondition', 'jobServices.service','rescheduleDates','clientAddress','captain'])->whereIn('id', $jobIds)->get();
+        if(isset($this->job_ids)){
+            $jobIds = json_decode($this->job_ids);
+            return Job::with(['user.client.referencable', 'termAndCondition', 'jobServices.service','rescheduleDates','clientAddress','captain'])->whereIn('id', $jobIds)->get();
+        }
+        return null;
     }
 
 }
