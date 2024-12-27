@@ -24,7 +24,7 @@ return new class extends Migration
             $table->string('trn')->nullable();
             $table->string('tag')->nullable();
             $table->integer('duration_in_months')->default(1);
-            $table->boolean('is_food_watch_account')->default(0);
+            $table->boolean('is_food_watch_account')->default(0)->nullable();
             $table->enum('billing_method',['installments','monthly','service','one_time'])->nullable();
             $table->integer('no_of_installments')->default(1);
 

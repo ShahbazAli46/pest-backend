@@ -9,6 +9,7 @@ use App\Models\JobRescheduleDetail;
 use App\Models\JobService;
 use App\Models\Ledger;
 use App\Models\Product;
+use App\Models\Quote;
 use App\Models\Role;
 use App\Models\Service;
 use App\Models\ServiceInvoice;
@@ -303,6 +304,96 @@ trait GeneralTrait
 
         return $issueDates;
     }
+
+    function linkJobsToInvoice($quoteId)
+    {
+        $invoices = ServiceInvoice::where('invoiceable_id', $quoteId)
+        ->where('invoiceable_type', Quote::class)
+        ->orderBy('issued_date')->get();
+        if(count($invoices)>1){
+            $jobs = Job::where('quote_id', $quoteId)->orderBy('job_date')->get();
+            $remainingJobs = collect($jobs); // Start with all jobs
+            $lastAssignedJobs = collect();  // Tracks the last assigned jobs
+
+            // return $jobs;
+            foreach ($invoices as $index => $invoice) {
+                $jobIdsForInvoice=[];
+                if($index==0){
+                    for($i=0; $i<=count($invoices); $i++){
+                        $firstDate = \Carbon\Carbon::parse($invoices[$index+$i]->issued_date)->endOfDay(); // Use endOfDay to include the entire day
+                        $jobs_data = $remainingJobs->filter(function ($job) use ($firstDate) {
+                            return $job->job_date <= $firstDate;
+                        });                                                                                        
+                        if ($jobs_data->isNotEmpty()) {
+                            foreach ($jobs_data as $job) {
+                                $jobIdsForInvoice[] = $job->id;
+                            }
+                            break;
+                        }
+                    }
+                }else if($index==count($invoices)-1){
+                    for($i=1; $i<=count($invoices); $i++){
+                        $firstDate = \Carbon\Carbon::parse($invoices[$index-$i]->issued_date)->endOfDay(); // Use endOfDay to include the entire day
+                        $jobs_data = $remainingJobs->filter(function ($job) use ($firstDate) {
+                            return $job->job_date > $firstDate;
+                        });
+
+                        if ($jobs_data->isNotEmpty()) {
+                            foreach ($jobs_data as $job) {
+                                $jobIdsForInvoice[] = $job->id;
+                            }
+                            break;
+                        }
+                    }
+                }else{
+                    $firstDate = \Carbon\Carbon::parse($invoices[$index-1]->issued_date)->endOfDay(); // Use endOfDay to include the entire day
+                    for ($i = 0; $i < count($invoices); $i++) {
+                        if (($index + $i) >= count($invoices)) { 
+                            $jobs_data = $remainingJobs->filter(function ($job) use ($firstDate) {
+                                return $job->job_date > $firstDate;
+                            });
+                        }else{
+                            $secondDate = \Carbon\Carbon::parse($invoices[$index+$i]->issued_date)->endOfDay(); // Use endOfDay to include the entire day
+                            $jobs_data = $remainingJobs->filter(function ($job) use ($firstDate, $secondDate) {
+                                return $job->job_date > $firstDate && $job->job_date <= $secondDate;
+                            });
+                        }
+
+                        if ($jobs_data->isNotEmpty()) {
+                            foreach ($jobs_data as $job) {
+                                $jobIdsForInvoice[] = $job->id;
+                            }
+                            break;
+                        }
+                    }
+
+                    if (empty($jobIdsForInvoice)) {
+                        for($i=1; $i<=count($invoices); $i++){
+                            $firstDate = \Carbon\Carbon::parse($invoices[$index-$i]->issued_date)->endOfDay(); // Use endOfDay to include the entire day
+                            $jobs_data = $remainingJobs->filter(function ($job) use ($firstDate) {
+                                return $job->job_date > $firstDate;
+                            });
+                            if ($jobs_data->isNotEmpty()) {
+                                foreach ($jobs_data as $job) {
+                                    $jobIdsForInvoice[] = $job->id;
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+                $invoice->update([
+                    'job_ids' => json_encode($jobIdsForInvoice),
+                ]);
+            }
+        }else{
+            $job_ids = Job::where('quote_id', $quoteId)->orderBy('job_date')->pluck('id');
+            foreach ($invoices as $index => $invoice) {
+                $invoices->update(['job_ids' => json_encode($job_ids)]);
+            }
+        }
+    }
+
 
     // // Example of a utility method
     // public function formatDate($date)

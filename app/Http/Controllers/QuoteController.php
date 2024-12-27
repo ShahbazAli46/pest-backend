@@ -340,6 +340,10 @@ class QuoteController extends Controller
                     // }
                 }
 
+                //link jobs with invoices
+                $this->linkJobsToInvoice($quote->id);
+
+
                 // Update the CLIENT ledger
                 $user=User::find($quote->user_id);
                 $lastClientLedger = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => $quote->user_id])->latest()->first();

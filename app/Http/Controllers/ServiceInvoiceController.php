@@ -58,6 +58,7 @@ class ServiceInvoiceController extends Controller
             }
         }else{
             $invoice=ServiceInvoice::with(['invoiceable','details.itemable','amountHistory','user.client'])->where('id',$id)->first();
+            $invoice->jobs = $invoice->getJobs(); 
             $invoice->title = $invoice->title; 
             return response()->json(['data' => $invoice]);
         }

@@ -356,8 +356,8 @@ class ClientController extends Controller
     }
 
     
-     /* ================= Client jobs =============*/ 
-     public function getClientJobs(Request $request,$id){
+    /* ================= Client jobs =============*/ 
+    public function getClientJobs(Request $request,$id){
         if($request->has('start_date') && $request->has('end_date')){
             $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
             $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
@@ -385,6 +385,5 @@ class ClientController extends Controller
             return response()->json(['data' => $client]);
         }
     }
-
 
 }

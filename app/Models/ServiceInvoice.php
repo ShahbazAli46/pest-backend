@@ -10,7 +10,7 @@ class ServiceInvoice extends Model
     use HasFactory;
     public $table="service_invoices";
 
-    protected $fillable = ['service_invoice_id','invoiceable_id','invoiceable_type','user_id','issued_date','total_amt','paid_amt','status'];
+    protected $fillable = ['service_invoice_id','invoiceable_id','invoiceable_type','user_id','issued_date','total_amt','paid_amt','status','job_ids'];
 
     public function invoiceable()
     {
@@ -52,6 +52,12 @@ class ServiceInvoice extends Model
                 $invoice->save();
             }
         });
+    }
+
+    public function getJobs()
+    {
+        $jobIds = json_decode($this->job_ids);
+        return Job::with(['user.client.referencable', 'termAndCondition', 'jobServices.service','rescheduleDates','clientAddress','captain'])->whereIn('id', $jobIds)->get();
     }
 
 }
