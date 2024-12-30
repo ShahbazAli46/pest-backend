@@ -2,19 +2,24 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bank;
 use App\Models\Employee;
 use App\Models\EmployeeAdvancePayment;
 use App\Models\EmployeeCommission;
 use App\Models\EmployeeDocs;
 use App\Models\EmployeeSalary;
+use App\Models\Expense;
+use App\Models\ExpenseCategory;
 use App\Models\Job;
 use App\Models\JobServiceReportProduct;
+use App\Models\Ledger;
 use App\Models\Product;
 use App\Models\Stock;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\VehicleEmployeeFine;
 use App\Traits\GeneralTrait;
+use App\Traits\LedgerTrait;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -22,7 +27,7 @@ use Illuminate\Support\Facades\Artisan;
 
 class EmployeeController extends Controller
 {
-    use GeneralTrait;
+    use GeneralTrait,LedgerTrait;
     
     public function index($id=null){
         if($id==null){
@@ -209,7 +214,7 @@ class EmployeeController extends Controller
                 'process_date' => 'nullable|date',
                 'process_amt' => 'nullable|numeric|min:0',
             ]);
-
+            //add condtion here
             $employee = Employee::where('user_id', $request->user_id)->first();
             if (!$employee) {
                 DB::rollBack();
@@ -218,7 +223,7 @@ class EmployeeController extends Controller
 
             $emp_docs = EmployeeDocs::where('employee_user_id', $request->user_id)->where('name', $request->name)->first();
     
-            $data = $request->only(['name', 'status', 'start', 'expiry', 'desc','process_date','process_amt']);
+            $data = $request->only(['name', 'status', 'start', 'expiry', 'desc','process_date']);
 
             $data['employee_user_id'] = $request->user_id;
             $data['employee_id'] = $employee->id;
@@ -228,6 +233,62 @@ class EmployeeController extends Controller
                 $oldFilePath = $emp_docs && !empty($emp_docs->file) ? $emp_docs->file : null; // Get old file path if it exists and is not empty
                 $data['file'] = $this->saveImage($request->file('file'), 'docs', $oldFilePath);
             }
+
+            if (!empty($request->process_amt) && $request->process_amt>0 && (!$emp_docs || $emp_docs->process_amt === "0.00")) {
+                $expense_category = ExpenseCategory::firstOrCreate(
+                    ['expense_category' => 'New Employee'],
+                    ['description' => 'New Employee Expense Category'] // Attributes to set if creating
+                );
+                if($expense_category){
+                    $amount = $request->process_amt;
+                    $requestData['total_amount']=$requestData['amount']=$data['process_amt'] = $amount;
+
+                    // Call the function to check balances
+                    $balanceCheck = $this->checkCompanyBalance(
+                        'cash',
+                        $amount
+                    );
+                    if ($balanceCheck !== true) {
+                        DB::rollBack();
+                        return $balanceCheck;
+                    }
+
+                    $requestData['expense_category_id'] = $expense_category->id;
+                    $requestData['expense_name'] = 'New Employee Expense';
+                    $requestData['payment_type'] = 'cash';
+                    $requestData['description'] = $request->name;
+                    $requestData['expense_date'] = now();
+                     
+                    $expense=Expense::create($requestData);
+
+                    // Update the company ledger
+                    $lastLedger = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->latest()->first();
+                    $oldBankBalance = $lastLedger ? $lastLedger->bank_balance : 0;
+                    $oldCashBalance = $lastLedger ? $lastLedger->cash_balance : 0;
+                    $newBankBalance=$oldBankBalance;
+                   
+                    $newCashBalance = ($oldCashBalance - $requestData['total_amount']);
+                    Ledger::create([
+                        'bank_id' => null, 
+                        'description' => 'Expense: ' . $requestData['expense_name'],
+                        'dr_amt' => $requestData['total_amount'],
+                        'cr_amt' => 0.00,
+                        'payment_type' => $requestData['payment_type'],
+                        'cash_amt' => $requestData['total_amount'],
+                        'cheque_amt' => 0.00,
+                        'online_amt' => 0.00,
+                        'bank_balance' => $newBankBalance,
+                        'cash_balance' => $newCashBalance,
+                        'entry_type' => 'dr',
+                        'person_id' => 1, // Admin or Company 
+                        'person_type' => 'App\Models\User', 
+                        'link_id' => $expense->id, 
+                        'link_name' => 'expense',
+                    ]);
+    
+                }
+            }
+
 
             if ($emp_docs) {
                 $emp_docs->update($data);
