@@ -236,7 +236,7 @@ class EmployeeController extends Controller
 
             if (!empty($request->process_amt) && $request->process_amt>0 && (!$emp_docs || $emp_docs->process_amt === "0.00")) {
                 $expense_category = ExpenseCategory::firstOrCreate(
-                    ['expense_category' => 'New Employee'],
+                    ['expense_category' => 'NEW EMPLOYEE EXPENSES'],
                     ['description' => 'New Employee Expense Category'] // Attributes to set if creating
                 );
                 if($expense_category){
