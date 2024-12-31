@@ -112,6 +112,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('device/create',[DeviceController::class,'store'])->name('device.create');
     Route::post('device/assign',[DeviceController::class,'assignDevice'])->name('device.assign');
     Route::post('device/update/{id}',[DeviceController::class,'update'])->name('device.update');
+    Route::get('device/history/{id}',[DeviceController::class,'getHistory'])->name('device.history');
     
     // Banks
     Route::get('bank/{id?}',[BankController::class,'index'])->name('bank');

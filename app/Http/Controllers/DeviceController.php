@@ -141,4 +141,9 @@ class DeviceController extends Controller
             return response()->json(['status'=>'error','message' => 'Failed to Update Device. ' . $e->getMessage(),500]);
         } 
     }
+
+    public function getHistory($id){
+        $device = Device::with(['user.employee','assignedHistories'])->find($id);
+        return response()->json(['data' => $device]);
+    }
 }
