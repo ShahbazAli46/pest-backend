@@ -41,7 +41,7 @@ class EmployeeController extends Controller
             // }
             return response()->json(['data' => $employees]);
         }else{
-            $employee=User::with('employee.documents')->where('id',$id)->whereIn('role_id',[2,3,4,6])->first();
+            $employee=User::with(['employee.documents','devices'])->where('id',$id)->whereIn('role_id',[2,3,4,6])->first();
             if ($employee && $employee->role_id == 4) {
                 $employee->load([
                     'captainJobs' => function($query) {

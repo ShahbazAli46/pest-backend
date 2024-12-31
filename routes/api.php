@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\{AdminController, BankController, BrandController,ClientController, CustomerController, DashboardController, EmployeeController, ExpenseCategoryController, ExpenseController, JobController, JobServiceReportController, ProductController, PurchaseOrderController, QuoteController, ReceivedCashRecordController, SaleOrderController, ServiceController, ServiceInvoiceController, SupplierController, TermsAndConditionController, TreatmentMethodController, UserAuthController, VehicleController, VehicleExpenseController, VendorController};
+use App\Http\Controllers\{AdminController, BankController, BrandController,ClientController, CustomerController, DashboardController, DeviceController, EmployeeController, ExpenseCategoryController, ExpenseController, JobController, JobServiceReportController, ProductController, PurchaseOrderController, QuoteController, ReceivedCashRecordController, SaleOrderController, ServiceController, ServiceInvoiceController, SupplierController, TermsAndConditionController, TreatmentMethodController, UserAuthController, VehicleController, VehicleExpenseController, VendorController};
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -107,6 +107,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('vehicle/create',[VehicleController::class,'store'])->name('vehicle.create');
     Route::post('vehicle/update/{id}',[VehicleController::class,'update'])->name('vehicle.update');
 
+    // Devices 
+    Route::get('device/{id?}',[DeviceController::class,'index'])->name('device');
+    Route::post('device/create',[DeviceController::class,'store'])->name('device.create');
+    Route::post('device/assign',[DeviceController::class,'assignDevice'])->name('device.assign');
+    Route::post('device/update/{id}',[DeviceController::class,'update'])->name('device.update');
+    
     // Banks
     Route::get('bank/{id?}',[BankController::class,'index'])->name('bank');
     Route::post('bank/create',[BankController::class,'store'])->name('bank.create');

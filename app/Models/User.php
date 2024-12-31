@@ -107,6 +107,17 @@ class User extends Authenticatable
         return $this->hasMany(Job::class, 'user_id');
     }
 
+    public function devices()
+    {
+        return $this->hasMany(Device::class, 'user_id');
+    }
+
+    public function assignedHistories()
+    {
+        return $this->hasMany(DeviceAssignedHistory::class, 'employee_user_id');
+    }
+    
+
     // Define a local query scope to filter active users
     // public function scopeActive($query)
     // {
