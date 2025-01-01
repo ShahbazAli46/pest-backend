@@ -242,43 +242,48 @@ class DashboardController extends Controller
     }
 
     //get financial report  
-    public function getMonthlyFinancialReport(Request $request){
-
+    public function getMonthlyFinancialReport($month = null)
+    {
+        // If no month is provided, use the current month and year
+        if (!$month) {
+            $month = now()->format('Y-m');  // Default to current month in 'YYYY-MM' format
+        }
+    
+        // Break the provided month into year and month
+        [$year, $month] = explode('-', $month);
+    
+        // Prepare data array
+        $data = [];
+    
+        // Supplier balance logic
         $data['supplier_balance'] = Ledger::select('cash_balance')
             ->where('person_type', Supplier::class)
-            ->whereIn('id', function ($query) use ($request){
+            ->whereIn('id', function ($query) use ($year, $month) {
                 $query->select(DB::raw('MAX(id)'))
                     ->from('ledgers')
-                    ->where('person_type', Supplier::class);
-                    if ($request->filled('month')) {
-                        [$year, $month] = explode('-', $request->month); // Assuming `month` is passed as "YYYY-MM"
-                        $query->whereYear('created_at', $year)->whereMonth('created_at', $month);
-                    }
-                    $query->groupBy('person_id');
-            })->sum('cash_balance')?: '0';
-            
+                    ->where('person_type', Supplier::class)
+                    ->whereYear('created_at', $year)
+                    ->whereMonth('created_at', $month)
+                    ->groupBy('person_id');
+            })
+            ->sum('cash_balance') ?: '0';  // Default to '0' if no results
+    
+        // Purchase order logic
         $purchase_order = PurchaseOrder::query();
-
-        $paid_employee_salary=EmployeeSalary::where('status','paid');
-        $paid_employee_comm=EmployeeCommission::where('status','paid');
-
-        if($request->filled('month')){
-            [$year, $month] = explode('-', $request->month); 
-            $purchase_order->whereYear('order_date', $year)->whereMonth('order_date', $month);
-
-            $paid_employee_salary->where('month',$request->month);
-            $paid_employee_comm->where('month',$request->month);
-        }
+        $purchase_order->whereYear('order_date', $year)->whereMonth('order_date', $month);
         $data['purchase_order'] = ($total = $purchase_order->sum('grand_total')) === 0 ? '0' : $total;
-        $data['paid_employee_salary']=($total = $paid_employee_salary->sum('paid_salary')) === 0 ? '0' : $total;
-        $data['paid_employee_comm']=($total = $paid_employee_comm->sum('paid_amt')) === 0 ? '0' : $total;
-
-        // $data['paid_employee_comm']
-        // 'total_amt' => ServiceInvoice::whereBetween('issued_date', [$startOfThisMonth, $endOfThisMonth])->sum('total_amt'),
-
-
-
-
+    
+        // Paid employee salary logic
+        $paid_employee_salary = EmployeeSalary::where('status', 'paid');
+        $paid_employee_salary->where('month', $month);
+        $data['paid_employee_salary'] = ($total = $paid_employee_salary->sum('paid_salary')) === 0 ? '0' : $total;
+    
+        // Paid employee commission logic
+        $paid_employee_comm = EmployeeCommission::where('status', 'paid');
+        $paid_employee_comm->where('month', $month);
+        $data['paid_employee_comm'] = ($total = $paid_employee_comm->sum('paid_amt')) === 0 ? '0' : $total;
+    
+        // Return the response
         return response()->json(['data' => $data]);
     }
 }

@@ -30,8 +30,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('dashboard/pos_collection',[DashboardController::class,'getPosCollection'])->name('dashboard.pos_collection');
     Route::get('dashboard/expense_collection',[DashboardController::class,'getExpenseCollection'])->name('dashboard.expense_collection');
     Route::get('dashboard/bank_collection',[DashboardController::class,'getBankCollection'])->name('dashboard.bank_collection');
-    Route::get('dashboard/monthly_financial_report',[DashboardController::class,'getMonthlyFinancialReport'])->name('dashboard.monthly_financial_report');
-
+    Route::get('dashboard/monthly_financial_report/{month?}',[DashboardController::class,'getMonthlyFinancialReport'])->name('dashboard.monthly_financial_report');
     
     // Employee
     Route::get('employee/{id?}',[EmployeeController::class,'index'])->name('employee');
