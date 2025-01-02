@@ -46,13 +46,18 @@ class EmployeeController extends Controller
                 $employee->load([
                     'captainJobs' => function($query) {
                         $query->where('is_completed', '!=', 1) // Filter by is_completed != 1
-                            ->with(['captain.employee','user.client.referencable','termAndCondition','jobServices.service','clientAddress','rescheduleDates']);
+                        ->whereHas('quote', function ($query) {
+                            $query->whereNull('contact_cancelled_at'); // Only include jobs where the quote is not canceled
+                        })->with(['captain.employee','user.client.referencable','termAndCondition','jobServices.service','clientAddress','rescheduleDates']);
                     }
                 ]);
                
                 $teamMemberJobs = Job::whereJsonContains('team_member_ids', (string) $employee->id)  // Fetch jobs where the user is a team member
                     ->with(['captain.employee','user.client.referencable','termAndCondition','jobServices.service','clientAddress'])
-                    ->where('is_completed', '!=', 1)->get();
+                    ->where('is_completed', '!=', 1)
+                    ->whereHas('quote', function ($query) {
+                        $query->whereNull('contact_cancelled_at'); // Only include jobs where the quote is not canceled
+                    })->get();
                       
                 $allJobs = $employee->captainJobs->merge($teamMemberJobs);
                 

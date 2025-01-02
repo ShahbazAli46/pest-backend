@@ -386,6 +386,70 @@ class QuoteController extends Controller
             return response()->json(['status'=>'error','message' => 'Failed to Move Contract. ' . $e->getMessage(),500]);
         } 
     }
+
+    public function moveToCancel(Request $request,$id){
+        try {
+            DB::beginTransaction();
+            
+            $request->validate([    
+                'contact_cancel_reason' => 'nullable|max:255',
+            ]);
+
+            // Find by ID
+            $quote = Quote::findOrFail($id);
+            if($quote->is_contracted==1){
+                $msg_type='Contract';
+                if($quote->contact_cancelled_at!=null){
+                    DB::rollBack();
+                    return response()->json(['status' => 'error','message' => 'The Contract has Already been Cancelled.'],500);
+                }
+
+                $unpaidTotal = ServiceInvoice::where('status', 'unpaid')->where('invoiceable_type', Quote::class)->where('invoiceable_id', $quote->id)
+                ->select(DB::raw('SUM(total_amt - paid_amt) as unpaid_total'))
+                ->value('unpaid_total');
+
+                $unpaidTotal = $unpaidTotal ?? 0;
+                if($unpaidTotal>0){
+                    // Update the CLIENT ledger
+                    $user=User::find($quote->user_id);
+                    $lastClientLedger = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => $quote->user_id])->latest()->first();
+                    $oldCliCashBalance = $lastClientLedger ? $lastClientLedger->cash_balance : 0;
+                    $newCliCashBalance = $oldCliCashBalance - $unpaidTotal;
+                    $cli_ledger=Ledger::create([
+                        'bank_id' => null, 
+                        'description' => 'Contract cancellation for client ' . $user->name . ' (Contract ID: ' . $quote->id . ')',
+                        'cr_amt' => $unpaidTotal,
+                        'payment_type' => 'none',
+                        'entry_type' => 'cr',  
+                        'cash_balance' => $newCliCashBalance,
+                        'person_id' => $quote->user_id,
+                        'person_type' => 'App\Models\User',
+                    ]);
+                }
+            }else{
+                $msg_type='Quote';
+                if($quote->contact_cancelled_at!=null){
+                    DB::rollBack();
+                    return response()->json(['status' => 'error','message' => 'The Quote has Already been Cancelled.'],500);
+                }
+            }
+
+            $quote->update(['contact_cancelled_at'=>now(),'contact_cancel_reason'=>$request->contact_cancel_reason]);
+
+            DB::commit();
+            return response()->json(['status' => 'success','message' => 'The '.$msg_type.' has been Cancelled Successfully']);
+
+        } catch (ModelNotFoundException $e) {
+            DB::rollBack();
+            return response()->json(['status'=>'error', 'message' => 'Quote Not Found.'], 404);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return response()->json(['status'=>'error','message' => $e->validator->errors()->first()], 422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['status'=>'error','message' => 'Failed to Move Contract. ' . $e->getMessage(),500]);
+        } 
+    }
     
     /*
     public function updateContractDate(Request $request){

@@ -156,6 +156,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('quote/move/contract/{id}',[QuoteController::class,'moveToContract'])->name('quote.move.contract');
     Route::post('quote/contract/date/update',[QuoteController::class,'updateContractDate'])->name('quote.contract.date.update');
 
+    Route::post('quote/move/cancel/{id}',[QuoteController::class,'moveToCancel'])->name('quote.move.cancel');
+
     //Jobs
     Route::get('job/{id?}',[JobController::class,'index'])->name('job');
     Route::post('job/create',[JobController::class,'store'])->name('job.create');
