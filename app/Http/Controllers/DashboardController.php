@@ -95,7 +95,10 @@ class DashboardController extends Controller
             $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
             $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay(); // Use endOfDay to include the entire day
             
-            $jobsCount = Job::whereBetween('job_date', [$startDate, $endDate])->count();
+            // $jobsCount = Job::whereBetween('job_date', [$startDate, $endDate])->count();
+            $jobsCount = Job::whereBetween('job_date', [$startDate, $endDate])
+            ->withActiveQuoteOrCompletedJobs()//Contract cancelled condition
+            ->count();
 
             return response()->json([
                 'start_date' => $startDate,

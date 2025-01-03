@@ -46,22 +46,19 @@ class EmployeeController extends Controller
                 $employee->load([
                     'captainJobs' => function($query) {
                         $query->where('is_completed', '!=', 1) // Filter by is_completed != 1
-                        ->whereHas('quote', function ($query) {
-                            $query->whereNull('contact_cancelled_at'); // Only include jobs where the quote is not canceled
-                        })->with(['captain.employee','user.client.referencable','termAndCondition','jobServices.service','clientAddress','rescheduleDates']);
+                        ->withActiveQuoteOrCompletedJobs()//Contract cancelled condition
+                        ->with(['captain.employee','user.client.referencable','termAndCondition','jobServices.service','clientAddress','rescheduleDates']);
                     }
                 ]);
                
                 $teamMemberJobs = Job::whereJsonContains('team_member_ids', (string) $employee->id)  // Fetch jobs where the user is a team member
                     ->with(['captain.employee','user.client.referencable','termAndCondition','jobServices.service','clientAddress'])
-                    ->where('is_completed', '!=', 1)
-                    ->whereHas('quote', function ($query) {
-                        $query->whereNull('contact_cancelled_at'); // Only include jobs where the quote is not canceled
-                    })->get();
+                    ->where('is_completed', '!=', 1)          
+                    ->withActiveQuoteOrCompletedJobs()//Contract cancelled condition
+                    ->get();
                       
                 $allJobs = $employee->captainJobs->merge($teamMemberJobs);
                 
-                 
                 foreach ($allJobs as $job) {
                     $job->team_members = $job->getTeamMembers(); // Add team_members to each job
                 }
@@ -837,9 +834,13 @@ class EmployeeController extends Controller
 
     public function getEmployeeJobHistory(Request $request,$emp_id)
     {
-        $jobs = Job::with(['user.client.referencable','captain','report:id,job_id'])->where('is_completed', 1)->where('captain_id', $emp_id);
+        $jobs = Job::with(['user.client.referencable','captain','report:id,job_id'])
+        ->withActiveQuoteOrCompletedJobs()//Contract cancelled condition
+        ->where('is_completed', 1)->where('captain_id', $emp_id);
         $teamMemberJobs = Job::whereJsonContains('team_member_ids', (string) $emp_id)  // Fetch jobs where the user is a team member
-                    ->with(['user.client.referencable','captain','report:id,job_id'])->where('is_completed', 1);      
+                    ->with(['user.client.referencable','captain','report:id,job_id'])
+                    ->withActiveQuoteOrCompletedJobs()//Contract cancelled condition
+                    ->where('is_completed', 1);      
        
         $response_arr=[];
         // Check if date filters are present

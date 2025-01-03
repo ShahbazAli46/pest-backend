@@ -22,11 +22,21 @@ class JobController extends Controller
         $is_int = filter_var($id, FILTER_VALIDATE_INT);
         $type=$id;
         if ($is_int === false) {
-            if ($type == 'pending' || $type == 'completed') {
-                $is_completed = $type == 'pending' ? 0 : 1;
-                $jobs = Job::with(['user.client.referencable','captain','report:id,job_id','clientAddress','rescheduleDates'])->where('is_completed', $is_completed);
+            if ($type == 'pending' || $type == 'completed' || $type == 'cancelled') {
                 
-                // Apply client_id filter if present
+                $jobs = Job::with(['user.client.referencable','captain','report:id,job_id','clientAddress','rescheduleDates']);
+                
+                if ($type === 'cancelled') {
+                    $jobs->whereHas('quote', function ($subQuery) {
+                        $subQuery->whereNotNull('contact_cancelled_at') // Include jobs where the quote is canceled
+                            ->where('is_completed', 0);
+                    });
+                } else {
+                    $is_completed = $type == 'pending' ? 0 : 1;
+                    $jobs->withActiveQuoteOrCompletedJobs()
+                         ->where('is_completed', $is_completed);
+                }
+
                 if ($request->has('user_id')) {
                     $jobs->where('user_id', $request->input('user_id'));
                 }
@@ -39,7 +49,8 @@ class JobController extends Controller
                 }
                 $jobs = $jobs->orderBy('id', 'DESC')->get();
             } else {
-                $jobs = Job::with(['user.client.referencable','captain','report:id,job_id','clientAddress','rescheduleDates']);
+                $jobs = Job::with(['user.client.referencable','captain','report:id,job_id','clientAddress','rescheduleDates'])
+                ->withActiveQuoteOrCompletedJobs();
 
                 // Apply client_id filter if present
                 if ($request->has('user_id')) {
@@ -122,6 +133,18 @@ class JobController extends Controller
             $job=Job::find($request->job_id);
             if($job){
                 if($job->is_completed==0){
+                    //check contract cancel condition
+                    if($job->quote_id!=null){
+                        $isContractCancelled = $job->quote()->whereNotNull('contact_cancelled_at')->exists();
+                        if ($isContractCancelled) {
+                            DB::rollBack();
+                            return response()->json([
+                                'status' => 'error',
+                                'message' => 'This job contract has been cancelled, so you may not perform any changes on it.'
+                            ], 422);
+                        }
+                    }
+
                     if($job->job_date!=$request->job_date){
                         $job->update(['job_date'=>$request->job_date,'is_modified'=>1,'captain_id'=>null,'team_member_ids'=>null,'assigned_at'=>null]);
                         JobRescheduleDetail::create(['job_id'=>$job->id,'job_date'=>$request->job_date,'reason'=>$request->reason]);
@@ -170,6 +193,15 @@ class JobController extends Controller
 
             $job = Job::find($request->job_id);
             if($job){
+                //check contract cancel condition
+                if($job->quote_id!=null){
+                    $isContractCancelled = $job->quote()->whereNotNull('contact_cancelled_at')->exists();
+                    if ($isContractCancelled) {
+                        DB::rollBack();
+                        return response()->json(['status' => 'error','message' => 'This job contract has been cancelled, so you may not perform any changes on it.'], 422);
+                    }
+                }
+
                 if($job->is_completed==0){
                     $job->update(['captain_id'=>$request->captain_id,'team_member_ids'=>$teamMemberIds,'job_instructions'=>$request->job_instructions,'assigned_at'=>now()]);
                     DB::commit();
@@ -197,6 +229,15 @@ class JobController extends Controller
 
             // Find by ID
             $job = Job::findOrFail($job_id);
+            //check contract cancel condition
+            if($job->quote_id!=null){
+                $isContractCancelled = $job->quote()->whereNotNull('contact_cancelled_at')->exists();
+                if ($isContractCancelled) {
+                    DB::rollBack();
+                    return response()->json(['status' => 'error','message' => 'This job contract has been cancelled, so you may not perform any changes on it.'], 422);
+                }
+            }
+
             if($job->is_completed==1){
                 DB::rollBack();
                 return response()->json(['status' => 'error','message' => 'The Job has Already been Completed.'],500);
@@ -232,6 +273,16 @@ class JobController extends Controller
 
             // Find by ID
             $job = Job::findOrFail($job_id);
+
+            //check contract cancel condition
+            if($job->quote_id!=null){
+                $isContractCancelled = $job->quote()->whereNotNull('contact_cancelled_at')->exists();
+                if ($isContractCancelled) {
+                    DB::rollBack();
+                    return response()->json(['status' => 'error','message' => 'This job contract has been cancelled, so you may not perform any changes on it.'], 422);
+                }
+            }
+
             if($job->is_completed==1){
                 DB::rollBack();
                 return response()->json(['status' => 'error','message' => 'The Job has Already been Completed.'],500);

@@ -364,7 +364,8 @@ class ClientController extends Controller
             $client=User::with([
                 'client.referencable',
                 'clientJobs' => function ($query) use ($startDate, $endDate) {
-                    $query->whereBetween('job_date', [$startDate, $endDate]);
+                    $query->whereBetween('job_date', [$startDate, $endDate])
+                    ->withActiveQuoteOrCompletedJobs();//Contract cancelled condition
                 },
                 'clientJobs.rescheduleDates',
                 'clientJobs.termAndCondition',
@@ -372,10 +373,14 @@ class ClientController extends Controller
                 'clientJobs.captain',
                 'clientJobs.jobServices.service',
             ])->where('role_id',5)->where('id',$id)->first();
+
             return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $client]);
         }else{
             $client=User::with([
                 'client.referencable',
+                'clientJobs' => function ($query) {
+                    $query->withActiveQuoteOrCompletedJobs();
+                },
                 'clientJobs.rescheduleDates',
                 'clientJobs.termAndCondition',
                 'clientJobs.clientAddress',

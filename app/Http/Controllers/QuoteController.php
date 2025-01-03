@@ -116,7 +116,14 @@ class QuoteController extends Controller
                 if ($quote->is_contracted == 1) {
                     DB::rollBack();
                     return response()->json(['error' => 'The Quote has Already been Contracted and Cannot be Modified.'], 422);
+                }else{
+                    $isContractCancelled = $quote->whereNotNull('contact_cancelled_at')->exists();
+                    if ($isContractCancelled) {
+                        DB::rollBack();
+                        return response()->json(['status' => 'error','message' => 'This quote has been cancelled, so you may not perform any changes on it.'], 422);
+                    }
                 }
+
                 $manage_typed='Updated';
                 $manage_type='Update';
                 //delete old data
@@ -242,6 +249,12 @@ class QuoteController extends Controller
             if($quote->is_contracted==1){
                 DB::rollBack();
                 return response()->json(['status' => 'error','message' => 'The Quote has Already been Contracted.'],500);
+            }
+
+            $isContractCancelled = $quote->whereNotNull('contact_cancelled_at')->exists();
+            if ($isContractCancelled) {
+                DB::rollBack();
+                return response()->json(['status' => 'error','message' => 'This quote has been cancelled, so you may not perform any changes on it.'], 422);
             }
 
             // Insert into quote_services dates table
