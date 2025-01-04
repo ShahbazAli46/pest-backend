@@ -52,4 +52,9 @@ class Quote extends Model
         return $this->hasMany(Job::class);
     }
 
+    public function invoices()
+    {
+        return $this->morphMany(ServiceInvoice::class, 'invoiceable');
+    }
+
 }
