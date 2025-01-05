@@ -467,6 +467,9 @@ class QuoteController extends Controller
     public function getContractServiceInvoices($id){
         $quote = Quote::with(['user.client.referencable', 'termAndCondition', 'quoteServices.service','quoteServices.quoteServiceDates','invoices'])->find($id);
         if ($quote) {
+            foreach ($quote->invoices as $invoice) {
+                $invoice->jobs = $invoice->getJobs();
+            }
             $quote->treatment_methods = $quote->getTreatmentMethods(); // Call your method to get treatment methods
         }
         return response()->json(['data' => $quote]);
