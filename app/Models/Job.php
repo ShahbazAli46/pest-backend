@@ -85,10 +85,10 @@ class Job extends Model
     {
         return $query->where(function ($query) {
             $query->whereHas('quote', function ($subQuery) {
-                $subQuery->whereNull('contact_cancelled_at'); // Include jobs where the quote is not canceled
+                $subQuery->whereNull('contract_cancelled_at'); // Include jobs where the quote is not canceled
             })->orWhere(function ($subQuery) {
                 $subQuery->whereHas('quote', function ($nestedQuery) {
-                    $nestedQuery->whereNotNull('contact_cancelled_at'); // Include jobs with canceled quotes
+                    $nestedQuery->whereNotNull('contract_cancelled_at'); // Include jobs with canceled quotes
                 })->where('is_completed', 1); // Only include completed jobs
             });
         });

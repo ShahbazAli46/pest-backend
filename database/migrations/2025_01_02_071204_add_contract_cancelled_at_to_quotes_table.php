@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('quotes', function (Blueprint $table) {
-            $table->timestamp('contact_cancelled_at')->nullable();
-            $table->string('contact_cancel_reason')->nullable();
+            $table->timestamp('contract_cancelled_at')->nullable();
+            $table->string('contract_cancel_reason')->nullable();
 
         });
     }
@@ -24,8 +24,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('quotes', function (Blueprint $table) {
-            $table->dropColumn('contact_cancelled_at');
-            $table->dropColumn('contact_cancel_reason');
+            $table->dropColumn('contract_cancelled_at');
+            $table->dropColumn('contract_cancel_reason');
         });
     }
 };

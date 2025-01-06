@@ -117,8 +117,7 @@ class QuoteController extends Controller
                     DB::rollBack();
                     return response()->json(['error' => 'The Quote has Already been Contracted and Cannot be Modified.'], 422);
                 }else{
-                    $isContractCancelled = $quote->whereNotNull('contact_cancelled_at')->exists();
-                    if ($isContractCancelled) {
+                    if ($quote->contract_cancelled_at!=null) {
                         DB::rollBack();
                         return response()->json(['status' => 'error','message' => 'This quote has been cancelled, so you may not perform any changes on it.'], 422);
                     }
@@ -251,8 +250,7 @@ class QuoteController extends Controller
                 return response()->json(['status' => 'error','message' => 'The Quote has Already been Contracted.'],500);
             }
 
-            $isContractCancelled = $quote->whereNotNull('contact_cancelled_at')->exists();
-            if ($isContractCancelled) {
+            if ($quote->contact_cancelled_at!=null) {
                 DB::rollBack();
                 return response()->json(['status' => 'error','message' => 'This quote has been cancelled, so you may not perform any changes on it.'], 422);
             }
@@ -405,14 +403,14 @@ class QuoteController extends Controller
             DB::beginTransaction();
             
             $request->validate([    
-                'contact_cancel_reason' => 'nullable|max:255',
+                'contract_cancel_reason' => 'nullable|max:255',
             ]);
 
             // Find by ID
             $quote = Quote::findOrFail($id);
             if($quote->is_contracted==1){
                 $msg_type='Contract';
-                if($quote->contact_cancelled_at!=null){
+                if($quote->contract_cancelled_at!=null){
                     DB::rollBack();
                     return response()->json(['status' => 'error','message' => 'The Contract has Already been Cancelled.'],500);
                 }
@@ -441,13 +439,13 @@ class QuoteController extends Controller
                 }
             }else{
                 $msg_type='Quote';
-                if($quote->contact_cancelled_at!=null){
+                if($quote->contract_cancelled_at!=null){
                     DB::rollBack();
                     return response()->json(['status' => 'error','message' => 'The Quote has Already been Cancelled.'],500);
                 }
             }
 
-            $quote->update(['contact_cancelled_at'=>now(),'contact_cancel_reason'=>$request->contact_cancel_reason]);
+            $quote->update(['contract_cancelled_at'=>now(),'contract_cancel_reason'=>$request->contract_cancel_reason]);
 
             DB::commit();
             return response()->json(['status' => 'success','message' => 'The '.$msg_type.' has been Cancelled Successfully']);

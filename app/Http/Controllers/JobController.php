@@ -28,7 +28,7 @@ class JobController extends Controller
                 
                 if ($type === 'cancelled') {
                     $jobs->whereHas('quote', function ($subQuery) {
-                        $subQuery->whereNotNull('contact_cancelled_at') // Include jobs where the quote is canceled
+                        $subQuery->whereNotNull('contract_cancelled_at') // Include jobs where the quote is canceled
                             ->where('is_completed', 0);
                     });
                 } else {
@@ -135,8 +135,7 @@ class JobController extends Controller
                 if($job->is_completed==0){
                     //check contract cancel condition
                     if($job->quote_id!=null){
-                        $isContractCancelled = $job->quote()->whereNotNull('contact_cancelled_at')->exists();
-                        if ($isContractCancelled) {
+                        if ($job->quote()->contact_cancelled_at!=null) {
                             DB::rollBack();
                             return response()->json([
                                 'status' => 'error',
@@ -195,8 +194,7 @@ class JobController extends Controller
             if($job){
                 //check contract cancel condition
                 if($job->quote_id!=null){
-                    $isContractCancelled = $job->quote()->whereNotNull('contact_cancelled_at')->exists();
-                    if ($isContractCancelled) {
+                    if ($job->quote()->contract_cancelled_at!=null) {
                         DB::rollBack();
                         return response()->json(['status' => 'error','message' => 'This job contract has been cancelled, so you may not perform any changes on it.'], 422);
                     }
@@ -231,8 +229,7 @@ class JobController extends Controller
             $job = Job::findOrFail($job_id);
             //check contract cancel condition
             if($job->quote_id!=null){
-                $isContractCancelled = $job->quote()->whereNotNull('contact_cancelled_at')->exists();
-                if ($isContractCancelled) {
+                if ($job->quote()->contract_cancelled_at!=null) {
                     DB::rollBack();
                     return response()->json(['status' => 'error','message' => 'This job contract has been cancelled, so you may not perform any changes on it.'], 422);
                 }
@@ -276,8 +273,7 @@ class JobController extends Controller
 
             //check contract cancel condition
             if($job->quote_id!=null){
-                $isContractCancelled = $job->quote()->whereNotNull('contact_cancelled_at')->exists();
-                if ($isContractCancelled) {
+                if ($job->quote()->contract_cancelled_at!=null) {
                     DB::rollBack();
                     return response()->json(['status' => 'error','message' => 'This job contract has been cancelled, so you may not perform any changes on it.'], 422);
                 }
