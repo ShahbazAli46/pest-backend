@@ -194,7 +194,7 @@ class JobController extends Controller
             if($job){
                 //check contract cancel condition
                 if($job->quote_id!=null){
-                    if ($job->quote()->contract_cancelled_at!=null) {
+                    if ($job->quote->contract_cancelled_at!=null) {
                         DB::rollBack();
                         return response()->json(['status' => 'error','message' => 'This job contract has been cancelled, so you may not perform any changes on it.'], 422);
                     }
@@ -229,7 +229,7 @@ class JobController extends Controller
             $job = Job::findOrFail($job_id);
             //check contract cancel condition
             if($job->quote_id!=null){
-                if ($job->quote()->contract_cancelled_at!=null) {
+                if ($job->quote->contract_cancelled_at!=null) {
                     DB::rollBack();
                     return response()->json(['status' => 'error','message' => 'This job contract has been cancelled, so you may not perform any changes on it.'], 422);
                 }
@@ -273,7 +273,7 @@ class JobController extends Controller
 
             //check contract cancel condition
             if($job->quote_id!=null){
-                if ($job->quote()->contract_cancelled_at!=null) {
+                if ($job->quote->contract_cancelled_at!=null) {
                     DB::rollBack();
                     return response()->json(['status' => 'error','message' => 'This job contract has been cancelled, so you may not perform any changes on it.'], 422);
                 }
