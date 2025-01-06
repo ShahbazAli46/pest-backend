@@ -18,6 +18,7 @@ use App\Models\Stock;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\VehicleEmployeeFine;
+use App\Models\Vendor;
 use App\Traits\GeneralTrait;
 use App\Traits\LedgerTrait;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -787,12 +788,22 @@ class EmployeeController extends Controller
         try {
             $request->validate([
                 'commission_month' => 'nullable|date_format:Y-m',
+                'referencable_id' => 'nullable|numeric|min:0',
+                'referencable_type' => 'nullable|in:user,vendor', 
             ]);
+
+            $employee_commission=EmployeeCommission::with(['referencable']);
+
             if($request->filled('commission_month')){
-                $employee_commission=EmployeeCommission::with(['referencable'])->where('month',$request->commission_month)->get();
-            }else{
-                $employee_commission=EmployeeCommission::with(['referencable'])->get();
+                $employee_commission->where('month',$request->commission_month);
             }
+
+            if($request->filled('referencable_id') && $request->filled('referencable_type')){
+                $referencable_type=($request->referencable_type=='user')? User::class :  Vendor::class;
+                $employee_commission->where('referencable_id',$request->referencable_id)->where('referencable_type',$referencable_type);
+            }
+
+            $employee_commission=$employee_commission->get();
             return response()->json(['data' => $employee_commission]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json(['status'=> 'error','message' => $e->validator->errors()->first()], 422);
