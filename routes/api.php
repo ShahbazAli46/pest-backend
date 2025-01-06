@@ -157,7 +157,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('quote/contract/date/update',[QuoteController::class,'updateContractDate'])->name('quote.contract.date.update');
 
     Route::post('quote/move/cancel/{id}',[QuoteController::class,'moveToCancel'])->name('quote.move.cancel');
-    Route::get('quote/service_invoices/{id}',[QuoteController::class,'getCon0tractServiceInvoices'])->name('quote.service_invoices');
+    Route::get('quote/service_invoices/{id}',[QuoteController::class,'getContractServiceInvoices'])->name('quote.service_invoices');
 
     //Jobs
     Route::get('job/{id?}',[JobController::class,'index'])->name('job');
