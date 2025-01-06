@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Client;
 use App\Models\EmployeeCommission;
+use App\Models\EmployeeDocs;
 use App\Models\EmployeeSalary;
 use App\Models\Expense;
 use App\Models\Job;
@@ -17,6 +18,7 @@ use App\Models\VehicleExpense;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
@@ -281,11 +283,10 @@ class DashboardController extends Controller
         $paid_employee_salary->where('month', $month);
         $data['paid_employee_salary'] = ($total = $paid_employee_salary->sum('paid_salary')) === 0 ? '0' : $total;
     
-        // Paid employee commission logic
-        $paid_employee_comm = EmployeeCommission::where('status', 'paid');
-        $paid_employee_comm->where('month', $month);
-        $data['paid_employee_comm'] = ($total = $paid_employee_comm->sum('paid_amt')) === 0 ? '0' : $total;
-    
+        $startDate = Carbon::create($year, $month, 1)->startOfMonth()->toDateString();
+        $endDate = Carbon::create($year, $month, 1)->endOfMonth()->toDateString();
+        $data['employee_expense'] = EmployeeDocs::whereBetween('process_date', [$startDate, $endDate])->sum('process_amt') ?: '0';
+
         // Return the response
         return response()->json(['data' => $data]);
     }
