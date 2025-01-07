@@ -58,8 +58,7 @@ class AdminController extends Controller
             $user=User::findOrFail(1);
             $data['cash_balance']=$user->getCurrentCashBalance(User::class);
             $data['bank_balance'] = Bank::sum('balance');
-            $data['banks_info']=Bank::all();
-
+            $data['pos_collection'] = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->where('payment_type','pos')->where('entry_type','cr')->sum('pos_amt')?: '0';
             return response()->json(['data' => $data]);
         } catch (ModelNotFoundException $e) {
             return response()->json(['status'=>'error', 'message' => 'Admin Not Found.'], 404);
