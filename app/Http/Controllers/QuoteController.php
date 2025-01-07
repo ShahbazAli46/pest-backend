@@ -83,7 +83,8 @@ class QuoteController extends Controller
                 'duration_in_months' => 'required|integer|min:1',
                 // 'is_food_watch_account' => 'boolean',
                 'billing_method' => 'required|in:installments,monthly,service,one_time',
-                'dis_per' => 'nullable|numeric|min:0',
+                // 'dis_per' => 'nullable|numeric|min:0',
+                'dis_amt' => 'nullable|numeric|min:0',
                 'vat_per' => 'nullable|numeric|min:0',
                 'term_and_condition_id' => 'required|exists:terms_and_conditions,id',
             
@@ -156,8 +157,14 @@ class QuoteController extends Controller
             $vatAmount = ($sub_total * $vatPer) / 100;
             $requestData['vat_amt'] = $vatAmount;
 
-            $discountAmount = isset($requestData['dis_per']) ? ($sub_total * $requestData['dis_per']) / 100 : 0;
-            $requestData['dis_amt'] = $discountAmount;
+            // $discountAmount = isset($requestData['dis_per']) ? ($sub_total * $requestData['dis_per']) / 100 : 0;
+            $discountAmount = isset($requestData['dis_amt']) ? $requestData['dis_amt'] : 0;
+            if ($subTotal > 0) {
+                $discountPer = ($discountAmount / $subTotal) * 100;
+            } else {
+                $discountPer = 0; 
+            }
+            $requestData['dis_per'] = $discountPer;
 
             $grandTotal = $sub_total + $vatAmount - $discountAmount;
             $requestData['grand_total'] = $grandTotal;
