@@ -80,6 +80,7 @@ class JobServiceReportController extends Controller
             $pestFoundIds = $request->input('pest_found_ids');
 
             $job=Job::find($request->job_id);
+
             if($job && !$job->report){
 
                 foreach ($request->input('used_products', []) as $product) {

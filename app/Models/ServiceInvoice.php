@@ -69,4 +69,37 @@ class ServiceInvoice extends Model
         return null;
     }
 
+    public function scopeWithActiveQuote($query)
+    {
+        return $query->whereHasMorph(
+            'invoiceable', 
+            [Quote::class],
+            function ($query) {
+                $query->whereNull('contract_cancelled_at');
+            }
+        );
+    }
+
+    public function scopeWithActiveOrPaidInvoices($query)
+    {
+        return $query->where(function ($query) {
+            $query->whereHasMorph(
+                'invoiceable',
+                [Quote::class], 
+                function ($subQuery) {
+                    $subQuery->whereNull('contract_cancelled_at'); // Include invoices with active quotes
+                }
+            )->orWhere(function ($subQuery) {
+                $subQuery->whereHasMorph(
+                    'invoiceable',
+                    [Quote::class], 
+                    function ($nestedQuery) {
+                        $nestedQuery->whereNotNull('contract_cancelled_at'); // Include invoices with canceled quotes
+                    }
+                )->where('status', 'paid'); // Only include paid invoices
+            });
+        });
+    }
+
+
 }

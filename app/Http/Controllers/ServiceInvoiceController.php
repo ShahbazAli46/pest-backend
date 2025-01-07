@@ -26,7 +26,7 @@ class ServiceInvoiceController extends Controller
                 $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay(); // Use endOfDay to include the entire day
                 
                 // it should apply due_date not issue_date so this is pending
-                $invoices = ServiceInvoice::with(['user.client.referencable', 'invoiceable'])->whereBetween('issued_date', [$startDate, $endDate]);
+                $invoices = ServiceInvoice::withActiveOrPaidInvoices()->with(['user.client.referencable', 'invoiceable'])->whereBetween('issued_date', [$startDate, $endDate]);
 
                 // Apply user_id filter if present
                 if ($request->has('user_id')) {
@@ -42,7 +42,7 @@ class ServiceInvoiceController extends Controller
                 });
                 return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $invoices]);
             }else{
-                $invoices=ServiceInvoice::with(['user.client.referencable','invoiceable']);
+                $invoices=ServiceInvoice::withActiveOrPaidInvoices()->with(['user.client.referencable','invoiceable']);
                 
                 // Apply user_id filter if present
                 if ($request->has('user_id')) {
@@ -56,7 +56,7 @@ class ServiceInvoiceController extends Controller
                 });
                 return response()->json(['data' => $invoices]);
             }
-        }else{
+        }else{ 
             $invoice=ServiceInvoice::with(['invoiceable','details.itemable','amountHistory','user.client'])->where('id',$id)->first();
             $invoice->jobs = $invoice->getJobs(); 
             $invoice->title = $invoice->title; 
@@ -93,7 +93,8 @@ class ServiceInvoiceController extends Controller
                 ]);
             }
          
-            $invoice=ServiceInvoice::findOrFail($request->service_invoice_id);
+            $invoice=ServiceInvoice::withActiveQuote()->findOrFail($request->service_invoice_id);
+
             $paid_amt=0;
             if($invoice->status=='unpaid'){
                 if($request->has('is_all_amt_pay') && $request->is_all_amt_pay==1){
@@ -234,23 +235,23 @@ class ServiceInvoiceController extends Controller
         $invoices = [
             [
                 'title' => 'This Month',
-                'count' => ServiceInvoice::where('status','unpaid')->whereBetween('issued_date', [$startOfThisMonth, $endOfThisMonth])->count(),
-                'total_amt' => ServiceInvoice::where('status','unpaid')->whereBetween('issued_date', [$startOfThisMonth, $endOfThisMonth])->sum('total_amt'),
+                'count' => ServiceInvoice::withActiveQuote()->where('status','unpaid')->whereBetween('issued_date', [$startOfThisMonth, $endOfThisMonth])->count(),
+                'total_amt' => ServiceInvoice::withActiveQuote()->where('status','unpaid')->whereBetween('issued_date', [$startOfThisMonth, $endOfThisMonth])->sum('total_amt'),
             ],
             [
                 'title' => 'Last Month',
-                'count' => ServiceInvoice::where('status','unpaid')->whereBetween('issued_date', [$startOfLastMonth, $endOfLastMonth])->count(),
-                'total_amt' => ServiceInvoice::where('status','unpaid')->whereBetween('issued_date', [$startOfLastMonth, $endOfLastMonth])->sum('total_amt'),
+                'count' => ServiceInvoice::withActiveQuote()->where('status','unpaid')->whereBetween('issued_date', [$startOfLastMonth, $endOfLastMonth])->count(),
+                'total_amt' => ServiceInvoice::withActiveQuote()->where('status','unpaid')->whereBetween('issued_date', [$startOfLastMonth, $endOfLastMonth])->sum('total_amt'),
             ],
             [
                 'title' => 'Last 3 Months',
-                'count' => ServiceInvoice::where('status','unpaid')->whereBetween('issued_date', [$startOfThreeMonthsAgo, $endOfThreeMonthsAgo])->count(),
-                'total_amt' => ServiceInvoice::where('status','unpaid')->whereBetween('issued_date', [$startOfThreeMonthsAgo, $endOfThreeMonthsAgo])->sum('total_amt'),
+                'count' => ServiceInvoice::withActiveQuote()->where('status','unpaid')->whereBetween('issued_date', [$startOfThreeMonthsAgo, $endOfThreeMonthsAgo])->count(),
+                'total_amt' => ServiceInvoice::withActiveQuote()->where('status','unpaid')->whereBetween('issued_date', [$startOfThreeMonthsAgo, $endOfThreeMonthsAgo])->sum('total_amt'),
             ],
             [
                 'title' => 'Older Than 3 Months',
-                'count' => ServiceInvoice::where('status','unpaid')->where('issued_date', '<', $startOfThreeMonthsAgo)->count(),
-                'total_amt' => ServiceInvoice::where('status','unpaid')->where('issued_date', '<', $startOfThreeMonthsAgo)->sum('total_amt'),
+                'count' => ServiceInvoice::withActiveQuote()->where('status','unpaid')->where('issued_date', '<', $startOfThreeMonthsAgo)->count(),
+                'total_amt' => ServiceInvoice::withActiveQuote()->where('status','unpaid')->where('issued_date', '<', $startOfThreeMonthsAgo)->sum('total_amt'),
             ],
         ];
 

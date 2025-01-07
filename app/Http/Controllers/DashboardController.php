@@ -125,8 +125,8 @@ class DashboardController extends Controller
             $data['total_cash'] = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->where('entry_type','cr')->where('payment_type','cash')->whereBetween('created_at', [$startDate, $endDate])->sum('cash_amt')?: '0';
             $data['no_of_transection'] = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->where('entry_type', 'cr')->where('payment_type','cash')->whereBetween('created_at', [$startDate, $endDate])->count();
            
-            $data['receiveable_invoices_amt'] = ServiceInvoice::where('status','unpaid')->whereBetween('issued_date', [$startDate, $endDate])->sum('total_amt'); 
-            $data['receiveable_invoices_count'] = ServiceInvoice::where('status','unpaid')->whereBetween('issued_date', [$startDate, $endDate])->count();
+            $data['receiveable_invoices_amt'] = ServiceInvoice::withActiveQuote()->where('status','unpaid')->whereBetween('issued_date', [$startDate, $endDate])->sum('total_amt'); 
+            $data['receiveable_invoices_count'] = ServiceInvoice::withActiveQuote()->where('status','unpaid')->whereBetween('issued_date', [$startDate, $endDate])->count();
    
             return response()->json([
                 'start_date' => $startDate,
@@ -137,8 +137,8 @@ class DashboardController extends Controller
             $data['total_cash'] = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->where('payment_type','cash')->where('entry_type','cr')->sum('cash_amt')?: '0';
             $data['no_of_transection'] = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->where('payment_type','cash')->where('entry_type', 'cr')->count();
             
-            $data['receiveable_invoices_amt'] = ServiceInvoice::where('status','unpaid')->sum('total_amt'); 
-            $data['receiveable_invoices_count'] = ServiceInvoice::where('status','unpaid')->count();
+            $data['receiveable_invoices_amt'] = ServiceInvoice::withActiveQuote()->where('status','unpaid')->sum('total_amt'); 
+            $data['receiveable_invoices_count'] = ServiceInvoice::withActiveQuote()->where('status','unpaid')->count();
 
             return response()->json([
                 'data' => $data,

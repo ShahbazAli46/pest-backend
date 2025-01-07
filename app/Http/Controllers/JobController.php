@@ -135,7 +135,7 @@ class JobController extends Controller
                 if($job->is_completed==0){
                     //check contract cancel condition
                     if($job->quote_id!=null){
-                        if ($job->quote()->contact_cancelled_at!=null) {
+                        if ($job->quote->contact_cancelled_at!=null) {
                             DB::rollBack();
                             return response()->json([
                                 'status' => 'error',

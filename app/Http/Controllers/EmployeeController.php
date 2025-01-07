@@ -749,10 +749,6 @@ class EmployeeController extends Controller
             $data['employee_user_id'] = $request->user_id;
             $data['employee_id'] = $employee->id;
         
-
-
-
-
             $request->validate([
                 'employee_user_id' => 'required|exists:users,id', 
                 'attendance_per' => 'required|numeric|min:0|max:100', 
