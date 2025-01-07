@@ -481,7 +481,9 @@ class EmployeeController extends Controller
             $employee_salary=EmployeeSalary::findOrFail($id);
 
             if($employee_salary->status=='unpaid'){
-                $total_salary = ($employee_salary->total_salary * $per) / 100;
+                $basic_salary_amt = ($employee_salary->basic_salary * $per) / 100;
+                $total_salary=$basic_salary_amt+($employee_salary->allowance+$employee_salary->other);
+                
                 // $data['employee_salary']->payable_salary = strval($total_salary - $data['employee_salary']->total_fines);
                 $employee_salary->payable_salary=$total_salary - $employee_salary->total_fines;
                 $employee_salary->attendance_per=$per;
