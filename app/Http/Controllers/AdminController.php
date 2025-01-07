@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bank;
 use App\Models\Expense;
 use App\Models\Ledger;
 use App\Models\User;
@@ -51,11 +52,14 @@ class AdminController extends Controller
         }
     }
 
-    //get admin current cash balance
-    public function getAdminCashBalance(){
+    //get admin current balance
+    public function getAdminCurrentBalance(){
         try {
             $user=User::findOrFail(1);
-            $data['cash_balance']=$user->getCurrentBalance(User::class);
+            $data['cash_balance']=$user->getCurrentCashBalance(User::class);
+            $data['bank_balance'] = Bank::sum('balance');
+            $data['banks_info']=Bank::all();
+
             return response()->json(['data' => $data]);
         } catch (ModelNotFoundException $e) {
             return response()->json(['status'=>'error', 'message' => 'Admin Not Found.'], 404);

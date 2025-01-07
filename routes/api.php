@@ -137,7 +137,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     //Company or Admin
     Route::get('admin/ledger/get/{id?}',[AdminController::class,'getAdminLedger'])->name('admin.ledger.get');
-    Route::get('admin/cash_balance/get',[AdminController::class,'getAdminCashBalance'])->name('admin.cash_balance.get');
+    Route::get('admin/current/balance/get',[AdminController::class,'getAdminCurrentBalance'])->name('admin.current.balance.get');
     Route::get('admin/dashboard',[AdminController::class,'getAdminDashboard'])->name('admin.dashboard');
 
     // Terms And Condition
