@@ -102,6 +102,7 @@ class EmployeeController extends Controller
                 'other' => 'nullable|numeric|min:0',
                 'total_salary' => 'nullable|numeric|min:0',
                 'commission_per' => 'required|numeric|min:0|max:100',
+                'country' => 'nullable|string|max:100',
             ]);
 
             $requestData = $request->all(); 
@@ -170,6 +171,7 @@ class EmployeeController extends Controller
             $request->validate([
                 'user_id' => 'required|exists:users,id',
                 'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Max file size 2MB
+                'country' => 'nullable|string|max:100',
             ]);
             
             $user=User::find($request->user_id);
@@ -179,6 +181,7 @@ class EmployeeController extends Controller
             }
 
             $requestData=[];
+            $requestData['country']=$request->country;
 
             if ($request->hasFile('profile_image')) {
                 $employee = $user->employee;
