@@ -66,4 +66,51 @@ class AdminController extends Controller
             return response()->json(['status' => 'error','message' => 'Failed to Get Admin Balance. ' .$e->getMessage()],500);
         }
     }
+
+    public function addCashBalanceAdd(Request $request){
+        try {
+            DB::beginTransaction();
+            $request->validate([
+                'cash_amt' => 'required|numeric|min:1',
+            ]);
+
+            //Compnay ledger
+            $lastLedger = Ledger::where(['person_type'=> 'App\Models\User','person_id'=>1])->latest()->first();
+            $oldBankBalance = $lastLedger ? $lastLedger->bank_balance : 0;
+            $oldCashBalance = $lastLedger ? $lastLedger->cash_balance : 0;
+
+            $newCashBalance = $oldCashBalance + $request->cash_amt;
+            Ledger::create([
+                'bank_id' => null,
+                'description' => 'Add Cash Balance for Admin',
+                'dr_amt' => 0,  
+                'cr_amt' => $request->cash_amt,  
+                'payment_type' => 'opening_balance',
+                'cash_amt' => $request->cash_amt,  
+                'bank_balance' => $oldBankBalance,  
+                'cash_balance' => $newCashBalance,  
+                'entry_type' => 'cr',  
+                'person_id' => 1,  
+                'person_type' => 'App\Models\User',  // Admin or Company
+                'link_id' => null,  
+                'link_name' => null,  
+            ]);
+
+            DB::commit();
+            return response()->json(['status' => 'success','message' => 'Cash Added Successfully','total_cash_balance'=>$newCashBalance]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return response()->json(['status'=> 'error','message' => $e->validator->errors()->first()],422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['status' => 'error','message' => 'Failed to Add Client. ' .$e->getMessage()],500);
+        }
+
+
+        
+
+         
+
+
+    }
 }

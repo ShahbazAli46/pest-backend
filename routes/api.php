@@ -139,6 +139,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('admin/ledger/get/{id?}',[AdminController::class,'getAdminLedger'])->name('admin.ledger.get');
     Route::get('admin/current/balance/get',[AdminController::class,'getAdminCurrentBalance'])->name('admin.current.balance.get');
     Route::get('admin/dashboard',[AdminController::class,'getAdminDashboard'])->name('admin.dashboard');
+    Route::post('admin/cash_balance/add',[AdminController::class,'addCashBalanceAdd'])->name('admin.cash_balance.add');
 
     // Terms And Condition
     Route::get('terms_and_condition/{id?}',[TermsAndConditionController::class,'index'])->name('terms_and_condition');
