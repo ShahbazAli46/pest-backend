@@ -171,7 +171,8 @@ class EmployeeController extends Controller
             $request->validate([
                 'user_id' => 'required|exists:users,id',
                 'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Max file size 2MB
-                'country' => 'nullable|string|max:100',
+                'target' => 'nullable|numeric|min:0',
+                // 'country' => 'nullable|string|max:100',
             ]);
             
             $user=User::find($request->user_id);
@@ -181,12 +182,34 @@ class EmployeeController extends Controller
             }
 
             $requestData=[];
-            $requestData['country']=$request->country;
+            // $requestData['country']=$request->country;
 
             if ($request->hasFile('profile_image')) {
                 $employee = $user->employee;
                 $oldImagePath = $employee ? $employee->profile_image : null;
                 $requestData['profile_image'] = $this->saveImage($request->file('profile_image'), 'employees', $oldImagePath);
+            }
+
+            if($request->filled('target')){
+                $requestData['target']=$request->target;
+
+                //update commision of current month
+                $currentMonth = now()->format('Y-m'); // Get current month (e.g., "2024-10")
+                $employee_com=EmployeeCommission::where('referencable_id',$request->user_id)
+                ->where('referencable_type',User::class)->where('month',$currentMonth)->where('status','unpaid')->first();
+                
+                if($employee_com){
+                    $employee_com->target=$request->target;
+                    $total_sale=$employee_com->sale;
+                    if($total_sale>$request->target){
+                        $rem_amt=$total_sale-$request->target;
+                        $com_paid_amt = ($employee_com->commission_per / 100) * $rem_amt;
+                        $employee_com->paid_amt=$com_paid_amt;
+                    }else{
+                        $employee_com->paid_amt=0.00;
+                    }
+                    $employee_com->update();
+                }
             }
             
             $employee=$user->employee()->update($requestData);
