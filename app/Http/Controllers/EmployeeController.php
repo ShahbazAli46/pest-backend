@@ -193,7 +193,7 @@ class EmployeeController extends Controller
             if($request->filled('target')){
                 $requestData['target']=$request->target;
 
-                //update commision of current month
+                //update commission of current month
                 $currentMonth = now()->format('Y-m'); // Get current month (e.g., "2024-10")
                 $employee_com=EmployeeCommission::where('referencable_id',$request->user_id)
                 ->where('referencable_type',User::class)->where('month',$currentMonth)->where('status','unpaid')->first();

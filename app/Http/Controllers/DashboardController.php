@@ -263,15 +263,10 @@ class DashboardController extends Controller
         // Supplier balance logic
         $data['supplier_balance'] = Ledger::select('cash_balance')
             ->where('person_type', Supplier::class)
-            ->whereIn('id', function ($query) use ($year, $month) {
+            ->whereIn('id', function ($query) {
                 $query->select(DB::raw('MAX(id)'))
-                    ->from('ledgers')
-                    ->where('person_type', Supplier::class)
-                    ->whereYear('created_at', $year)
-                    ->whereMonth('created_at', $month)
-                    ->groupBy('person_id');
-            })
-            ->sum('cash_balance') ?: '0';  // Default to '0' if no results
+                    ->from('ledgers')->where('person_type', Supplier::class)->groupBy('person_id');
+            })->sum('cash_balance') ?: '0';  // Default to '0' if no results
     
         // Purchase order logic
         $purchase_order = PurchaseOrder::query();
