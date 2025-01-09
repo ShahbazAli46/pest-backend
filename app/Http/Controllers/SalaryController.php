@@ -29,7 +29,7 @@ class SalaryController extends Controller
             $data[]=['name'=>'Remaining Salary','value'=>$employee_salary->sum('remaining_salary')];
 
             $data[]=['name'=>'Total WPS','value'=>$employee_salary->where('transection_type', 'wps')->where('status','paid')->sum('paid_salary')];
-            $data[]=['name'=>'Total Cash','value'=>$employee_salary->where('transection_type', 'wps')->where('status','paid')->sum('total_cash')];
+            $data[]=['name'=>'Total Cash','value'=>$employee_salary->where('transection_type', 'cash')->where('status','paid')->sum('paid_salary')];
 
 
             return response()->json(['data' => $data]);
