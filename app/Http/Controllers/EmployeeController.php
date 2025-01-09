@@ -494,6 +494,7 @@ class EmployeeController extends Controller
             }
 
             $employee_salary=$employee_salary_query->get();
+
             return response()->json(['data' => $employee_salary]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json(['status'=> 'error','message' => $e->validator->errors()->first()], 422);
