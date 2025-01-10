@@ -23,6 +23,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Route::middleware(['auth:sanctum','permission'])->group(function () {
     Route::post('device/token',[DashboardController::class,'deviceToken'])->name('device.token');
 
+
     //Dashboard
     Route::get('dashboard/count_clients',[DashboardController::class,'getCountClients'])->name('dashboard.count_clients');
     Route::get('dashboard/count_jobs',[DashboardController::class,'getCountJobs'])->name('dashboard.count_jobs');
@@ -198,4 +199,3 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::post('logout',[UserAuthController::class,'logout'])->name('logout');
 });
-

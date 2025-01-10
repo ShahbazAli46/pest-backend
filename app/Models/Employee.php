@@ -44,17 +44,15 @@ class Employee extends Model
         return $this->hasMany(VehicleAssignedHistory::class, 'employee_id');
     }
 
-    // public function getCurrentAdvBalance()
-    // {
-    //     $lastLedger = EmployeeAdvancePayment::where([
-    //         'employee_id' => $this->id
-    //     ])->latest()->first();
-    //     return $lastLedger ? $lastLedger->balance : "0";
-    // }
-
     public function getCurrentAdvBalanceAttribute()
     {
         $lastLedger = EmployeeAdvancePayment::where('employee_id', $this->id)->latest()->first();
+        return $lastLedger ? $lastLedger->balance : "0";
+    }
+
+    public function getCurrentFineBalanceAttribute()
+    {
+        $lastLedger = VehicleEmployeeFine::where('employee_id', $this->id)->latest()->first();
         return $lastLedger ? $lastLedger->balance : "0";
     }
 }

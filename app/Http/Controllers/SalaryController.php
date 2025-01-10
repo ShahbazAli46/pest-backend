@@ -25,7 +25,7 @@ class SalaryController extends Controller
             $data[]=['name'=>'Adv Paid','value'=>$employee_salary->sum('adv_paid')];
             $data[]=['name'=>'Payable Salary','value'=>$employee_salary->sum('payable_salary')];
             $data[]=['name'=>'Paid Salary','value'=>$employee_salary->sum('paid_salary')];
-            $data[]=['name'=>'Adv Received','value'=>$employee_salary->sum('adv_received')];
+            $data[]=['name'=>'Deduction of Advance','value'=>$employee_salary->sum('adv_received')];
             $data[]=['name'=>'Remaining Salary','value'=>$employee_salary->sum('remaining_salary')];
 
             $data[]=['name'=>'Total WPS','value'=>$employee_salary->where('transection_type', 'wps')->where('status','paid')->sum('paid_salary')];

@@ -9,7 +9,7 @@ class VehicleEmployeeFine extends Model
 {
     use HasFactory;
     public $table="vehicle_employee_fines";
-    protected $fillable = ['employee_id','employee_user_id','vehicle_id','fine','fine_date'];
+    protected $fillable = ['employee_id','employee_user_id','vehicle_id','fine','fine_date','month','description','fine_received','payment_type','balance'];
 
     public function user()
     {
@@ -27,3 +27,4 @@ class VehicleEmployeeFine extends Model
     }
 
 }
+

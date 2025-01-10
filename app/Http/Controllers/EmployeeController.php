@@ -591,6 +591,7 @@ class EmployeeController extends Controller
                 'transection_type' => 'required|in:wps,cash',
                 'attendance_per' => 'required|numeric|min:0|max:100', 
                 'adv_received' => 'nullable|numeric', 
+                'fine_received' => 'nullable|numeric', 
                 'description' => 'nullable|max:255', 
             ]);
             
@@ -604,13 +605,15 @@ class EmployeeController extends Controller
                 }
                 $employee=Employee::find($employee_salary->employee_id);
                 $current_adv_balance=$employee->current_adv_balance;
+                $current_fine_balance=$employee->current_fine_balance;
 
                 $total_salary = $employee_salary->total_salary; // Total salary to be paid
                 $attendance_per = $request->attendance_per; // Attendance percentage
                 
                 $advance_recv_msg="";
+                $fine_rec_msg="";
                 $payable_salary = ($total_salary * $attendance_per) / 100;
-                $payable_salary=$payable_salary-$employee_salary->total_fines;
+                // $payable_salary=$payable_salary-$employee_salary->total_fines;
 
                 $employee_salary->payable_salary=$payable_salary;
                 $paid_salary=$request->paid_salary;
@@ -636,6 +639,29 @@ class EmployeeController extends Controller
                     $adv_payment->save();
                 }
 
+                if($request->filled('fine_received')){
+                    if($current_fine_balance<$request->fine_received){
+                        DB::rollBack();
+                        return response()->json(['status' => 'error', 'message' => "Fine received amount should be less than or equal to fine amount."], 400);
+                    }
+                    // $paid_salary=$payable_salary-$request->adv_received;
+                    $fine_rec_msg=" & Detected fine of ".$request->fine_received; 
+                    $employee_salary->fine_received = $employee_salary->fine_received+$request->fine_received; 
+
+                    $vehicleFine = new VehicleEmployeeFine();
+                    $vehicleFine->employee_user_id = $employee_salary->user_id; 
+                    // $vehicleFine->vehicle_id = $request->vehicle_id;
+                    // $vehicleFine->fine = $request->fine;
+                    $vehicleFine->fine_date = now()->format('Y-m-d');
+                    $vehicleFine->employee_id = $employee->id;
+                    $vehicleFine->employee_salary_id = $employee_salary->id;
+                    $vehicleFine->description = $request->description; 
+                    $vehicleFine->payment_type = 'dr'; 
+                    $vehicleFine->month = $employee_salary->month; 
+                    $vehicleFine->balance = $current_fine_balance-$request->fine_received; 
+                    $vehicleFine->save();
+                }
+
                 //if i want to pay hold salary or add hold salary
                 if($paid_salary>$payable_salary){
                     $pay_hold_salary=$paid_salary-$payable_salary;
@@ -653,10 +679,11 @@ class EmployeeController extends Controller
                 $employee_salary->status = 'paid'; 
                 $employee_salary->paid_at = now(); 
                 $employee_salary->transection_type = $request->transection_type; 
+                $employee_salary->total_fines=($employee_salary->total_fines+$request->fine_received);
                 $employee_salary->save();
 
                 DB::commit();
-                return response()->json(['status' => 'success','message' => "Salary paid based on $attendance_per% attendance$advance_recv_msg: $paid_salary"]);
+                return response()->json(['status' => 'success','message' => "Salary paid based on $attendance_per% attendance$advance_recv_msg $fine_rec_msg: $paid_salary"]);
             } else {
                 DB::rollBack();
                 return response()->json(['status' => 'error','message' => 'Employee Salary Not Found.'], 500);
@@ -725,6 +752,7 @@ class EmployeeController extends Controller
                 'vehicle_id' => 'required|exists:vehicles,id', 
                 'fine' => 'required|max:100',
                 'fine_date' => 'required|date',
+                'description' => 'nullable|max:255', 
             ]);
             $vehicle = Vehicle::find($request->vehicle_id);
 
@@ -747,6 +775,8 @@ class EmployeeController extends Controller
                     return response()->json(['status' => 'error','message' => 'The salary for this month has already been paid.'], 400);
                 }
 
+                $current_fine_balance=$employee->current_fine_balance;
+
                 $vehicleFine = new VehicleEmployeeFine();
                 $vehicleFine->employee_user_id = $vehicle->user_id;
                 $vehicleFine->vehicle_id = $request->vehicle_id;
@@ -754,6 +784,10 @@ class EmployeeController extends Controller
                 $vehicleFine->fine_date = $request->fine_date;
                 $vehicleFine->employee_id = $employee->id;
                 $vehicleFine->employee_salary_id = $employee_salary->id;
+                $vehicleFine->description = $request->description; 
+                $vehicleFine->payment_type = 'cr'; 
+                $vehicleFine->month = $employee_salary->month; 
+                $vehicleFine->balance = $current_fine_balance+$request->fine; 
                 $vehicleFine->save();
 
                 $employee_salary->total_fines=($employee_salary->total_fines+$request->fine);
@@ -771,43 +805,12 @@ class EmployeeController extends Controller
                 DB::rollBack();
                 return response()->json(['status' => 'error','message' => 'The specified user does not have an employee record.'], 400);
             }
-
-            $emp_docs = EmployeeDocs::where('employee_user_id', $request->user_id)->where('name', $request->name)->first();
-    
-            $data = $request->only(['name', 'status', 'start', 'expiry', 'desc']);
-            $data['employee_user_id'] = $request->user_id;
-            $data['employee_id'] = $employee->id;
-        
-            $request->validate([
-                'employee_user_id' => 'required|exists:users,id', 
-                'attendance_per' => 'required|numeric|min:0|max:100', 
-            ]);
-    
-            // Find the employee salary record
-            $employee_salary = EmployeeSalary::find($request->employee_salary_id);
-    
-            // if ($employee_salary) {
-            //     $total_salary = $employee_salary->total_salary; // Total salary to be paid
-            //     $attendance_per = $request->attendance_per; // Attendance percentage
-    
-            //     $paid_salary = ($total_salary * $attendance_per) / 100;
-            //     $employee_salary->paid_salary = $paid_salary; 
-            //     $employee_salary->attendance_per = $attendance_per; 
-            //     $employee_salary->status = 'paid'; 
-            //     $employee_salary->paid_at = now(); 
-            //     $employee_salary->save();
-    
-            //     return response()->json(['status' => 'success','message' => "Salary paid based on $attendance_per% attendance: $paid_salary"]);
-            // } else {
-            //     return response()->json(['status' => 'error','message' => 'Employee Salary Not Found.'], 500);
-            // }
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json(['status'=> 'error','message' => $e->validator->errors()->first()], 422);
         } catch (\Exception $e) {
             return response()->json(['status' => 'error','message' => 'Failed to Employee Salary Paid. ' .$e->getMessage()],500);
         }
     }
-
 
     public function getEmployeeCommission(Request $request){
         try {
