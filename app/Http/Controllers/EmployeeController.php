@@ -619,7 +619,7 @@ class EmployeeController extends Controller
                 $employee_salary->payable_salary=$payable_salary; 
                 $paid_salary=$request->paid_salary;
             
-                if($request->filled('adv_received')){
+                if($request->filled('adv_received') && $request->adv_received>0){
                     if($current_adv_balance<$request->adv_received){
                         DB::rollBack();
                         return response()->json(['status' => 'error', 'message' => "Advance received amount should be less than or equal to advance amount."], 400);
@@ -640,7 +640,7 @@ class EmployeeController extends Controller
                     $adv_payment->save();
                 }
 
-                if($request->filled('fine_received')){
+                if($request->filled('fine_received') && $request->fine_received>0){
                     if($current_fine_balance<$request->fine_received){
                         DB::rollBack();
                         return response()->json(['status' => 'error', 'message' => "Fine received amount should be less than or equal to fine amount."], 400);
