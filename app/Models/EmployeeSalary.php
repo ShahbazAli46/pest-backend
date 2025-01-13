@@ -23,7 +23,7 @@ class EmployeeSalary extends Model
     {
         return $this->hasMany(EmployeeAdvancePayment::class);
     }
-
+    
     public function vehicleFines()
     {
         return $this->hasMany(VehicleEmployeeFine::class);

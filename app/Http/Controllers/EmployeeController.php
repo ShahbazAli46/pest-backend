@@ -658,6 +658,7 @@ class EmployeeController extends Controller
                     $vehicleFine->description = $request->description; 
                     $vehicleFine->payment_type = 'dr'; 
                     $vehicleFine->month = $employee_salary->month; 
+                    $vehicleFine->fine_received = $request->fine_received; 
                     $vehicleFine->balance = $current_fine_balance-$request->fine_received; 
                     $vehicleFine->save();
                 }
@@ -679,7 +680,6 @@ class EmployeeController extends Controller
                 $employee_salary->status = 'paid'; 
                 $employee_salary->paid_at = now(); 
                 $employee_salary->transection_type = $request->transection_type; 
-                $employee_salary->total_fines=($employee_salary->total_fines+$request->fine_received);
                 $employee_salary->save();
 
                 DB::commit();
