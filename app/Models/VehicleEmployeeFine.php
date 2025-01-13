@@ -26,5 +26,10 @@ class VehicleEmployeeFine extends Model
         return $this->belongsTo(EmployeeSalary::class,'employee_salary_id');
     }
 
+    public function vehicle()
+    {
+        return $this->belongsTo(Vehicle::class,'vehicle_id');
+    }
+
 }
 

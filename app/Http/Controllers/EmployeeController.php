@@ -483,7 +483,7 @@ class EmployeeController extends Controller
                 'salary_month' => 'nullable|date_format:Y-m',
                 'employee_user_id' => 'nullable|exists:users,id', 
             ]);
-            $employee_salary_query=EmployeeSalary::with(['user.employee','employeeAdvancePayment','vehicleFines']);
+            $employee_salary_query=EmployeeSalary::with(['user.employee','employeeAdvancePayment','vehicleFines.vehicle']);
 
             if($request->filled('salary_month')){
                 $employee_salary_query->where('month',$request->salary_month);
