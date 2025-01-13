@@ -277,6 +277,10 @@ class DashboardController extends Controller
         $paid_employee_salary = EmployeeSalary::where('status', 'paid')->where('month', $monthh);
         $data['paid_employee_salary'] =  $paid_employee_salary->sum('paid_salary') === 0 ? '0' : $paid_employee_salary->sum('paid_salary');
     
+        // Paid employee commission logic
+        $paid_employee_comm = EmployeeCommission::where('status', 'paid')->where('month', $monthh);
+        $data['paid_employee_comm'] =  $paid_employee_comm->sum('paid_amt') === 0 ? '0' : $paid_employee_comm->sum('paid_amt');
+        
         $startDate = Carbon::create($year, $month, 1)->startOfMonth()->toDateString();
         $endDate = Carbon::create($year, $month, 1)->endOfMonth()->toDateString();
         $data['employee_expense'] = EmployeeDocs::whereBetween('process_date', [$startDate, $endDate])->sum('process_amt') ?: '0';
