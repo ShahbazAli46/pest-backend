@@ -607,15 +607,16 @@ class EmployeeController extends Controller
                 $current_adv_balance=$employee->current_adv_balance;
                 $current_fine_balance=$employee->current_fine_balance;
 
-                $total_salary = $employee_salary->total_salary; // Total salary to be paid
                 $attendance_per = $request->attendance_per; // Attendance percentage
-                
+
+                $basic_salary_amt = ($employee_salary->basic_salary * $attendance_per) / 100;
+                $total_salary=$basic_salary_amt+($employee_salary->allowance+$employee_salary->other);
+
+
                 $advance_recv_msg="";
                 $fine_rec_msg="";
-                $payable_salary = ($total_salary * $attendance_per) / 100;
-                // $payable_salary=$payable_salary-$employee_salary->total_fines;
-
-                $employee_salary->payable_salary=$payable_salary;
+                $payable_salary=$total_salary - $employee_salary->total_fines;
+                $employee_salary->payable_salary=$payable_salary; 
                 $paid_salary=$request->paid_salary;
             
                 if($request->filled('adv_received')){
