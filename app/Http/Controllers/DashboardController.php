@@ -253,7 +253,7 @@ class DashboardController extends Controller
         if (!$month) {
             $month = now()->format('Y-m');  // Default to current month in 'YYYY-MM' format
         }
-    
+        $monthh=$month;
         // Break the provided month into year and month
         [$year, $month] = explode('-', $month);
     
@@ -274,9 +274,8 @@ class DashboardController extends Controller
         $data['purchase_order'] = ($total = $purchase_order->sum('grand_total')) === 0 ? '0' : $total;
     
         // Paid employee salary logic
-        $paid_employee_salary = EmployeeSalary::where('status', 'paid');
-        $paid_employee_salary->where('month', $month);
-        $data['paid_employee_salary'] = ($total = $paid_employee_salary->sum('paid_salary')) === 0 ? '0' : $total;
+        $paid_employee_salary = EmployeeSalary::where('status', 'paid')->where('month', $monthh);
+        $data['paid_employee_salary'] =  $paid_employee_salary->sum('paid_salary') === 0 ? '0' : $paid_employee_salary->sum('paid_salary');
     
         $startDate = Carbon::create($year, $month, 1)->startOfMonth()->toDateString();
         $endDate = Carbon::create($year, $month, 1)->endOfMonth()->toDateString();
