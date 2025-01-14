@@ -283,7 +283,7 @@ class DashboardController extends Controller
         
         $startDate = Carbon::create($year, $month, 1)->startOfMonth()->toDateString();
         $endDate = Carbon::create($year, $month, 1)->endOfMonth()->toDateString();
-        $data['employee_expense'] = EmployeeDocs::whereBetween('process_date', [$startDate, $endDate])->sum('process_amt') ?: '0';
+        $data['employee_expense'] = EmployeeDocs::whereBetween('created_at', [$startDate, $endDate])->sum('process_amt') ?: '0';
 
         // Return the response
         return response()->json(['data' => $data]);
