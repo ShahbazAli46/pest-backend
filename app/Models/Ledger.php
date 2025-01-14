@@ -15,7 +15,7 @@ class Ledger extends Model
         'bank_id', 'description', 'dr_amt', 'cr_amt', 'payment_type', 
         'cash_amt', 'pos_amt', 'cheque_amt', 'online_amt', 'cheque_no', 
         'cheque_date', 'entry_type', 'transection_id', 'bank_balance', 'cash_balance','person_id',
-        'person_type', 'link_id', 'link_name'
+        'person_type', 'link_id', 'link_name','referenceable_id','referenceable_type'
     ];
          
     // Define the morphTo relationship
@@ -32,7 +32,11 @@ class Ledger extends Model
         }
         return $this->morphTo(null, 'person_type', 'person_id');
     }
-
+    
+    public function referenceable()
+    {
+        return $this->morphTo();
+    }
 
     public function getPurchaseOrder()
     {

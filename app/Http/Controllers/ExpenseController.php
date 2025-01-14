@@ -124,6 +124,8 @@ class ExpenseController extends Controller
                 'person_type' => 'App\Models\User', 
                 'link_id' => $expense->id, 
                 'link_name' => 'expense',
+                'referenceable_id' => $expense->id,
+                'referenceable_type' => 'App\Models\Expense',
             ]);
 
             DB::commit();

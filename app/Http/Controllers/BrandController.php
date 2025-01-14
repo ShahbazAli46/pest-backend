@@ -46,6 +46,7 @@ class BrandController extends Controller
             return response()->json(['status' => 'error','message' => 'Failed to Add Brand. ' .$e->getMessage()],500);
         }
     }
+    
     //Update
     public function update(Request $request, $id)
     {

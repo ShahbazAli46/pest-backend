@@ -124,6 +124,8 @@ class VehicleExpenseController extends Controller
                 'person_type' => 'App\Models\User', 
                 'link_id' => $vehicle_expense->id, 
                 'link_name' => 'vehicle_expense',
+                'referenceable_id' =>  $vehicle_expense->id,
+                'referenceable_type' => 'App\Models\VehicleExpense',
             ]);
             
 

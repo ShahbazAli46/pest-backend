@@ -143,6 +143,8 @@ class CustomerController extends Controller
                 'person_type' => 'App\Models\User', 
                 'link_id' => $cus_ledger->id, 
                 'link_name' => 'customer_ledger',
+                'referenceable_id' => $request->customer_id,
+                'referenceable_type' => 'App\Models\Customer',
             ]);
 
             DB::commit();

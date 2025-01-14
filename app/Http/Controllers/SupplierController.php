@@ -177,6 +177,8 @@ class SupplierController extends Controller
                 'person_type' => 'App\Models\User', 
                 'link_id' => $sup_ledger->id, 
                 'link_name' => 'supplier_ledger',
+                'referenceable_id' =>  $supplier->id,
+                'referenceable_type' => 'App\Models\Supplier',
             ]);
 
             DB::commit();

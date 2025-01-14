@@ -175,6 +175,8 @@ class ServiceInvoiceController extends Controller
                         'person_type' => 'App\Models\User', 
                         'link_id' => $cli_ledger->id, 
                         'link_name' => 'client_ledger',
+                        'referenceable_id' =>  $invoice->user_id,
+                        'referenceable_type' => 'App\Models\User',
                     ]);
                 }
 
