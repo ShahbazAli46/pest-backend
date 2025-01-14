@@ -16,11 +16,11 @@ class BankController extends Controller
             $banks=Bank::orderBy('id', 'DESC')->get();
             return response()->json(['data' => $banks]);
         }else{
-            $bank=Bank::find($id);
+            $bank=Bank::with('ledgers.personable')->find($id);
             return response()->json(['data' => $bank]);
         }
     }
-    
+
     //Store
     public function store(Request $request)
     {

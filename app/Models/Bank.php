@@ -21,4 +21,9 @@ class Bank extends Model
     {
         return $this->hasMany(VehicleExpense::class);
     }
+
+    public function ledgers()
+    {
+        return $this->hasMany(Ledger::class, 'bank_id');
+    }
 }
