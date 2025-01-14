@@ -114,7 +114,11 @@ class User extends Authenticatable
         return $this->hasMany(DeviceAssignedHistory::class, 'employee_user_id');
     }
     
-
+    public function referenceableLedgers()
+    {
+        return $this->morphMany(Ledger::class, 'referenceable');
+    }
+    
     // Define a local query scope to filter active users
     // public function scopeActive($query)
     // {

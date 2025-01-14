@@ -27,4 +27,9 @@ class Expense extends Model
     {
         return $value ? asset($value) : null;
     }
+
+    public function referenceableLedgers()
+    {
+        return $this->morphMany(Ledger::class, 'referenceable');
+    }
 }

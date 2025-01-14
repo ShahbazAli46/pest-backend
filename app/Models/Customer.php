@@ -25,4 +25,9 @@ class Customer extends Model
     {
         return $this->morphMany(Stock::class, 'person');
     }
+
+    public function referenceableLedgers()
+    {
+        return $this->morphMany(Ledger::class, 'referenceable');
+    }
 }

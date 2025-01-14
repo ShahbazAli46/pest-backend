@@ -26,4 +26,9 @@ class Supplier extends Model
     {
         return $this->morphMany(BankInfo::class, 'linkable');
     }
+
+    public function referenceableLedgers()
+    {
+        return $this->morphMany(Ledger::class, 'referenceable');
+    }
 }
