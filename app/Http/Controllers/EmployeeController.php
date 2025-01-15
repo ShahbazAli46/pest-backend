@@ -509,10 +509,10 @@ class EmployeeController extends Controller
 
             if($employee_salary->status=='unpaid'){
                 $basic_salary_amt = ($employee_salary->basic_salary * $per) / 100;
-                $total_salary=$basic_salary_amt+($employee_salary->allowance+$employee_salary->other);
+                $employee_salary->payable_salary=$basic_salary_amt+($employee_salary->allowance+$employee_salary->other);
                 
                 // $data['employee_salary']->payable_salary = strval($total_salary - $data['employee_salary']->total_fines);
-                $employee_salary->payable_salary=$total_salary - $employee_salary->total_fines;
+                // $employee_salary->payable_salary=$total_salary - $employee_salary->total_fines;
                 $employee_salary->attendance_per=$per;
                 $employee_salary->save();
 
@@ -610,12 +610,12 @@ class EmployeeController extends Controller
                 $attendance_per = $request->attendance_per; // Attendance percentage
 
                 $basic_salary_amt = ($employee_salary->basic_salary * $attendance_per) / 100;
-                $total_salary=$basic_salary_amt+($employee_salary->allowance+$employee_salary->other);
+                $payable_salary=$basic_salary_amt+($employee_salary->allowance+$employee_salary->other);
 
 
                 $advance_recv_msg="";
                 $fine_rec_msg="";
-                $payable_salary=$total_salary - $employee_salary->total_fines;
+                // $payable_salary=$total_salary - $employee_salary->total_fines;
                 $employee_salary->payable_salary=$payable_salary; 
                 $paid_salary=$request->paid_salary;
             
