@@ -126,6 +126,9 @@ class ExpenseController extends Controller
                 'link_name' => 'expense',
                 'referenceable_id' => $expense->id,
                 'referenceable_type' => 'App\Models\Expense',
+                'cheque_no' => $request->input('payment_type') == 'cheque' ? $request->input('cheque_no') : null,
+                'cheque_date' => $request->input('payment_type') == 'cheque' ? $request->input('cheque_date') : null,
+                'transection_id' => in_array($request->input('payment_type'), ['online', 'pos']) ? $request->input('transection_id') : null,
             ]);
 
             DB::commit();

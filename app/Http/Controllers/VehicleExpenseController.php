@@ -126,6 +126,9 @@ class VehicleExpenseController extends Controller
                 'link_name' => 'vehicle_expense',
                 'referenceable_id' =>  $vehicle_expense->id,
                 'referenceable_type' => 'App\Models\VehicleExpense',
+                'cheque_no' => $request->input('payment_type') == 'cheque' ? $request->input('cheque_no') : null,
+                'cheque_date' => $request->input('payment_type') == 'cheque' ? $request->input('cheque_date') : null,
+                'transection_id' => in_array($request->input('payment_type'), ['online', 'pos']) ? $request->input('transection_id') : null,
             ]);
             
 
