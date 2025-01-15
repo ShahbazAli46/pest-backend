@@ -22,7 +22,7 @@ class SalaryController extends Controller
             $data[]=['name'=>'Total Other','value'=>$employee_salary->sum('other')];
             $data[]=['name'=>'Total Salary','value'=>$employee_salary->sum('total_salary')];
             $data[]=['name'=>'Total Fines','value'=>$employee_salary->sum('total_fines')];
-            $data[]=['name'=>'Adv Paid','value'=>$employee_salary->sum('adv_paid')];
+            $data[]=['name'=>'Advance Paid','value'=>$employee_salary->sum('adv_paid')];
             $data[]=['name'=>'Payable Salary','value'=>$employee_salary->sum('payable_salary')];
             $data[]=['name'=>'Paid Salary','value'=>$employee_salary->sum('paid_salary')];
             $data[]=['name'=>'Deduction of Advance','value'=>$employee_salary->sum('adv_received')];
