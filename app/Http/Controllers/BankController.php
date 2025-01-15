@@ -11,13 +11,32 @@ use Illuminate\Support\Facades\DB;
 class BankController extends Controller
 {
     //Get
-    public function index($id=null){
+    public function index(Request $request,$id=null){
         if($id==null){
             $banks=Bank::orderBy('id', 'DESC')->get();
             return response()->json(['data' => $banks]);
         }else{
-            $bank=Bank::with(['ledgers.referenceable'])->find($id);
-            return response()->json(['data' => $bank]);
+            if ($request->has('start_date') && $request->has('end_date')) {
+                $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
+                $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
+               
+                $bank = Bank::with([
+                    'ledgers' => function ($query) use ($startDate, $endDate, $request) {
+                        if ($request->has('start_date') && $request->has('end_date')) {
+                            $query->whereBetween('created_at', [$startDate, $endDate]);
+                        }
+                    },'ledgers.referenceable'
+                ])->find($id);
+                return response()->json([
+                    'start_date' => $startDate->toDateTimeString(),
+                    'end_date' => $endDate->toDateTimeString(),
+                    'data' => $bank,
+                ]);
+            } else {
+                $bank = Bank::with(['ledgers.referenceable'])->find($id);
+                $bank->ledgers = $bank->ledgers()->with(['referenceable'])->get();
+                return response()->json(['data' => $bank]);
+            }
         }
     }
 
