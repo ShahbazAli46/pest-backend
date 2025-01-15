@@ -16,7 +16,7 @@ class BankController extends Controller
             $banks=Bank::orderBy('id', 'DESC')->get();
             return response()->json(['data' => $banks]);
         }else{
-            $bank=Bank::with(['ledgers.personable','ledgers.referenceable'])->find($id);
+            $bank=Bank::with(['ledgers.referenceable'])->find($id);
             return response()->json(['data' => $bank]);
         }
     }
