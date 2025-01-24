@@ -64,6 +64,7 @@ class ProductController extends Controller
                 'attachments' => 'nullable|array', 
                 'attachments.*' => 'file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120', 
                 'product_category' => 'nullable|string|max:100',
+                'opening_stock_qty' =>  'required|numeric|min:0',
             ]);
 
             $requestData = $request->all(); 
@@ -77,6 +78,21 @@ class ProductController extends Controller
                 $this->saveAttachments($request->file('attachments'), $product->id, Product::class, 'products/attachments', 'Product Detail Document');
             }
 
+            // Add stock entry
+            $stock = Stock::where(['product_id'=> $product->id,'person_id'=>1,'person_type'=>'App\Models\User'])->latest()->first();
+            $old_total_qty=$stock?$stock->total_qty:0;
+            $old_remaining_qty=$stock?$stock->remaining_qty:0;
+            Stock::create([
+                'product_id' => $product->id,
+                'total_qty' => $old_total_qty+$request->opening_stock_qty, 
+                'stock_in' => $request->opening_stock_qty,
+                'remaining_qty' => $old_remaining_qty+$request->opening_stock_qty, 
+                'person_id' => 1,
+                'person_type' => 'App\Models\User',  
+                'link_name' => 'opening_stock', 
+            ]);
+
+
             DB::commit();
             return response()->json(['status' => 'success','message' => 'Product Added Successfully']);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -87,6 +103,42 @@ class ProductController extends Controller
             return response()->json(['status' => 'error','message' => 'Failed to Add Product. ' .$e->getMessage()],500);
         }
     }
+    
+    //add new stock
+    public function addStock(Request $request){
+        try {
+            DB::beginTransaction();
+            $request->validate([
+                'product_id' => 'required|exists:products,id', 
+                'add_stock_qty' =>  'required|numeric|min:1',
+            ]);
+
+            // Add stock entry
+            $stock = Stock::where(['product_id'=> $request->product_id,'person_id'=>1,'person_type'=>'App\Models\User'])->latest()->first();
+            $old_total_qty=$stock?$stock->total_qty:0;
+            $old_remaining_qty=$stock?$stock->remaining_qty:0;
+            Stock::create([
+                'product_id' => $request->product_id,
+                'total_qty' => $old_total_qty+$request->add_stock_qty, 
+                'stock_in' => $request->add_stock_qty,
+                'remaining_qty' => $old_remaining_qty+$request->add_stock_qty, 
+                'person_id' => 1,
+                'person_type' => 'App\Models\User',  
+                'link_name' => 'add_stock', 
+            ]);
+
+            DB::commit();
+            return response()->json(['status' => 'success','message' => 'Stock Added Successfully']);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return response()->json(['status'=> 'error','message' => $e->validator->errors()->first()], 422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['status' => 'error','message' => 'Failed to Add Stock.' .$e->getMessage()],500);
+        }
+    }
+
+   
 
     public function getProductStok($id=null)
     {
