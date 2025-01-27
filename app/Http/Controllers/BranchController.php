@@ -29,8 +29,9 @@ class BranchController extends Controller
                 'name' => 'required|string|max:255|unique:branches,name',
                 'address' => 'nullable|string|max:255',
                 'phone' => 'nullable|string|max:100',
-                'email' => 'nullable|string|max:100',
+                'email' => 'nullable|email|max:100',
             ]);
+            
 
             $branch=Branch::create($validateData);
             if($branch){
@@ -59,7 +60,7 @@ class BranchController extends Controller
                 'name' => 'required|string|max:255|unique:branches,name,'.$id,
                 'address' => 'nullable|string|max:255',
                 'phone' => 'nullable|string|max:100',
-                'email' => 'nullable|string|max:100',
+                'email' => 'nullable|email|max:100',
             ]);
 
              // Find the bank by ID

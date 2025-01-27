@@ -124,6 +124,10 @@ class User extends Authenticatable
         return $this->morphMany(Ledger::class, 'referenceable');
     }
     
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
+    }
     // Define a local query scope to filter active users
     // public function scopeActive($query)
     // {

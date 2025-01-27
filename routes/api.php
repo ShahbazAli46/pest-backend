@@ -53,7 +53,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('employee/vehicle/fine',[EmployeeController::class,'vehicleEmployeeFine'])->name('employee.vehicle.fine');
     Route::post('employee/adv_received',[EmployeeController::class,'advanceReceived'])->name('employee.adv_received');
     
-    Route::get('salary/detail/{month?}',[SalaryController::class,'getSalaryDetails'])->name('salary.detail');
+    Route::get('salary/detail/{month?}/{branch_id?}',[SalaryController::class,'getSalaryDetails'])->name('salary.detail');
 
     //Sales-Manager
 

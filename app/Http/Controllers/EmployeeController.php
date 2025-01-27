@@ -32,7 +32,7 @@ class EmployeeController extends Controller
     
     public function index($id=null){
         if($id==null){
-            $employees=User::notFired()->with(['employee.documents','role:id,name'])->whereIn('role_id',[2,3,4,6])->orderBy('id', 'DESC')->get();
+            $employees=User::notFired()->with(['employee.documents','role:id,name','branch'])->whereIn('role_id',[2,3,4,6])->orderBy('id', 'DESC')->get();
             //sales manager only
             // foreach($employees as $key=>$employee){
             //     if($employee->role_id==4){
@@ -42,7 +42,7 @@ class EmployeeController extends Controller
             // }
             return response()->json(['data' => $employees]);
         }else{
-            $employee=User::with(['employee.documents','devices','assignedVehicles'])->where('id',$id)->whereIn('role_id',[2,3,4,6])->first();
+            $employee=User::with(['employee.documents','devices','assignedVehicles','branch'])->where('id',$id)->whereIn('role_id',[2,3,4,6])->first();
             if ($employee && $employee->role_id == 4) {
                 $employee->load([
                     'captainJobs' => function($query) {

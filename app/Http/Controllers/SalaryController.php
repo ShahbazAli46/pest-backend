@@ -8,15 +8,22 @@ use Illuminate\Http\Request;
 class SalaryController extends Controller
 {
     //
-    public function getSalaryDetails($month=null){
+    public function getSalaryDetails($month=null,$branch_id = null){
         try {
             $employee_salary_query = EmployeeSalary::query();
             
             if ($month!=null) {
                 $employee_salary_query->where('month', $month);
             }
-            
+
+            if ($branch_id!=null) {
+                $employee_salary_query->whereHas('user', function ($query) use ($branch_id) {
+                    $query->where('branch_id', $branch_id);
+                });
+            }
+
             $employee_salary = $employee_salary_query->get();
+ 
             $data[]=['name'=>'Total Basic Salary','value'=>$employee_salary->sum('basic_salary')];
             $data[]=['name'=>'Total Allowance','value'=>$employee_salary->sum('allowance')];
             $data[]=['name'=>'Total Other','value'=>$employee_salary->sum('other')];
