@@ -34,6 +34,7 @@ trait GeneralTrait
                 'name' => 'required|string|max:255',
                 'email' => 'required|string|email|unique:users|max:255',
                 'role_id' => 'required|exists:roles,id',
+                'branch_id' => 'nullable|exists:branches,id', 
             ]);
             $user_password=$this->generateRandomPassword(12);
             $user = User::create([
@@ -41,6 +42,7 @@ trait GeneralTrait
                 'email' => $registerUserData['email'],
                 'role_id' => $request->role_id,
                 'password' => Hash::make($user_password),
+                'branch_id' => $registerUserData['branch_id'],
             ]);
 
             $user_role=Role::where('id',$user->role_id)->first()->name;

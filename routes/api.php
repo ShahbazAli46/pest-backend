@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\{AdminController, BankController, BrandController,ClientController, CustomerController, DashboardController, DeviceController, EmployeeController, ExpenseCategoryController, ExpenseController, JobController, JobServiceReportController, ProductController, PurchaseOrderController, QuoteController, ReceivedCashRecordController, SalaryController, SaleOrderController, ServiceController, ServiceInvoiceController, SupplierController, TermsAndConditionController, TreatmentMethodController, UserAuthController, VehicleController, VehicleExpenseController, VendorController};
+use App\Http\Controllers\{AdminController, BankController, BranchController, BrandController,ClientController, CustomerController, DashboardController, DeviceController, EmployeeController, ExpenseCategoryController, ExpenseController, JobController, JobServiceReportController, ProductController, PurchaseOrderController, QuoteController, ReceivedCashRecordController, SalaryController, SaleOrderController, ServiceController, ServiceInvoiceController, SupplierController, TermsAndConditionController, TreatmentMethodController, UserAuthController, VehicleController, VehicleExpenseController, VendorController};
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -60,7 +60,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('employee/commission/get',[EmployeeController::class,'getEmployeeCommission'])->name('employee.commission.get');
     Route::post('employee/commission/paid',[EmployeeController::class,'paidEmployeeCommission'])->name('employee.commission.paid');
 
-    
+    // Branches
+    Route::get('branch/{id?}',[BranchController::class,'index'])->name('branch');
+    Route::post('branch/create',[BranchController::class,'store'])->name('branch.create');
+    Route::post('branch/update/{id}',[BranchController::class,'update'])->name('branch.update');
+
     // Vendors
     Route::get('vendor/{id?}',[VendorController::class,'index'])->name('vendor');
     Route::post('vendor/create',[VendorController::class,'store'])->name('vendor.create');

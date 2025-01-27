@@ -52,6 +52,7 @@ class ExpenseController extends Controller
                 'vat_per' => 'nullable|numeric|min:0|max:100',
                 'expense_file' => 'nullable|file|mimes:jpeg,jpg,png,pdf,doc,docx|max:5120',
                 'expense_date' => 'required|date', 
+                'branch_id' => 'required|exists:branches,id', 
             ]);
 
             if ($request->input('payment_type') == 'cheque') {

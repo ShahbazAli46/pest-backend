@@ -138,6 +138,7 @@ class User extends Authenticatable
         'fired_at',
         'app_version',
         'firebase_token',
+        'branch_id'
     ];
 
     protected $dates = ['fired_at'];

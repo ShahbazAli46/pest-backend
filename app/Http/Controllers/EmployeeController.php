@@ -103,6 +103,7 @@ class EmployeeController extends Controller
                 'total_salary' => 'nullable|numeric|min:0',
                 'commission_per' => 'required|numeric|min:0|max:100',
                 'country' => 'nullable|string|max:100',
+                'branch_id' => 'required|exists:branches,id', 
             ]);
 
             $requestData = $request->all(); 
