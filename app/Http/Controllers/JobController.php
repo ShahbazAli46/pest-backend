@@ -178,13 +178,17 @@ class JobController extends Controller
     {
         try {
             DB::beginTransaction();
+
             $request->merge([
-                'team_member_ids' => explode(',', $request->input('team_member_ids')),
+                'team_member_ids' => $request->has('team_member_ids') && $request->input('team_member_ids') !== null 
+                    ? explode(',', $request->input('team_member_ids')) 
+                    : [],
             ]);
+
             $request->validate([
                 'job_id' => 'required|exists:jobs,id',
                 'captain_id' => 'required|exists:users,id,role_id,4', //user_id
-                'team_member_ids.*' => 'required|exists:users,id,role_id,4',
+                'team_member_ids.*' => 'nullable|exists:users,id,role_id,4',
                 'job_instructions' => 'nullable|string',
             ]);
 
