@@ -39,7 +39,7 @@ class Employee extends Model
         return $this->hasMany(VehicleEmployeeFine::class, 'employee_id');
     }
     
-    public function assignedVehicles()
+    public function assignedVehicleHistory()
     {
         return $this->hasMany(VehicleAssignedHistory::class, 'employee_id');
     }

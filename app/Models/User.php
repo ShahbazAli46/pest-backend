@@ -94,9 +94,14 @@ class User extends Authenticatable
         return $this->hasMany(VehicleEmployeeFine::class, 'employee_user_id');
     }
     
-    public function assignedVehicles()
+    public function assignedVehicleHistory()
     {
         return $this->hasMany(VehicleAssignedHistory::class, 'employee_user_id');
+    }
+
+    public function assignedVehicles()
+    {
+        return $this->hasMany(Vehicle::class, 'user_id');
     }
 
     public function clientJobs()
