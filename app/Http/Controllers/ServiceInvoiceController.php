@@ -26,7 +26,7 @@ class ServiceInvoiceController extends Controller
                 $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay(); // Use endOfDay to include the entire day
                 
                 // it should apply due_date not issue_date so this is pending
-                $invoices = ServiceInvoice::withActiveOrPaidInvoices()->with(['user.client.referencable', 'invoiceable'])->whereBetween('issued_date', [$startDate, $endDate]);
+                $invoices = ServiceInvoice::withActiveOrPaidInvoices()->with(['user.client.referencable', 'invoiceable','address'])->whereBetween('issued_date', [$startDate, $endDate]);
 
                 // Apply user_id filter if present
                 if ($request->has('user_id')) {
@@ -42,7 +42,7 @@ class ServiceInvoiceController extends Controller
                 });
                 return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $invoices]);
             }else{
-                $invoices=ServiceInvoice::withActiveOrPaidInvoices()->with(['user.client.referencable','invoiceable']);
+                $invoices=ServiceInvoice::withActiveOrPaidInvoices()->with(['user.client.referencable','invoiceable','address']);
                 
                 // Apply user_id filter if present
                 if ($request->has('user_id')) {
@@ -57,7 +57,7 @@ class ServiceInvoiceController extends Controller
                 return response()->json(['data' => $invoices]);
             }
         }else{ 
-            $invoice=ServiceInvoice::with(['invoiceable','details.itemable','amountHistory','user.client'])->where('id',$id)->first();
+            $invoice=ServiceInvoice::with(['invoiceable','details.itemable','amountHistory','user.client','address'])->where('id',$id)->first();
             $invoice->jobs = $invoice->getJobs(); 
             $invoice->title = $invoice->title; 
             return response()->json(['data' => $invoice]);
