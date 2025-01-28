@@ -54,7 +54,6 @@ class VehicleExpenseController extends Controller
                 'vat_per' => 'nullable|numeric|min:0|max:100',
                 'oil_change_limit'   => 'nullable|string|max:50',   
                 'expense_date' => 'required|date', 
-                'branch_id' => 'required|exists:branches,id', 
             ]);
 
             if ($request->input('payment_type') == 'cheque') {
