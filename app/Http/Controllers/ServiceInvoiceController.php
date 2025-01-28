@@ -127,6 +127,8 @@ class ServiceInvoiceController extends Controller
                 $lastClientLedger = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => $invoice->user_id])->latest()->first();
                 $oldCliCashBalance = $lastClientLedger ? $lastClientLedger->cash_balance : 0;
                 $newCliCashBalance = $oldCliCashBalance - $paid_amt;
+                $auth_user = Auth::user();      
+
                 $cli_ledger=Ledger::create([
                     'bank_id' => null,  // Assuming null if no specific bank is involved
                     'description' => 'Add Payment for invoice ' . $invoice->service_invoice_id,
@@ -136,9 +138,10 @@ class ServiceInvoiceController extends Controller
                     'cash_balance' => $newCliCashBalance,
                     'person_id' => $invoice->user_id,
                     'person_type' => 'App\Models\User',
+                    'referenceable_id' => $auth_user,
+                    'referenceable_type' => 'App\Models\User',
                 ]);
 
-                $auth_user = Auth::user();      
                 // Update the company ledger
                 if($auth_user->role_id!=6 && $request->input('payment_type') === 'cash'){
                     ReceivedCashRecord::create([

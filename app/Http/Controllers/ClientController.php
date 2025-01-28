@@ -316,10 +316,14 @@ class ClientController extends Controller
 
                 $clients=User::with(['client'])->where('role_id',5)->orderBy('id', 'DESC')->get()
                 ->map(function($client) use ($startDate, $endDate) {
-                    $crAmtSum = Ledger::where('person_id',$client->id)->whereBetween('created_at', [$startDate, $endDate])->where(['person_type' => 'App\Models\User'])->sum('cr_amt');
+                    $ledgerEntries = Ledger::with(['referenceable'])->where('person_id', $client->id)
+                        ->whereBetween('created_at', [$startDate, $endDate])->where('person_type', 'App\Models\User')->get();
+
+                        $crAmtSum = $ledgerEntries->sum('cr_amt'); // Correctly sums all rows
                         if ($crAmtSum > 0) {
-                            $client->ledger_cr_amt_sum = $crAmtSum;
-                            return $client;
+                            $client->ledger_cr_amt_sum = $crAmtSum; // Add the sum to the client
+                            $client->ledger_entries = $ledgerEntries; // Add the ledger entries to the client
+                            return $client; // Return the modified client object
                         }
                         return null;
                     })->filter() ->values();
@@ -327,9 +331,13 @@ class ClientController extends Controller
             }else{
                 $clients=User::with(['client'])->where('role_id',5)->orderBy('id', 'DESC')->get()
                 ->map(function($client){
-                    $crAmtSum = Ledger::where('person_id',$client->id)->where(['person_type' => 'App\Models\User'])->sum('cr_amt');
+                    $ledgerEntries = Ledger::with(['referenceable'])->where('person_id', $client->id)->where('person_type', 'App\Models\User')->get();
+                    $crAmtSum = $ledgerEntries->sum('cr_amt'); // Correctly sums all rows
+
+                    // $crAmtSum = Ledger::where('person_id',$client->id)->where(['person_type' => 'App\Models\User'])->sum('cr_amt');
                         if ($crAmtSum > 0) {
                             $client->ledger_cr_amt_sum = $crAmtSum;
+                            $client->ledger_entries = $ledgerEntries; // Add the ledger entries to the client
                             return $client;
                         }
                         return null;
@@ -342,14 +350,22 @@ class ClientController extends Controller
                 $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
 
                 $client=User::with(['client'])->where('role_id',5)->where('id',$id)->first();
-                $client->ledger_cr_amt_sum = Ledger::where('person_id',$client->id)->whereBetween('created_at', [$startDate, $endDate])->where(['person_type' => 'App\Models\User'])->sum('cr_amt');
+                $ledgerEntries = Ledger::with(['referenceable'])->where('person_id', $client->id)->whereBetween('created_at', [$startDate, $endDate])->where('person_type', 'App\Models\User')->get();
+                $crAmtSum = $ledgerEntries->sum('cr_amt'); // Correctly sums all rows
+                $client->ledger_cr_amt_sum=$crAmtSum;
+                $client->ledger_entries = $ledgerEntries;
+                // $client->ledger_cr_amt_sum = Ledger::where('person_id',$client->id)->whereBetween('created_at', [$startDate, $endDate])->where(['person_type' => 'App\Models\User'])->sum('cr_amt');
                 return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $client]);
             }else{
-                $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
-                $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
+                // $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
+                // $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
 
                 $client=User::with(['client'])->where('role_id',5)->where('id',$id)->first();
-                $client->ledger_cr_amt_sum = Ledger::where('person_id',$client->id)->where(['person_type' => 'App\Models\User'])->sum('cr_amt');
+                // $client->ledger_cr_amt_sum = Ledger::where('person_id',$client->id)->where(['person_type' => 'App\Models\User'])->sum('cr_amt');
+                $ledgerEntries = Ledger::with(['referenceable'])->where('person_id', $client->id)->where('person_type', 'App\Models\User')->get();
+                $crAmtSum = $ledgerEntries->sum('cr_amt'); // Correctly sums all rows
+                $client->ledger_cr_amt_sum=$crAmtSum;
+                $client->ledger_entries = $ledgerEntries; // Add the ledger entries to the client
                 return response()->json(['data' => $client]);
             }
         }
