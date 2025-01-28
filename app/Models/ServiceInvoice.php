@@ -10,7 +10,7 @@ class ServiceInvoice extends Model
     use HasFactory;
     public $table="service_invoices";
 
-    protected $fillable = ['service_invoice_id','invoiceable_id','invoiceable_type','user_id','issued_date','total_amt','paid_amt','status','job_ids','user_invoice_id'];
+    protected $fillable = ['service_invoice_id','invoiceable_id','invoiceable_type','user_id','issued_date','total_amt','paid_amt','status','job_ids','user_invoice_id','address_id'];
 
     public function invoiceable()
     {
@@ -30,6 +30,11 @@ class ServiceInvoice extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+    
+    public function address()
+    {
+        return $this->belongsTo(ClientAddress::class, 'address_id');
     }
 
     public function getTitleAttribute()

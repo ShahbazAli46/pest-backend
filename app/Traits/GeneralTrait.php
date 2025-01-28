@@ -42,7 +42,7 @@ trait GeneralTrait
                 'email' => $registerUserData['email'],
                 'role_id' => $request->role_id,
                 'password' => Hash::make($user_password),
-                'branch_id' => $registerUserData['branch_id'],
+                'branch_id' => $registerUserData['branch_id']??null,
             ]);
 
             $user_role=Role::where('id',$user->role_id)->first()->name;
@@ -226,6 +226,7 @@ trait GeneralTrait
 
     function generateServiceInvoice($inv_id,$inv_type,$user_id,$total_amt,$issued_date,$item_details,$item_type='Service')
     {
+        $inv_data=$inv_type::find($inv_id);
         $invoice=ServiceInvoice::create([
             'invoiceable_id'=>$inv_id,
             'invoiceable_type'=>$inv_type,
@@ -233,6 +234,7 @@ trait GeneralTrait
             'issued_date'=>$issued_date,
             'total_amt'=>$total_amt,
             'paid_amt'=>0.00,
+            'address_id'=> $inv_data->client_address_id
         ]);
         if($invoice){
             if($item_type=='Service'){

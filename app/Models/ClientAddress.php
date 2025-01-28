@@ -21,4 +21,9 @@ class ClientAddress extends Model
     {
         return $this->hasMany(Job::class,'client_address_id');
     }
+
+    public function serviceInvoices()
+    {
+        return $this->hasMany(ServiceInvoice::class, 'address_id');
+    }
 }
