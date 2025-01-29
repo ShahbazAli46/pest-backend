@@ -62,6 +62,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 
     Route::post('employee/invoice/assign',[EmployeeController::class,'assignInvoice'])->name('employee.invoices.assign');
+    Route::post('employee/invoice/assign/response',[EmployeeController::class,'responseFromCustomer'])->name('employee.invoices.assign.response');
 
     // Branches
     Route::get('branch/{id?}',[BranchController::class,'index'])->name('branch');

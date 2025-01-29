@@ -14,6 +14,8 @@ use App\Models\Job;
 use App\Models\JobServiceReportProduct;
 use App\Models\Ledger;
 use App\Models\Product;
+use App\Models\ServiceInvoice;
+use App\Models\ServiceInvoiceAssignedHhistory;
 use App\Models\Stock;
 use App\Models\User;
 use App\Models\Vehicle;
@@ -32,7 +34,7 @@ class EmployeeController extends Controller
     
     public function index($id=null){
         if($id==null){
-            $employees=User::notFired()->with(['employee.documents','role:id,name','branch'])->whereIn('role_id',[2,3,4,6])->orderBy('id', 'DESC')->get();
+            $employees=User::notFired()->with(['employee.documents','role:id,name','branch'])->whereIn('role_id',[2,3,4,6,7])->orderBy('id', 'DESC')->get();
             //sales manager only
             // foreach($employees as $key=>$employee){
             //     if($employee->role_id==4){
@@ -42,7 +44,7 @@ class EmployeeController extends Controller
             // }
             return response()->json(['data' => $employees]);
         }else{
-            $employee=User::with(['employee.documents','devices','assignedVehicles','branch'])->where('id',$id)->whereIn('role_id',[2,3,4,6])->first();
+            $employee=User::with(['employee.documents','devices','assignedVehicles','branch'])->where('id',$id)->whereIn('role_id',[2,3,4,6,7])->first();
             if ($employee && $employee->role_id == 4) {
                 $employee->load([
                     'captainJobs' => function($query) {
@@ -71,13 +73,16 @@ class EmployeeController extends Controller
                     'person_id' => $employee->id,
                     'person_type' => 'App\Models\User'
                 ])->latest()->get(['id', 'product_id', 'total_qty', 'remaining_qty', 'created_at'])->unique('product_id')->values();
+            }else if($employee && $employee->role_id == 7){
+                $employee->load(['assignedInvoices']);
+                // ServiceInvoiceAssignedHhistory::
             }
             return response()->json(['data' => $employee]);
         }
     }
 
     public function getFiredEmployees(){
-        $employees=User::fired()->with(['employee','role:id,name'])->whereIn('role_id',[2,3,4,6])->orderBy('id', 'DESC')->get();
+        $employees=User::fired()->with(['employee','role:id,name'])->whereIn('role_id',[2,3,4,6,7])->orderBy('id', 'DESC')->get();
         return response()->json(['data' => $employees]);
     }
 
@@ -90,7 +95,7 @@ class EmployeeController extends Controller
                 'name' => 'required|string|max:255',
                 'email' => 'required|string|email|unique:users|max:255',
                 'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Max file size 2MB
-                'role_id' => 'required|exists:roles,id|in:2,3,4,6', // Assuming there's a roles table
+                'role_id' => 'required|exists:roles,id|in:2,3,4,6,7', // Assuming there's a roles table
                 'phone_number' => 'nullable|string|max:50',
                 'target' => 'nullable|numeric|min:0',
                 'profession' => 'nullable|string',
@@ -146,7 +151,6 @@ class EmployeeController extends Controller
                     'month' => $currentMonth,
                     'status' => 'unpaid',
                 ]);
-                
 
                 // $message="A employee has been added into system by ".$user['data']->name;
                 DB::commit();
@@ -315,7 +319,6 @@ class EmployeeController extends Controller
                         'link_id' => $expense->id, 
                         'link_name' => 'expense',
                     ]);
-    
                 }
             }
 
@@ -436,7 +439,7 @@ class EmployeeController extends Controller
 
     public function fireEmployee($user_id){
         try {
-            $employee_user=User::where('id',$user_id)->whereIn('role_id',[2,3,4,6])->first();
+            $employee_user=User::where('id',$user_id)->whereIn('role_id',[2,3,4,6,7])->first();
             if($employee_user){
                 if($employee_user->fired_at==null){
                     $employee_user->fired_at=now();
@@ -457,7 +460,7 @@ class EmployeeController extends Controller
 
     public function reActiveEmployee($user_id){
         try {
-            $employee_user=User::where('id',$user_id)->whereIn('role_id',[2,3,4,6])->first();
+            $employee_user=User::where('id',$user_id)->whereIn('role_id',[2,3,4,6,7])->first();
             if($employee_user){
                 if($employee_user->fired_at!=null){
                     $employee_user->fired_at=null;
@@ -900,11 +903,108 @@ class EmployeeController extends Controller
         return response()->json($response_arr);
     }
 
+    public function assignInvoice(Request $request){
+        try {
+            DB::beginTransaction();
+            $request->validate([
+                'invoice_id' => 'required|exists:service_invoices,id',
+                'recovery_officer_id' => 'required|exists:users,id,role_id,7', 
+            ]);
+            
+            $service_invoice=ServiceInvoice::findOrFail($request->invoice_id);
+
+            $employee = Employee::where('user_id', $request->recovery_officer_id)->first();
+            if (!$employee) {
+                DB::rollBack();
+                return response()->json(['status' => 'error','message' => 'The specified user does not have an employee record.'], 400);
+            }
+
+            if($service_invoice->status=='unpaid'){
+                $message=$service_invoice->assigned_user_id!=null?'Service Invoice ReAssigned Successfully':'Service Invoice Assigned Successfully';
+                $service_invoice->assigned_user_id=$request->recovery_officer_id;
+                $service_invoice->promise_date = null;
+                $service_invoice->update();
+
+                ServiceInvoiceAssignedHhistory::create([
+                    'service_invoice_id' => $request->invoice_id,
+                    'employee_user_id'=> $request->recovery_officer_id,
+                    'employee_id'=> $employee->id,
+                ]);
+
+                DB::commit();
+                return response()->json(['status' => 'success', 'message' => $message]);
+            }else if($service_invoice->status=='paid'){
+                DB::rollBack();
+                return response()->json(['status' => 'error','message' => 'Employee Salary already Paid.'], 500);
+            }
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return response()->json(['status'=> 'error','message' => $e->validator->errors()->first()], 422);
+        } catch (ModelNotFoundException $e) {
+            DB::rollBack();
+            return response()->json(['status'=>'error', 'message' => 'Service Invoice Not Found.'], 404);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['status' => 'error','message' => 'Failed to Assign Stock. ' .$e->getMessage()],500);
+        }
+    }
+
+    public function responseFromCustomer(Request $request){
+        try {
+            DB::beginTransaction();
+            $request->validate([
+                'invoice_id' => 'required|exists:service_invoices,id',
+                'recovery_officer_id' => 'required|exists:users,id,role_id,7', 
+                'response_type' => 'required|in:payment,promise,other', 
+                'promise_date' => 'nullable|date|after:today',
+            ]);
+            
+            $service_invoice=ServiceInvoice::with(['assignedHistories'])->findOrFail($request->invoice_id);
+
+            $employee = Employee::where('user_id', $request->recovery_officer_id)->first();
+            if (!$employee) {
+                DB::rollBack();
+                return response()->json(['status' => 'error','message' => 'The specified user does not have an employee record.'], 400);
+            }
+
+            if($service_invoice->status=='unpaid'){
+                if($service_invoice->assigned_user_id!=null){
+                    $service_invoice->assigned_user_id=null;
+                    $service_invoice->promise_date=$request->promise_date??null;
+                    $service_invoice->update();
+
+                    $history = $service_invoice->assignedHistories()->latest('id')->first();
+                    if($history){
+                        $history->response_type=$request->response_type;
+                        $history->promise_date=$request->promise_date??null;
+                        $history->update();
+                    }
+                    DB::commit();
+                    return response()->json(['status' => 'success', 'message' => 'Response Added Successfully']);
+                }else{
+                    DB::rollBack();
+                    return response()->json(['status' => 'error','message' => 'Service invoice has not been assigned to any officer yet.'], 500);
+                }
+            }else if($service_invoice->status=='paid'){
+                DB::rollBack();
+                return response()->json(['status' => 'error','message' => 'Employee Salary already Paid.'], 500);
+            }
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return response()->json(['status'=> 'error','message' => $e->validator->errors()->first()], 422);
+        } catch (ModelNotFoundException $e) {
+            DB::rollBack();
+            return response()->json(['status'=>'error', 'message' => 'Service Invoice Not Found.'], 404);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['status' => 'error','message' => 'Failed to Assign Stock. ' .$e->getMessage()],500);
+        }
+    }
+    
     //get all sales managers and its number of assign job and complete jobs
     // if ($request->has('start_date') && $request->has('end_date')) {
     //     $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
     //     $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay(); // Use endOfDay to include the entire day
     //     // $jobs = $jobs->whereBetween('job_date', [$startDate, $endDate]);
     // }
-
 }

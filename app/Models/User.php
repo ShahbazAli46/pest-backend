@@ -128,6 +128,16 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Branch::class);
     }
+
+    public function assignedInvoiceHistory()
+    {
+        return $this->hasMany(ServiceInvoiceAssignedHhistory::class, 'employee_user_id');
+    }
+
+    public function assignedInvoices()
+    {
+        return $this->hasMany(ServiceInvoice::class, 'assigned_user_id');
+    }
     // Define a local query scope to filter active users
     // public function scopeActive($query)
     // {

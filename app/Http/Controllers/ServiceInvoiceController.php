@@ -57,7 +57,7 @@ class ServiceInvoiceController extends Controller
                 return response()->json(['data' => $invoices]);
             }
         }else{ 
-            $invoice=ServiceInvoice::with(['invoiceable','details.itemable','amountHistory','user.client','address'])->where('id',$id)->first();
+            $invoice=ServiceInvoice::with(['invoiceable','details.itemable','amountHistory','user.client','address','assignedHistories'])->where('id',$id)->first();
             $invoice->jobs = $invoice->getJobs(); 
             $invoice->title = $invoice->title; 
             return response()->json(['data' => $invoice]);
@@ -138,7 +138,7 @@ class ServiceInvoiceController extends Controller
                     'cash_balance' => $newCliCashBalance,
                     'person_id' => $invoice->user_id,
                     'person_type' => 'App\Models\User',
-                    'referenceable_id' => $auth_user,
+                    'referenceable_id' => $auth_user->id,
                     'referenceable_type' => 'App\Models\User',
                 ]);
 
