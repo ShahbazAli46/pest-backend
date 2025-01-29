@@ -43,7 +43,13 @@ class ServiceInvoiceController extends Controller
                 return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $invoices]);
             }else{
                 $invoices=ServiceInvoice::withActiveOrPaidInvoices()->with(['user.client.referencable','invoiceable','address']);
-                
+
+                if ($request->has('start_promise_date') && $request->has('end_promise_date')) {
+                    $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
+                    $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay(); // Use endOfDay to include the entire day
+                    $invoices->whereBetween('promise_date', [$startDate, $endDate]);
+                }
+
                 // Apply user_id filter if present
                 if ($request->has('user_id')) {
                     $invoices->where('user_id', $request->input('user_id'));
