@@ -10,7 +10,7 @@ class ServiceInvoiceAssignedHhistory extends Model
     use HasFactory;
 
     public $table="service_invoices_assigned_history";
-    protected $fillable = ['service_invoice_id','employee_user_id','employee_id','response_type','promise_date'];
+    protected $fillable = ['service_invoice_id','employee_user_id','employee_id','response_type','promise_date','other'];
 
     public function serviceInvoice()
     {

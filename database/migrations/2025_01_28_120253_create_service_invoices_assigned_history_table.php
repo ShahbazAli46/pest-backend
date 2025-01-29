@@ -21,6 +21,7 @@ return new class extends Migration
             $table->foreign('service_invoice_id')->references('id')->on('service_invoices')->onDelete('cascade');
             $table->string('response_type',100)->nullable();
             $table->date('promise_date')->nullable();
+            $table->string('other')->nullable();
             $table->timestamps();
         });
     }

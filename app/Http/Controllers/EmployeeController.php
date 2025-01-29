@@ -74,7 +74,7 @@ class EmployeeController extends Controller
                     'person_type' => 'App\Models\User'
                 ])->latest()->get(['id', 'product_id', 'total_qty', 'remaining_qty', 'created_at'])->unique('product_id')->values();
             }else if($employee && $employee->role_id == 7){
-                $employee->load(['assignedInvoices']);
+                $employee->load(['assignedInvoices.user']);
                 // ServiceInvoiceAssignedHhistory::
             }
             return response()->json(['data' => $employee]);
@@ -957,6 +957,7 @@ class EmployeeController extends Controller
                 'recovery_officer_id' => 'required|exists:users,id,role_id,7', 
                 'response_type' => 'required|in:payment,promise,other', 
                 'promise_date' => 'nullable|date|after:today',
+                'other' => 'nullable|string|max:255',
             ]);
             
             $service_invoice=ServiceInvoice::with(['assignedHistories'])->findOrFail($request->invoice_id);
@@ -977,6 +978,7 @@ class EmployeeController extends Controller
                     if($history){
                         $history->response_type=$request->response_type;
                         $history->promise_date=$request->promise_date??null;
+                        $history->other=$request->other??null;
                         $history->update();
                     }
                     DB::commit();
