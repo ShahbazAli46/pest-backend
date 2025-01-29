@@ -60,10 +60,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('employee/commission/get',[EmployeeController::class,'getEmployeeCommission'])->name('employee.commission.get');
     Route::post('employee/commission/paid',[EmployeeController::class,'paidEmployeeCommission'])->name('employee.commission.paid');
 
-
+    Route::get('employee/recovery_officer/get',[EmployeeController::class,'getRecoveryOfficer'])->name('employee.recovery_officer.get');
     Route::post('employee/invoice/assign',[EmployeeController::class,'assignInvoice'])->name('employee.invoices.assign');
     Route::post('employee/invoice/assign/response',[EmployeeController::class,'responseFromCustomer'])->name('employee.invoices.assign.response');
-
+    
     // Branches
     Route::get('branch/{id?}',[BranchController::class,'index'])->name('branch');
     Route::post('branch/create',[BranchController::class,'store'])->name('branch.create');

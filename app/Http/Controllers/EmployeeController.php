@@ -1000,7 +1000,12 @@ class EmployeeController extends Controller
             return response()->json(['status' => 'error','message' => 'Failed to Assign Stock. ' .$e->getMessage()],500);
         }
     }
-    
+
+    public function getRecoveryOfficer(Request $request){
+        $recovery_officers=User::notFired()->with(['employee.documents','role:id,name'])->withCount('assignedInvoices')->where('role_id',7)->orderBy('id', 'DESC')->get();
+        return response()->json(['data' => $recovery_officers]);
+    }
+
     //get all sales managers and its number of assign job and complete jobs
     // if ($request->has('start_date') && $request->has('end_date')) {
     //     $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
