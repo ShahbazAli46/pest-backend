@@ -74,7 +74,7 @@ class EmployeeController extends Controller
                     'person_type' => 'App\Models\User'
                 ])->latest()->get(['id', 'product_id', 'total_qty', 'remaining_qty', 'created_at'])->unique('product_id')->values();
             }else if($employee && $employee->role_id == 7){
-                $employee->load(['assignedInvoices.user']);
+                $employee->load(['assignedInvoices.user','assignedInvoices.address']);
                 // ServiceInvoiceAssignedHhistory::
             }
             return response()->json(['data' => $employee]);
