@@ -271,4 +271,35 @@ class ServiceInvoiceController extends Controller
 
         return response()->json(['data' => $invoices]);
     }
+
+
+    public function getAssignedStates(Request $request){
+        $invoices = ServiceInvoice::withActiveOrPaidInvoices()
+        ->with([
+            'user.client.referencable',
+            'invoiceable',
+            'address',
+            'assignedHistories'
+        ])
+        ->whereHas('assignedHistories', function ($query) use ($request) {
+            if ($request->has('start_promise_date') && $request->has('end_promise_date')) {
+                $startDate = \Carbon\Carbon::parse($request->input('start_promise_date'))->startOfDay();
+                $endDate = \Carbon\Carbon::parse($request->input('end_promise_date'))->endOfDay();
+                $query->whereBetween('created_at', [$startDate, $endDate]);
+            }
+        });
+    
+    // Apply user_id filter if present
+    if ($request->has('user_id')) {
+        $invoices->where('user_id', $request->input('user_id'));
+    }
+    
+    $invoices = $invoices->get();
+
+        $invoices->each(function($invoice) {
+            $invoice->title = $invoice->title; 
+            $invoice->makeHidden('invoiceable'); 
+        });
+        return response()->json(['data' => $invoices]);
+    }
 }
