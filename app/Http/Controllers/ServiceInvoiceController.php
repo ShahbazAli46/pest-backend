@@ -42,7 +42,7 @@ class ServiceInvoiceController extends Controller
                 });
                 return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $invoices]);
             }else{
-                $invoices=ServiceInvoice::withActiveOrPaidInvoices()->with(['user.client.referencable','invoiceable','address']);
+                $invoices=ServiceInvoice::withActiveOrPaidInvoices()->with(['user.client.referencable','invoiceable','address','assignedRecoveryOfficer']);
 
                 if ($request->has('start_promise_date') && $request->has('end_promise_date')) {
                     $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
@@ -63,7 +63,7 @@ class ServiceInvoiceController extends Controller
                 return response()->json(['data' => $invoices]);
             }
         }else{ 
-            $invoice=ServiceInvoice::with(['invoiceable','details.itemable','amountHistory','user.client','address','assignedHistories'])->where('id',$id)->first();
+            $invoice=ServiceInvoice::with(['invoiceable','details.itemable','amountHistory','user.client','address','assignedHistories','assignedRecoveryOfficer'])->where('id',$id)->first();
             $invoice->jobs = $invoice->getJobs(); 
             $invoice->title = $invoice->title; 
             return response()->json(['data' => $invoice]);
@@ -273,19 +273,23 @@ class ServiceInvoiceController extends Controller
     }
 
 
-    public function getAssignedStates(Request $request){
+    public function getAssignedStates(Request $request,$rec_officer_id=null){
         $invoices = ServiceInvoice::withActiveOrPaidInvoices()
         ->with([
             'user.client.referencable',
             'invoiceable',
             'address',
-            'assignedHistories'
+            'assignedHistories.employeeUser',
+            // 'assignedRecoveryOfficer'
         ])
-        ->whereHas('assignedHistories', function ($query) use ($request) {
+        ->whereHas('assignedHistories', function ($query) use ($request,$rec_officer_id) {
             if ($request->has('start_promise_date') && $request->has('end_promise_date')) {
                 $startDate = \Carbon\Carbon::parse($request->input('start_promise_date'))->startOfDay();
                 $endDate = \Carbon\Carbon::parse($request->input('end_promise_date'))->endOfDay();
                 $query->whereBetween('created_at', [$startDate, $endDate]);
+            }
+            if($rec_officer_id!=null){
+                $query->where('employee_user_id', $rec_officer_id);
             }
         });
     

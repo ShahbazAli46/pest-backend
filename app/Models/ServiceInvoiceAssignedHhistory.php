@@ -26,4 +26,5 @@ class ServiceInvoiceAssignedHhistory extends Model
     {
         return $this->belongsTo(User::class, 'employee_user_id');
     }
+    
 }
