@@ -37,6 +37,11 @@ class ServiceInvoice extends Model
         return $this->belongsTo(ClientAddress::class, 'address_id');
     }
 
+    public function assignedRecoveryOfficer()
+    {
+        return $this->belongsTo(User::class, 'assigned_user_id');
+    }
+
     public function assignedHistories()
     {
         return $this->hasMany(ServiceInvoiceAssignedHhistory::class, 'service_invoice_id');
