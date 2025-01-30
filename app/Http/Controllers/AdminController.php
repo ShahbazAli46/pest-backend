@@ -27,6 +27,24 @@ class AdminController extends Controller
         }
     }
 
+    public function getAdminCashLedger(Request $request)
+    {
+        if($request->has('start_date') && $request->has('end_date')){
+            $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
+            $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
+
+            $ledgers = Ledger::with(['personable'])->whereBetween('created_at', [$startDate, $endDate])
+            ->whereIn('payment_type',['opening_balance','cash'])
+            ->where(['person_type' => 'App\Models\User','person_id'=>1])->get();
+            return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $ledgers]);
+        }else{
+            $ledgers = Ledger::with(['personable'])->where(['person_type' => 'App\Models\User','person_id'=>1])
+            ->whereIn('payment_type',['opening_balance','cash'])
+            ->get();
+            return response()->json(['data' => $ledgers]);
+        }
+    }
+
     //get dashboard data
     public function getAdminDashboard(Request $request)
     {
