@@ -70,6 +70,7 @@ class PurchaseOrderController extends Controller
                 'price.*' => 'required|numeric|min:1',
                 'vat_per' => 'nullable|array',
                 'vat_per.*' => 'nullable|numeric|min:0|max:100',
+                'order_type' => 'required|in:delivery_note,purchase_order',
             ]);
     
             $supplier = Supplier::findOrFail($validatedData['supplier_id']);
@@ -131,42 +132,55 @@ class PurchaseOrderController extends Controller
                     'vat_per' => $vatPers[$i],
                     'vat_amount' => $vatAmount,
                     'total' => $total,
-                ]);
-               
-                // Add stock entry
-                $stock = Stock::where(['product_id'=> $productIds[$i],'person_id'=>1,'person_type'=>'App\Models\User'])->latest()->first();
-                $old_total_qty=$stock?$stock->total_qty:0;
-                $old_remaining_qty=$stock?$stock->remaining_qty:0;
-
-                Stock::create([
-                    'product_id' => $productIds[$i],
-                    'total_qty' => $old_total_qty+$quantities[$i], 
-                    'stock_in' => $quantities[$i],  
-                    'remaining_qty' => $old_remaining_qty+$quantities[$i], 
-                    'person_id' => 1,
-                    'person_type' => 'App\Models\User',   
-                    'link_id' => $orderDetail->id,
-                    'link_name' => 'purchase_order_detail', 
+                    'order_type' => $request->order_type,
                 ]);
 
+
+                if($request->order_type=='delivery_note'){
+                    // Add stock entry
+                    $stock_query = Stock::where(['product_id'=> $productIds[$i],'person_id'=>1,'person_type'=>'App\Models\User']);
+                    $stock=$stock_query->latest()->first();
+
+                    $existingPrices = $stock_query->where('stock_in','>',0.00)->pluck('price')->toArray();
+                    $allPrices = array_merge($existingPrices, [$prices[$i],]);
+                    $avg_price = count($allPrices) > 0 ? array_sum($allPrices) / count($allPrices) : 0;
+
+                    $old_total_qty=$stock?$stock->total_qty:0;
+                    $old_remaining_qty=$stock?$stock->remaining_qty:0;
+                    Stock::create([
+                        'product_id' => $productIds[$i],
+                        'total_qty' => $old_total_qty+$quantities[$i], 
+                        'stock_in' => $quantities[$i],  
+                        'remaining_qty' => $old_remaining_qty+$quantities[$i], 
+                        'price' => $prices[$i],
+                        'avg_price' => $avg_price,
+                        'person_id' => 1,
+                        'person_type' => 'App\Models\User',   
+                        'link_id' => $orderDetail->id,
+                        'link_name' => 'purchase_order_detail', 
+                    ]);
+                }
             }
 
-            // Update the supplier ledger
-            $lastLedger = Ledger::where(['person_type' => 'App\Models\Supplier', 'person_id' => $request->supplier_id])->latest()->first();
-            $oldBalance = $lastLedger ? $lastLedger->cash_balance : 0;
-            $newBalance= $oldBalance+$grandTotal;
-            Ledger::create([
-                'bank_id' => null, 
-                'description' => 'Purchase Order',
-                'dr_amt' => $grandTotal,
-                'payment_type' => 'none',
-                'cash_balance' => $newBalance,
-                'entry_type' => 'dr',
-                'person_id' => $request->supplier_id, 
-                'person_type' => 'App\Models\Supplier', 
-                'link_id' => $purchaseOrder->id, 
-                'link_name' => 'purchase',
-            ]);
+            if($request->order_type=='delivery_note'){
+                // Update the supplier ledger
+                $lastLedger = Ledger::where(['person_type' => 'App\Models\Supplier', 'person_id' => $request->supplier_id])->latest()->first();
+                $oldBalance = $lastLedger ? $lastLedger->cash_balance : 0;
+                $newBalance= $oldBalance+$grandTotal;
+                Ledger::create([
+                    'bank_id' => null, 
+                    'description' => 'Delivery Note',
+                    'dr_amt' => $grandTotal,
+                    'payment_type' => 'none',
+                    'cash_balance' => $newBalance,
+                    'entry_type' => 'dr',
+                    'person_id' => $request->supplier_id, 
+                    'person_type' => 'App\Models\Supplier', 
+                    'link_id' => $purchaseOrder->id, 
+                    'link_name' => 'purchase',
+                ]);
+            }
+
 
             DB::commit();
             return response()->json(['status' => 'success', 'message' => 'Purchase Order Created Successfully!']);

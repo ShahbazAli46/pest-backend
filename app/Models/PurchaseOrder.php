@@ -9,7 +9,7 @@ class PurchaseOrder extends Model
 {
     use HasFactory;
     public $table="purchase_orders";
-    protected $fillable = ['po_id','supplier_id','city','zip','order_date','delivery_date','private_note','sub_total','vat_amt','dis_per','dis_amt','grand_total','invoice_no'];
+    protected $fillable = ['po_id','supplier_id','city','zip','order_date','delivery_date','private_note','sub_total','vat_amt','dis_per','dis_amt','grand_total','invoice_no','order_type'];
     
     public function supplier()
     {

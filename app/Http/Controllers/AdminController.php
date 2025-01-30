@@ -38,7 +38,8 @@ class AdminController extends Controller
             ->where(['person_type' => 'App\Models\User','person_id'=>1])->get();
             return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $ledgers]);
         }else{
-            $ledgers = Ledger::with(['personable'])->where(['person_type' => 'App\Models\User','person_id'=>1])
+            $ledgers = Ledger::with(['personable'])
+            ->where(['person_type' => 'App\Models\User','person_id'=>1])
             ->whereIn('payment_type',['opening_balance','cash'])
             ->get();
             return response()->json(['data' => $ledgers]);

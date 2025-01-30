@@ -11,9 +11,9 @@ class Stock extends Model
     public $table="stocks";
    
     protected $fillable = [
-        'product_id', 'total_qty', 'stock_in', 'stock_out', 'remaining_qty', 'person_id', 'person_type', 'link_id', 'link_name'
+        'product_id', 'total_qty', 'stock_in', 'stock_out', 'remaining_qty', 'person_id', 'person_type', 'link_id', 'link_name','price','avg_price'
     ];
-
+    
     public function product()
     {
         return $this->belongsTo(Product::class,'product_id');

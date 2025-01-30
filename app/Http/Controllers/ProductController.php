@@ -19,7 +19,7 @@ class ProductController extends Controller
     {
         if ($id == null) {
             $products = Product::with(['attachments', 'stocks' => function ($query) {
-                $query->select('id', 'product_id', 'total_qty', 'remaining_qty')->where('person_id', 1)
+                $query->select('id', 'product_id', 'total_qty', 'remaining_qty','avg_price')->where('person_id', 1)
                     ->whereIn('id', function ($subQuery) {
                         $subQuery->select(DB::raw('MAX(id)'))->from('stocks')->where('person_id', 1)->groupBy('product_id');
                     });
@@ -27,7 +27,7 @@ class ProductController extends Controller
             return response()->json(['data' => $products]);
         } else {
             $product = Product::with(['attachments','stocks' => function ($query) use ($id) {
-                $query->select('id', 'product_id', 'total_qty', 'remaining_qty')
+                $query->select('id', 'product_id', 'total_qty', 'remaining_qty','avg_price')
                     ->where('product_id', $id)
                     ->where('person_id', 1)->orderBy('id', 'DESC')->limit(1);
             }])->where('id', $id)->first();
@@ -65,6 +65,7 @@ class ProductController extends Controller
                 'attachments.*' => 'file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120', 
                 'product_category' => 'nullable|string|max:100',
                 'opening_stock_qty' =>  'required|numeric|min:0',
+                'opening_stock_price' =>  'required|numeric|min:0',
             ]);
 
             $requestData = $request->all(); 
@@ -79,19 +80,26 @@ class ProductController extends Controller
             }
 
             // Add stock entry
-            $stock = Stock::where(['product_id'=> $product->id,'person_id'=>1,'person_type'=>'App\Models\User'])->latest()->first();
+            $stock_query = Stock::where(['product_id'=> $product->id,'person_id'=>1,'person_type'=>'App\Models\User']);
+            $stock=$stock_query->latest()->first();
+
+            $existingPrices = $stock_query->where('stock_in','>',0.00)->pluck('price')->toArray();
+            $allPrices = array_merge($existingPrices, [$request->opening_stock_price]);
+            $avg_price = count($allPrices) > 0 ? array_sum($allPrices) / count($allPrices) : 0;
+
             $old_total_qty=$stock?$stock->total_qty:0;
             $old_remaining_qty=$stock?$stock->remaining_qty:0;
             Stock::create([
                 'product_id' => $product->id,
                 'total_qty' => $old_total_qty+$request->opening_stock_qty, 
                 'stock_in' => $request->opening_stock_qty,
+                'price' => $request->opening_stock_price,
+                'avg_price' => $avg_price,
                 'remaining_qty' => $old_remaining_qty+$request->opening_stock_qty, 
                 'person_id' => 1,
                 'person_type' => 'App\Models\User',  
                 'link_name' => 'opening_stock', 
             ]);
-
 
             DB::commit();
             return response()->json(['status' => 'success','message' => 'Product Added Successfully']);
@@ -111,16 +119,24 @@ class ProductController extends Controller
             $request->validate([
                 'product_id' => 'required|exists:products,id', 
                 'add_stock_qty' =>  'required|numeric|min:1',
+                'add_stock_price' =>  'required|numeric|min:1',
             ]);
 
             // Add stock entry
-            $stock = Stock::where(['product_id'=> $request->product_id,'person_id'=>1,'person_type'=>'App\Models\User'])->latest()->first();
+            $stock_query = Stock::where(['product_id'=> $request->product_id,'person_id'=>1,'person_type'=>'App\Models\User']);
+            $stock=$stock_query->latest()->first();
+            $existingPrices = $stock_query->where('stock_in','>',0.00)->pluck('price')->toArray();
+            $allPrices = array_merge($existingPrices, [$request->add_stock_price]);
+            $avg_price = count($allPrices) > 0 ? array_sum($allPrices) / count($allPrices) : 0;
+
             $old_total_qty=$stock?$stock->total_qty:0;
             $old_remaining_qty=$stock?$stock->remaining_qty:0;
             Stock::create([
                 'product_id' => $request->product_id,
                 'total_qty' => $old_total_qty+$request->add_stock_qty, 
                 'stock_in' => $request->add_stock_qty,
+                'price' => $request->add_stock_price,
+                'avg_price' => $avg_price,
                 'remaining_qty' => $old_remaining_qty+$request->add_stock_qty, 
                 'person_id' => 1,
                 'person_type' => 'App\Models\User',  
