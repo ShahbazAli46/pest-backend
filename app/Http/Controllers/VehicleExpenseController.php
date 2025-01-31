@@ -53,6 +53,7 @@ class VehicleExpenseController extends Controller
                 'payment_type' => 'required|in:cash,cheque,online',
                 'vat_per' => 'nullable|numeric|min:0|max:100',
                 'oil_change_limit'   => 'nullable|string|max:50',   
+                'meter_reading'   => 'nullable|string|max:50',   
                 'expense_date' => 'required|date', 
             ]);
 
@@ -96,12 +97,16 @@ class VehicleExpenseController extends Controller
             if($request->filled('oil_change_limit')){
                 Vehicle::where('id', $request->vehicle_id)->update(['oil_change_limit' => $request->oil_change_limit]);
             }
+
+            if($request->filled('meter_reading')){
+                Vehicle::where('id', $request->vehicle_id)->update(['meter_reading' => $request->meter_reading]);
+            }
             
             // Update the company ledger
             $lastLedger = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->latest()->first();
             $oldBankBalance = $lastLedger ? $lastLedger->bank_balance : 0;
             $oldCashBalance = $lastLedger ? $lastLedger->cash_balance : 0;
-            $newBankBalance=$oldBankBalance;
+            $newBankBalance = $oldBankBalance;
             if($request->input('payment_type') !== 'cash'){
                 $newBankBalance = $request->input('payment_type') !== 'cash' ? ($oldBankBalance - $requestData['total_amount']) : $oldBankBalance;
                 $bank=Bank::find($request->bank_id);
@@ -130,7 +135,6 @@ class VehicleExpenseController extends Controller
                 'cheque_date' => $request->input('payment_type') == 'cheque' ? $request->input('cheque_date') : null,
                 'transection_id' => in_array($request->input('payment_type'), ['online', 'pos']) ? $request->input('transection_id') : null,
             ]);
-            
 
             DB::commit();
             return response()->json(['status' => 'success','message' => 'Vehicle Expense Added Successfully']);
