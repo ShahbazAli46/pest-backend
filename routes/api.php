@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\{AdminController, BankController, BranchController, BrandController,ClientController, CustomerController, DashboardController, DeviceController, EmployeeController, ExpenseCategoryController, ExpenseController, JobController, JobServiceReportController, ProductController, PurchaseOrderController, QuoteController, ReceivedCashRecordController, SalaryController, SaleOrderController, ServiceController, ServiceInvoiceController, SupplierController, TermsAndConditionController, TreatmentMethodController, UserAuthController, VehicleController, VehicleExpenseController, VendorController};
+use App\Http\Controllers\{AdminController, BankController, BranchController, BrandController,ClientController, CustomerController, DashboardController, DeviceController, EmployeeController, ExpenseCategoryController, ExpenseController, JobController, JobServiceReportController, ProductController, DeliveryNoteController, QuoteController, ReceivedCashRecordController, SalaryController, SaleOrderController, ServiceController, ServiceInvoiceController, SupplierController, TermsAndConditionController, TreatmentMethodController, UserAuthController, VehicleController, VehicleExpenseController, VendorController};
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -142,9 +142,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('vehicle_expense/{id?}',[VehicleExpenseController::class,'index'])->name('vehicle_expense');
     Route::post('vehicle_expense/create',[VehicleExpenseController::class,'store'])->name('vehicle_expense.create');
 
-    // Purchase Orders
-    Route::get('purchase_order/{id?}',[PurchaseOrderController::class,'index'])->name('purchase_order');
-    Route::post('purchase_order/create',[PurchaseOrderController::class,'store'])->name('purchase_order.create');
+    // Delivery Note
+    Route::get('delivery_note/{id?}',[DeliveryNoteController::class,'index'])->name('delivery_note');
+    Route::post('delivery_note/create',[DeliveryNoteController::class,'store'])->name('delivery_note.create');
 
     //Company or Admin
     Route::get('admin/ledger/get',[AdminController::class,'getAdminLedger'])->name('admin.ledger.get');

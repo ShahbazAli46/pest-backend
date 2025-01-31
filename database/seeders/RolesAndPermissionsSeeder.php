@@ -113,9 +113,9 @@ class RolesAndPermissionsSeeder extends Seeder
             ['name' => 'View Vehicle Expense', 'icon'=>'', 'api_route' => 'vehicle_expense','frontend_url'=>'vehicle_expense', 'is_main'=>1],
                 ['name' => 'Create Vehicle Expense', 'icon'=>'', 'api_route' => 'vehicle_expense.create','frontend_url'=>'vehicle_expense/create', 'is_main'=>0, 'parent_api_route'=>'vehicle_expense'],
 
-            // Purchase Orders
-            ['name' => 'View Purchase Order', 'icon'=>'', 'api_route' => 'purchase_order','frontend_url'=>'purchase_order', 'is_main'=>1],
-                ['name' => 'Create Purchase Order', 'icon'=>'', 'api_route' => 'purchase_order.create','frontend_url'=>'purchase_order/create', 'is_main'=>0, 'parent_api_route'=>'purchase_order'],
+            // Delivery Note
+            ['name' => 'View Delivery Note', 'icon'=>'', 'api_route' => 'delivery_note','frontend_url'=>'delivery_note', 'is_main'=>1],
+                ['name' => 'Create Delivery Note', 'icon'=>'', 'api_route' => 'delivery_note.create','frontend_url'=>'delivery_note/create', 'is_main'=>0, 'parent_api_route'=>'delivery_note'],
 
             // Company or Admin
             ['name' => 'View Company or Admin', 'icon'=>'', 'api_route' => 'admin','frontend_url'=>'admin', 'is_main'=>1],

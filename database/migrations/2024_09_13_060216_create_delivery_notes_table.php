@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('purchase_orders', function (Blueprint $table) {
+        Schema::create('delivery_notes', function (Blueprint $table) {
             $table->id();
-            $table->string('po_id',50)->nullable();
+            $table->string('dn_id',50)->nullable();
             $table->string('purchase_invoice')->nullable();
             $table->unsignedBigInteger('supplier_id')->nullable();
             $table->foreign('supplier_id')->references('id')->on('suppliers')->onDelete('cascade');
@@ -36,6 +36,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('purchase_orders');
+        Schema::dropIfExists('delivery_notes');
     }
 };

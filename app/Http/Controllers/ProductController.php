@@ -2,9 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DeliveryNoteDetail;
 use App\Models\Product;
-use App\Models\PurchaseOrder;
-use App\Models\PurchaseOrderDetail;
 use App\Models\Stock;
 use App\Models\User;
 use App\Traits\GeneralTrait;
@@ -34,7 +33,7 @@ class ProductController extends Controller
             
             if($product){
                 $product->assigned_stock_history= Stock::with('person')->where('person_id', '!=', 1)->whereNull("link_name")->where('product_id', $id)->get();
-                $product->purchased_stock_history=PurchaseOrderDetail::with('purchaseOrder.supplier')->where('product_id',$id)->get();
+                $product->delivery_note_history=DeliveryNoteDetail::with('deliveryNote.supplier')->where('product_id',$id)->get();
             }
             return response()->json(['data' => $product]);
         }

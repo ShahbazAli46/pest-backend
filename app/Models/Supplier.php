@@ -17,9 +17,9 @@ class Supplier extends Model
         return $this->morphMany(Ledger::class, 'personable');
     }
 
-    public function purchaseOrders()
+    public function deliveryNote()
     {
-        return $this->hasMany(PurchaseOrder::class);
+        return $this->hasMany(DeliveryNote::class);
     }
 
     public function bankInfos()

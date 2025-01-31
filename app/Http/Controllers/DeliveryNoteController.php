@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Ledger;
-use App\Models\PurchaseOrder;
-use App\Models\PurchaseOrderDetail;
+use App\Models\DeliveryNote;
+use App\Models\DeliveryNoteDetail;
 use App\Models\Stock;
 use App\Models\Supplier;
 use App\Traits\GeneralTrait;
@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class PurchaseOrderController extends Controller
+class DeliveryNoteController extends Controller
 {
     use GeneralTrait;
     //
@@ -22,19 +22,19 @@ class PurchaseOrderController extends Controller
             if($request->has('start_date') && $request->has('end_date')){
                 $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
                 $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
-                $orders = PurchaseOrder::with(['supplier:id,supplier_name','orderDetails.product.brand:id,name'])
+                $notes = DeliveryNote::with(['supplier:id,supplier_name','noteDetails.product.brand:id,name'])
                 ->whereBetween('created_at', [$startDate, $endDate])->orderBy('id', 'DESC')->get();
-                return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $orders]);
+                return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $notes]);
             }else{
-                $orders=PurchaseOrder::with(['supplier:id,supplier_name','orderDetails.product.brand:id,name'])->orderBy('id', 'DESC')->get();
-                return response()->json(['data' => $orders]);
+                $notes=DeliveryNote::with(['supplier:id,supplier_name','noteDetails.product.brand:id,name'])->orderBy('id', 'DESC')->get();
+                return response()->json(['data' => $notes]);
             }
         }else{
             try {
-                $order = PurchaseOrder::with(['supplier','orderDetails.product.brand:id,name'])->findOrFail($id);
-                return response()->json(['data' => $order]);
+                $note = DeliveryNote::with(['supplier','noteDetails.product.brand:id,name'])->findOrFail($id);
+                return response()->json(['data' => $note]);
             } catch (ModelNotFoundException $e) {
-                return response()->json(['status'=>'error', 'message' => 'Purchase Order Not Found.'], 404);
+                return response()->json(['status'=>'error', 'message' => 'Delivery Note Not Found.'], 404);
             }
         }
     }
@@ -70,7 +70,6 @@ class PurchaseOrderController extends Controller
                 'price.*' => 'required|numeric|min:1',
                 'vat_per' => 'nullable|array',
                 'vat_per.*' => 'nullable|numeric|min:0|max:100',
-                'order_type' => 'required|in:delivery_note,purchase_order',
             ]);
     
             $supplier = Supplier::findOrFail($validatedData['supplier_id']);
@@ -102,7 +101,7 @@ class PurchaseOrderController extends Controller
             $discountAmount = isset($validatedData['dis_per']) ? ($subTotal * $validatedData['dis_per']) / 100 : 0;
             $grandTotal = $subTotal + $vatAmount - $discountAmount;
     
-            $purchaseOrderData = array_merge($validatedData, [
+            $deliveryNoteData = array_merge($validatedData, [
                 'sub_total' => $subTotal,
                 'vat_amt' => $vatAmount,
                 'dis_amt' => $discountAmount,
@@ -111,11 +110,11 @@ class PurchaseOrderController extends Controller
             
             // Handle the image upload
             if ($request->hasFile('purchase_invoice')) {
-                $purchaseOrderData['purchase_invoice']=$this->saveImage($request->purchase_invoice,'purchase_orders/purchase_invoices');
+                $deliveryNoteData['purchase_invoice']=$this->saveImage($request->purchase_invoice,'delivery_notes/purchase_invoices');
             }
 
-            // Create Purchase Order
-            $purchaseOrder = PurchaseOrder::create($purchaseOrderData);
+            // Create Delivery Note
+            $deliveryNote = DeliveryNote::create($deliveryNoteData);
     
             // Create Order Details
             for ($i = 0; $i < $maxIndex; $i++) {
@@ -123,8 +122,8 @@ class PurchaseOrderController extends Controller
                 $vatAmount = $vatPers[$i] ? ($itemSubTotal * $vatPers[$i]) / 100 : 0;
                 $total = $itemSubTotal + $vatAmount;
     
-                $orderDetail=PurchaseOrderDetail::create([
-                    'purchase_order_id' => $purchaseOrder->id,
+                $noteDetail=DeliveryNoteDetail::create([
+                    'delivery_note_id' => $deliveryNote->id,
                     'product_id' => $productIds[$i],
                     'quantity' => $quantities[$i],
                     'price' => $prices[$i],
@@ -132,64 +131,58 @@ class PurchaseOrderController extends Controller
                     'vat_per' => $vatPers[$i],
                     'vat_amount' => $vatAmount,
                     'total' => $total,
-                    'order_type' => $request->order_type,
                 ]);
 
+                // Add stock entry
+                $stock_query = Stock::where(['product_id'=> $productIds[$i],'person_id'=>1,'person_type'=>'App\Models\User']);
+                $stock=$stock_query->latest()->first();
 
-                if($request->order_type=='delivery_note'){
-                    // Add stock entry
-                    $stock_query = Stock::where(['product_id'=> $productIds[$i],'person_id'=>1,'person_type'=>'App\Models\User']);
-                    $stock=$stock_query->latest()->first();
+                $existingPrices = $stock_query->where('stock_in','>',0.00)->pluck('price')->toArray();
+                $allPrices = array_merge($existingPrices, [$prices[$i],]);
+                $avg_price = count($allPrices) > 0 ? array_sum($allPrices) / count($allPrices) : 0;
 
-                    $existingPrices = $stock_query->where('stock_in','>',0.00)->pluck('price')->toArray();
-                    $allPrices = array_merge($existingPrices, [$prices[$i],]);
-                    $avg_price = count($allPrices) > 0 ? array_sum($allPrices) / count($allPrices) : 0;
-
-                    $old_total_qty=$stock?$stock->total_qty:0;
-                    $old_remaining_qty=$stock?$stock->remaining_qty:0;
-                    Stock::create([
-                        'product_id' => $productIds[$i],
-                        'total_qty' => $old_total_qty+$quantities[$i], 
-                        'stock_in' => $quantities[$i],  
-                        'remaining_qty' => $old_remaining_qty+$quantities[$i], 
-                        'price' => $prices[$i],
-                        'avg_price' => $avg_price,
-                        'person_id' => 1,
-                        'person_type' => 'App\Models\User',   
-                        'link_id' => $orderDetail->id,
-                        'link_name' => 'purchase_order_detail', 
-                    ]);
-                }
-            }
-
-            if($request->order_type=='delivery_note'){
-                // Update the supplier ledger
-                $lastLedger = Ledger::where(['person_type' => 'App\Models\Supplier', 'person_id' => $request->supplier_id])->latest()->first();
-                $oldBalance = $lastLedger ? $lastLedger->cash_balance : 0;
-                $newBalance= $oldBalance+$grandTotal;
-                Ledger::create([
-                    'bank_id' => null, 
-                    'description' => 'Delivery Note',
-                    'dr_amt' => $grandTotal,
-                    'payment_type' => 'none',
-                    'cash_balance' => $newBalance,
-                    'entry_type' => 'dr',
-                    'person_id' => $request->supplier_id, 
-                    'person_type' => 'App\Models\Supplier', 
-                    'link_id' => $purchaseOrder->id, 
-                    'link_name' => 'purchase',
+                $old_total_qty=$stock?$stock->total_qty:0;
+                $old_remaining_qty=$stock?$stock->remaining_qty:0;
+                Stock::create([
+                    'product_id' => $productIds[$i],
+                    'total_qty' => $old_total_qty+$quantities[$i], 
+                    'stock_in' => $quantities[$i],  
+                    'remaining_qty' => $old_remaining_qty+$quantities[$i], 
+                    'price' => $prices[$i],
+                    'avg_price' => $avg_price,
+                    'person_id' => 1,
+                    'person_type' => 'App\Models\User',   
+                    'link_id' => $noteDetail->id,
+                    'link_name' => 'delivery_note_detail', 
                 ]);
             }
+
+            // Update the supplier ledger
+            $lastLedger = Ledger::where(['person_type' => 'App\Models\Supplier', 'person_id' => $request->supplier_id])->latest()->first();
+            $oldBalance = $lastLedger ? $lastLedger->cash_balance : 0;
+            $newBalance= $oldBalance+$grandTotal;
+            Ledger::create([
+                'bank_id' => null, 
+                'description' => 'Delivery Note',
+                'dr_amt' => $grandTotal,
+                'payment_type' => 'none',
+                'cash_balance' => $newBalance,
+                'entry_type' => 'dr',
+                'person_id' => $request->supplier_id, 
+                'person_type' => 'App\Models\Supplier', 
+                'link_id' => $deliveryNote->id, 
+                'link_name' => 'delivery',
+            ]);
 
 
             DB::commit();
-            return response()->json(['status' => 'success', 'message' => 'Purchase Order Created Successfully!']);
+            return response()->json(['status' => 'success', 'message' => 'Delivery Note Created Successfully!']);
         } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
             return response()->json(['status' => 'error', 'message' => $e->validator->errors()->first()], 422);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['status' => 'error', 'message' => 'Failed to Create Purchase Order: ' . $e->getMessage()], 500);
+            return response()->json(['status' => 'error', 'message' => 'Failed to Create Delivery Note: ' . $e->getMessage()], 500);
         }
     }
 

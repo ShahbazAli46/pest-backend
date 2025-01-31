@@ -3,13 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Models\DeliveryNote;
 use App\Models\EmployeeCommission;
 use App\Models\EmployeeDocs;
 use App\Models\EmployeeSalary;
 use App\Models\Expense;
 use App\Models\Job;
 use App\Models\Ledger;
-use App\Models\PurchaseOrder;
 use App\Models\ServiceInvoice;
 use App\Models\Setting;
 use App\Models\Supplier;
@@ -268,10 +268,10 @@ class DashboardController extends Controller
                     ->from('ledgers')->where('person_type', Supplier::class)->groupBy('person_id');
             })->sum('cash_balance') ?: '0';  // Default to '0' if no results
     
-        // Purchase order logic
-        $purchase_order = PurchaseOrder::query();
-        $purchase_order->whereYear('order_date', $year)->whereMonth('order_date', $month);
-        $data['purchase_order'] = ($total = $purchase_order->sum('grand_total')) === 0 ? '0' : $total;
+        // Delivery Note logic
+        $delivery_note = DeliveryNote::query();
+        $delivery_note->whereYear('order_date', $year)->whereMonth('order_date', $month);
+        $data['delivery_note'] = ($total = $delivery_note->sum('grand_total')) === 0 ? '0' : $total;
     
         // Paid employee salary logic
         $paid_employee_salary = EmployeeSalary::where('status', 'paid')->where('month', $monthh);

@@ -38,10 +38,10 @@ class Ledger extends Model
         return $this->morphTo();
     }
 
-    public function getPurchaseOrder()
+    public function getDeliveryNote()
     {
-        if ($this->link_name=='purchase') {
-             return PurchaseOrder::find($this->link_id);
+        if ($this->link_name=='delivery') {
+             return DeliveryNote::find($this->link_id);
         }
         return null; 
     }

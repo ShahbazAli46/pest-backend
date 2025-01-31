@@ -22,9 +22,9 @@ class Product extends Model
         return $this->morphMany(Attachment::class, 'attachmentable');
     }
 
-    public function purchaseOrderDetails()
+    public function deliveryNoteDetails()
     {
-        return $this->hasMany(PurchaseOrderDetail::class);
+        return $this->hasMany(DeliveryNoteDetail::class);
     }
 
     public function saleOrderDetails()
