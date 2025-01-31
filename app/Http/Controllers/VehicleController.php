@@ -59,13 +59,14 @@ class VehicleController extends Controller
     {
         try {
             DB::beginTransaction();
-            $validateData=$request->validate([        
+            $validateData=$request->validate([         
                 'vehicle_number' => 'required|string|max:100|unique:vehicles,vehicle_number',
                 'modal_name'         => 'nullable|string|max:255',
                 'user_id'            => 'required|exists:users,id', 
                 'condition'          => 'nullable|string|max:100',  
                 'expiry_date'        => 'nullable|date',            
                 'oil_change_limit'   => 'nullable|string|max:50',   
+                'meter_reading'      => 'nullable|string|max:50',   
             ]);
 
             $vehicle=Vehicle::create($validateData);
@@ -105,6 +106,7 @@ class VehicleController extends Controller
                 'condition'          => 'nullable|string|max:100',  
                 'expiry_date'        => 'nullable|date',            
                 'oil_change_limit'   => 'nullable|string|max:50',   
+                'meter_reading'      => 'nullable|string|max:50',   
             ]);
 
              // Find the bank by ID
