@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('month'); // Month (e.g., "2024-10")
             $table->string('description')->nullable();
             $table->decimal('fine_received', 15, 2)->default(0.00);
-            $table->enum('payment_type',['dr','cr'])->default('cr');
+            $table->enum('entry_type',['dr','cr'])->default('cr');
             $table->decimal('balance', 15, 2)->default(0.00);
         });
     }
@@ -29,7 +29,7 @@ return new class extends Migration
             $table->dropColumn('month');
             $table->dropColumn('description');
             $table->dropColumn('fine_received');
-            $table->dropColumn('payment_type');
+            $table->dropColumn('entry_type');
             $table->dropColumn('balance');
         });
     }

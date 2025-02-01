@@ -42,11 +42,11 @@ class ServiceInvoiceController extends Controller
                 });
                 return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $invoices]);
             }else{
-                $invoices=ServiceInvoice::withActiveOrPaidInvoices()->with(['user.client.referencable','invoiceable','address','assignedRecoveryOfficer']);
+                $invoices=ServiceInvoice::withActiveOrPaidInvoices()->with(['user.client.referencable','invoiceable','address','assignedRecoveryOfficer','assignedHistories.employeeUser']);
 
                 if ($request->has('start_promise_date') && $request->has('end_promise_date')) {
-                    $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
-                    $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay(); // Use endOfDay to include the entire day
+                    $startDate = \Carbon\Carbon::parse($request->input('start_promise_date'))->startOfDay();
+                    $endDate = \Carbon\Carbon::parse($request->input('end_promise_date'))->endOfDay(); // Use endOfDay to include the entire day
                     $invoices->whereBetween('promise_date', [$startDate, $endDate]);
                 }
 
@@ -63,7 +63,7 @@ class ServiceInvoiceController extends Controller
                 return response()->json(['data' => $invoices]);
             }
         }else{ 
-            $invoice=ServiceInvoice::with(['invoiceable','details.itemable','amountHistory','user.client','address','assignedHistories','assignedRecoveryOfficer'])->where('id',$id)->first();
+            $invoice=ServiceInvoice::with(['invoiceable','details.itemable','amountHistory','user.client','address','assignedHistories.employeeUser','assignedRecoveryOfficer'])->where('id',$id)->first();
             $invoice->jobs = $invoice->getJobs(); 
             $invoice->title = $invoice->title; 
             return response()->json(['data' => $invoice]);

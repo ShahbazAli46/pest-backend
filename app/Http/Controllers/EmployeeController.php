@@ -15,7 +15,7 @@ use App\Models\JobServiceReportProduct;
 use App\Models\Ledger;
 use App\Models\Product;
 use App\Models\ServiceInvoice;
-use App\Models\ServiceInvoiceAssignedHhistory;
+use App\Models\ServiceInvoiceAssignedHistory;
 use App\Models\Stock;
 use App\Models\User;
 use App\Models\Vehicle;
@@ -32,7 +32,7 @@ class EmployeeController extends Controller
 {
     use GeneralTrait,LedgerTrait;
     
-    public function index($id=null){
+    public function index(Request $request,$id=null){
         if($id==null){
             $employees=User::notFired()->with(['employee.documents','role:id,name','branch'])->whereIn('role_id',[2,3,4,6,7])->orderBy('id', 'DESC')->get();
             //sales manager only
@@ -74,8 +74,27 @@ class EmployeeController extends Controller
                     'person_type' => 'App\Models\User'
                 ])->latest()->get(['id', 'product_id', 'total_qty', 'remaining_qty', 'created_at'])->unique('product_id')->values();
             }else if($employee && $employee->role_id == 7){
-                $employee->load(['assignedInvoices.user.client','assignedInvoices.address']);
-                // ServiceInvoiceAssignedHhistory::
+                if($request->has('start_date') && $request->has('end_date')){
+                    $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
+                    $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
+                    
+                    $invoiceIds = $employee->assignedInvoiceHistory()->whereBetween('created_at', [$startDate, $endDate])->pluck('service_invoice_id');
+                    if ($invoiceIds->isNotEmpty()) {
+                        $assignedInvoices = ServiceInvoice::whereIn('id', $invoiceIds)->with(['user.client','address'])->get();
+                    } else {
+                        $assignedInvoices = collect([]); 
+                    }
+                    $employee->assigned_invoices=$assignedInvoices;      
+                    return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $employee]);
+                }else{
+                    $invoiceIds = $employee->assignedInvoiceHistory()->pluck('service_invoice_id');
+                    if ($invoiceIds->isNotEmpty()) {
+                        $assignedInvoices = ServiceInvoice::whereIn('id', $invoiceIds)->with(['user.client','address'])->get();
+                    } else {
+                        $assignedInvoices = collect([]); 
+                    }
+                    $employee->assigned_invoices=$assignedInvoices;     
+                }
             }
             return response()->json(['data' => $employee]);
         }
@@ -589,7 +608,7 @@ class EmployeeController extends Controller
     {
         try {
             DB::beginTransaction();
-            $request->validate([
+            $request->validate([ 
                 'employee_salary_id' => 'required|exists:employee_salaries,id', 
                 'paid_salary' => 'required|numeric', 
                 'transection_type' => 'required|in:wps,cash',
@@ -639,7 +658,7 @@ class EmployeeController extends Controller
                     $adv_payment->received_payment = $request->adv_received;
                     $adv_payment->month = $employee_salary->month; 
                     $adv_payment->description = $request->description; 
-                    $adv_payment->payment_type = 'dr'; 
+                    $adv_payment->entry_type = 'dr'; 
                     $adv_payment->balance = $current_adv_balance-$request->adv_received; 
                     $adv_payment->save();
                 }
@@ -757,8 +776,31 @@ class EmployeeController extends Controller
                 'vehicle_id' => 'required|exists:vehicles,id', 
                 'fine' => 'required|max:100',
                 'fine_date' => 'required|date',
-                'description' => 'nullable|max:255', 
+                'description' => 'nullable|max:255',
+                'payment_type' => 'required|in:cash,cheque,online', 
+                'vat_per' => 'nullable|numeric|min:0|max:100',
             ]);
+
+            if ($request->input('payment_type') == 'cheque') {
+                $request->validate([
+                    'bank_id' => 'required|exists:banks,id',
+                    'cheque_no' => 'required|string|max:100',
+                    'cheque_date' => 'required|date',
+                ]);
+            }else if($request->input('payment_type') == 'online'){
+                $request->validate([
+                    'bank_id' => 'required|exists:banks,id',
+                    'transection_id' => 'required|string|max:100',
+                ]);
+            }
+
+            $fine_amt=$request->input('fine');
+
+            // Calculate VAT amount
+            $vatPer = $request->input('vat_per', 0); // Default to 0 if vat_per is not provided
+            $vat_amount = ($fine_amt * $vatPer) / 100;
+            $total_fine = $fine_amt + $vat_amount;
+
             $vehicle = Vehicle::find($request->vehicle_id);
 
             if ($vehicle && $vehicle->user_id != null) {
@@ -780,24 +822,72 @@ class EmployeeController extends Controller
                     return response()->json(['status' => 'error','message' => 'The salary for this month has already been paid.'], 400);
                 }
 
+                // Call the function to check balances
+                $balanceCheck = $this->checkCompanyBalance(
+                    $request->input('payment_type'),
+                    $total_fine,
+                    $request->input('bank_id') 
+                );
+
+                if ($balanceCheck !== true) {
+                    return $balanceCheck;
+                }
+
                 $current_fine_balance=$employee->current_fine_balance;
-
-                $vehicleFine = new VehicleEmployeeFine();
-                $vehicleFine->employee_user_id = $vehicle->user_id;
-                $vehicleFine->vehicle_id = $request->vehicle_id;
-                $vehicleFine->fine = $request->fine;
-                $vehicleFine->fine_date = $request->fine_date;
-                $vehicleFine->employee_id = $employee->id;
-                $vehicleFine->employee_salary_id = $employee_salary->id;
-                $vehicleFine->description = $request->description; 
-                $vehicleFine->payment_type = 'cr'; 
-                $vehicleFine->month = $employee_salary->month; 
-                $vehicleFine->balance = $current_fine_balance+$request->fine; 
-                $vehicleFine->save();
-
-                $employee_salary->total_fines=($employee_salary->total_fines+$request->fine);
-                $employee_salary->save();
+                $data_arr=[
+                    'employee_user_id' => $vehicle->user_id,'vehicle_id' => $request->vehicle_id,'fine' => $fine_amt,'vat_per' => $vatPer,'vat_amount' => $vat_amount,
+                    'total_fine' => $total_fine,'fine_date' => $request->fine_date,'employee_id' => $employee->id,'employee_salary_id' => $employee_salary->id,
+                    'description' => $request->description,'entry_type' => 'cr', 'payment_type' =>  $request->input('payment_type'),
+                    'bank_id' => $request->input('payment_type') !== 'cash' ? $request->input('bank_id'):null,
+                    'cash_amt' => $request->input('payment_type') == 'cash' ? $fine_amt : 0.00,
+                    'cheque_amt' => $request->input('payment_type') == 'cheque' ? $fine_amt : 0.00, 
+                    'online_amt' => $request->input('payment_type') == 'online' ? $fine_amt : 0.00, 
+                    'cheque_no' => $request->input('payment_type') == 'cheque' ? $request->input('cheque_no') : null,
+                    'cheque_date' => $request->input('payment_type') == 'cheque' ? $request->input('cheque_date') : null,
+                    'transection_id' => $request->input('payment_type') == 'online' ? $request->input('transection_id') : null,
+                    'month' => $employee_salary->month,'balance' => $current_fine_balance+$total_fine, 
+                ];
                 
+                $vehicleFine = VehicleEmployeeFine::create($data_arr);
+
+                $employee_salary->total_fines=($employee_salary->total_fines+$total_fine);
+                $employee_salary->save();
+
+
+                // Update the company ledger
+                $lastLedger = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->latest()->first();
+                $oldBankBalance = $lastLedger ? $lastLedger->bank_balance : 0;
+                $oldCashBalance = $lastLedger ? $lastLedger->cash_balance : 0;
+                $newBankBalance = $oldBankBalance;
+                if($request->input('payment_type') !== 'cash'){
+                    $newBankBalance = $request->input('payment_type') !== 'cash' ? ($oldBankBalance -$total_fine) : $oldBankBalance;
+                    $bank=Bank::find($request->bank_id);
+                    $bank->update(['balance'=>$bank->balance- $total_fine]);
+                }
+                $newCashBalance = $request->input('payment_type') === 'cash' ? ($oldCashBalance - $total_fine) : $oldCashBalance;
+                Ledger::create([
+                    'bank_id' => $request->input('payment_type') !== 'cash' ? $request->input('bank_id'):null, 
+                    'description' => 'Vehicle Employee Fine',
+                    'dr_amt' => $total_fine,
+                    'cr_amt' => 0.00,
+                    'payment_type' => $request->input('payment_type'),
+                    'cash_amt' => $request->input('payment_type') == 'cash' ? $total_fine : 0.00,
+                    'cheque_amt' => $request->input('payment_type') == 'cheque' ? $total_fine : 0.00,
+                    'online_amt' => $request->input('payment_type') == 'online' ? $total_fine : 0.00,
+                    'bank_balance' => $newBankBalance,
+                    'cash_balance' => $newCashBalance,
+                    'entry_type' => 'dr',
+                    'person_id' => 1, // Admin or Company 
+                    'person_type' => 'App\Models\User', 
+                    'link_id' => $vehicleFine->id, 
+                    'link_name' => 'vehicle_employee_fine',
+                    'referenceable_id' =>  $vehicleFine->id,
+                    'referenceable_type' => 'App\Models\VehicleEmployeeFine',
+                    'cheque_no' => $request->input('payment_type') == 'cheque' ? $request->input('cheque_no') : null,
+                    'cheque_date' => $request->input('payment_type') == 'cheque' ? $request->input('cheque_date') : null,
+                    'transection_id' => $request->input('payment_type') == 'online' ? $request->input('transection_id') : null,
+                ]);
+
                 DB::commit();
                 return response()->json(['status' => 'success', 'message' => 'Fine added successfully.']);
             } else {
@@ -925,7 +1015,7 @@ class EmployeeController extends Controller
                 $service_invoice->promise_date = null;
                 $service_invoice->update();
 
-                ServiceInvoiceAssignedHhistory::create([
+                ServiceInvoiceAssignedHistory::create([
                     'service_invoice_id' => $request->invoice_id,
                     'employee_user_id'=> $request->recovery_officer_id,
                     'employee_id'=> $employee->id,

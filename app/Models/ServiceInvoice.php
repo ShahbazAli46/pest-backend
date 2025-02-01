@@ -44,7 +44,7 @@ class ServiceInvoice extends Model
 
     public function assignedHistories()
     {
-        return $this->hasMany(ServiceInvoiceAssignedHhistory::class, 'service_invoice_id');
+        return $this->hasMany(ServiceInvoiceAssignedHistory::class, 'service_invoice_id');
     }
 
     public function getTitleAttribute()

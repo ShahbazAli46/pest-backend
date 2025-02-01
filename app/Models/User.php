@@ -131,7 +131,7 @@ class User extends Authenticatable
 
     public function assignedInvoiceHistory()
     {
-        return $this->hasMany(ServiceInvoiceAssignedHhistory::class, 'employee_user_id');
+        return $this->hasMany(ServiceInvoiceAssignedHistory::class, 'employee_user_id');
     }
 
     public function assignedInvoices()
