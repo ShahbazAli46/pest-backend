@@ -564,7 +564,31 @@ class EmployeeController extends Controller
                 'employee_salary_id' => 'required|exists:employee_salaries,id', 
                 'adv_paid' => 'required|numeric', 
                 'description' => 'nullable|max:255', 
+                'payment_type' => 'required|in:cash,cheque,online', 
+                'vat_per' => 'nullable|numeric|min:0|max:100',                
             ]);
+
+            if ($request->input('payment_type') == 'cheque') {
+                $request->validate([
+                    'bank_id' => 'required|exists:banks,id',
+                    'cheque_no' => 'required|string|max:100',
+                    'cheque_date' => 'required|date',
+                ]);
+            }else if($request->input('payment_type') == 'online'){
+                $request->validate([
+                    'bank_id' => 'required|exists:banks,id',
+                    'transection_id' => 'required|string|max:100',
+                ]);
+            }
+
+            $adv_paid=$request->input('adv_paid');
+
+            // Calculate VAT amount
+            $vatPer = $request->input('vat_per', 0); // Default to 0 if vat_per is not provided
+            $vat_amount = ($adv_paid * $vatPer) / 100;
+            $adv_paid_with_vat = $adv_paid + $vat_amount;
+
+    
             // Find the employee salary record
             $employee_salary = EmployeeSalary::find($request->employee_salary_id);
             if ($employee_salary) {
@@ -576,15 +600,62 @@ class EmployeeController extends Controller
                     $adv_payment->user_id = $employee_salary->user_id; 
                     $adv_payment->employee_id = $employee_salary->employee_id; 
                     $adv_payment->employee_salary_id = $employee_salary->id;
-                    $adv_payment->advance_payment = $request->adv_paid; 
+                    $adv_payment->advance_payment = $adv_paid; 
                     $adv_payment->month = $employee_salary->month; 
+                    $adv_payment->bank_id = $request->input('payment_type') !== 'cash' ? $request->input('bank_id'):null;
+
+
+                    $adv_payment->cash_amt = $request->input('payment_type') == 'cash' ? $adv_paid : 0.00;
+                    $adv_payment->cheque_amt = $request->input('payment_type') == 'cheque' ? $adv_paid : 0.00; 
+                    $adv_payment->online_amt = $request->input('payment_type') == 'online' ? $adv_paid : 0.00; 
+                    $adv_payment->cheque_no = $request->input('payment_type') == 'cheque' ? $request->input('cheque_no') : null;
+                    $adv_payment->cheque_date = $request->input('payment_type') == 'cheque' ? $request->input('cheque_date') : null;
+                    $adv_payment->transection_id = $request->input('payment_type') == 'online' ? $request->input('transection_id') : null;
+                    $adv_payment->vat_per = $vatPer; 
+                    $adv_payment->vat_amount = $vat_amount; 
+                    $adv_payment->adv_pay_with_vat = $adv_paid_with_vat; 
+
                     $adv_payment->description = $request->description; 
-                    $adv_payment->payment_type = 'cr'; 
-                    $adv_payment->balance = $current_advance_balance+$request->adv_paid; 
+                    $adv_payment->entry_type = 'cr'; 
+                    $adv_payment->balance = $current_advance_balance+$adv_paid; 
                     $adv_payment->save();
 
-                    $employee_salary->adv_paid = ($employee_salary->adv_paid+$request->adv_paid); 
+                    $employee_salary->adv_paid = ($employee_salary->adv_paid+$adv_paid); 
                     $employee_salary->save();
+
+                    // Update the company ledger
+                    $lastLedger = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->latest()->first();
+                    $oldBankBalance = $lastLedger ? $lastLedger->bank_balance : 0;
+                    $oldCashBalance = $lastLedger ? $lastLedger->cash_balance : 0;
+                    $newBankBalance = $oldBankBalance;
+                    if($request->input('payment_type') !== 'cash'){
+                        $newBankBalance = $request->input('payment_type') !== 'cash' ? ($oldBankBalance -$adv_paid_with_vat) : $oldBankBalance;
+                        $bank=Bank::find($request->bank_id);
+                        $bank->update(['balance'=>$bank->balance- $adv_paid_with_vat]);
+                    }
+                    $newCashBalance = $request->input('payment_type') === 'cash' ? ($oldCashBalance - $adv_paid_with_vat) : $oldCashBalance;
+                    Ledger::create([
+                        'bank_id' => $request->input('payment_type') !== 'cash' ? $request->input('bank_id'):null, 
+                        'description' => 'Advance Employee Payment',
+                        'dr_amt' => $adv_paid_with_vat,
+                        'cr_amt' => 0.00,
+                        'payment_type' => $request->input('payment_type'),
+                        'cash_amt' => $request->input('payment_type') == 'cash' ? $adv_paid_with_vat : 0.00,
+                        'cheque_amt' => $request->input('payment_type') == 'cheque' ? $adv_paid_with_vat : 0.00,
+                        'online_amt' => $request->input('payment_type') == 'online' ? $adv_paid_with_vat : 0.00,
+                        'bank_balance' => $newBankBalance,
+                        'cash_balance' => $newCashBalance,
+                        'entry_type' => 'dr',
+                        'person_id' => 1, // Admin or Company 
+                        'person_type' => 'App\Models\User', 
+                        'link_id' => $adv_payment->id, 
+                        'link_name' => 'adv_paid',
+                        'referenceable_id' =>  $employee_salary->user_id,
+                        'referenceable_type' => 'App\Models\User',
+                        'cheque_no' => $request->input('payment_type') == 'cheque' ? $request->input('cheque_no') : null,
+                        'cheque_date' => $request->input('payment_type') == 'cheque' ? $request->input('cheque_date') : null,
+                        'transection_id' => $request->input('payment_type') == 'online' ? $request->input('transection_id') : null,
+                    ]);
                     DB::commit();
                     return response()->json(['status' => 'success','message' => "Advance amount paid Successfully"]);
                 }else{
@@ -615,12 +686,34 @@ class EmployeeController extends Controller
                 'attendance_per' => 'required|numeric|min:0|max:100', 
                 'adv_received' => 'nullable|numeric', 
                 'fine_received' => 'nullable|numeric', 
+                'bonus' => 'nullable|numeric|min:0',                
                 'description' => 'nullable|max:255', 
+                'payment_type' => 'required|in:cash,cheque,online', 
+                'vat_per' => 'nullable|numeric|min:0|max:100',                
             ]);
+
+            if ($request->input('payment_type') == 'cheque') {
+                $request->validate([
+                    'bank_id' => 'required|exists:banks,id',
+                    'cheque_no' => 'required|string|max:100',
+                    'cheque_date' => 'required|date',
+                ]);
+            }else if($request->input('payment_type') == 'online'){
+                $request->validate([
+                    'bank_id' => 'required|exists:banks,id',
+                    'transection_id' => 'required|string|max:100',
+                ]);
+            }
+            
+            // Call the function to check balances
+            $balanceCheck = $this->checkCompanyBalance($request->input('payment_type'),$request->paid_salary,$request->input('bank_id'));
+            if ($balanceCheck !== true) {
+                return $balanceCheck;
+            }
             
             // Find the employee salary record
             $employee_salary = EmployeeSalary::find($request->employee_salary_id);
-    
+            
             if ($employee_salary) {
                 if($employee_salary->status=='paid'){
                     DB::rollBack();
@@ -631,21 +724,29 @@ class EmployeeController extends Controller
                 $current_fine_balance=$employee->current_fine_balance;
 
                 $attendance_per = $request->attendance_per; // Attendance percentage
+                $bonus=$request->input('bonus',0);
 
                 $basic_salary_amt = ($employee_salary->basic_salary * $attendance_per) / 100;
-                $payable_salary=$basic_salary_amt+($employee_salary->allowance+$employee_salary->other);
-
-
+                $payable_salary=$basic_salary_amt+($employee_salary->allowance+$employee_salary->other+$bonus);
+                
                 $advance_recv_msg="";
                 $fine_rec_msg="";
                 // $payable_salary=$total_salary - $employee_salary->total_fines;
                 $employee_salary->payable_salary=$payable_salary; 
                 $paid_salary=$request->paid_salary;
-            
+                $fine_received=$request->input('fine_received',0);
+                $adv_received=$request->input('adv_received',0);
+                $bonus=$request->input('bonus',0);
+                
                 if($request->filled('adv_received') && $request->adv_received>0){
                     if($current_adv_balance<$request->adv_received){
                         DB::rollBack();
                         return response()->json(['status' => 'error', 'message' => "Advance received amount should be less than or equal to advance amount."], 400);
+                    }
+
+                    if(($paid_salary-$fine_received)<$adv_received){
+                        DB::rollBack();
+                        return response()->json(['status' => 'error', 'message' => "Advance received amount should be less than or equal to paid salary & fine."], 400);
                     }
                     // $paid_salary=$payable_salary-$request->adv_received;
                     $advance_recv_msg=" & Detected advance payment of ".$request->adv_received; 
@@ -656,11 +757,55 @@ class EmployeeController extends Controller
                     $adv_payment->employee_id = $employee_salary->employee_id; 
                     $adv_payment->employee_salary_id = $employee_salary->id;
                     $adv_payment->received_payment = $request->adv_received;
+
+                    $adv_payment->bank_id = $request->input('payment_type') !== 'cash' ? $request->input('bank_id'):null;
+                    $adv_payment->cash_amt = $request->input('payment_type') == 'cash' ? $adv_received : 0.00;
+                    $adv_payment->cheque_amt = $request->input('payment_type') == 'cheque' ? $adv_received : 0.00; 
+                    $adv_payment->online_amt = $request->input('payment_type') == 'online' ? $adv_received : 0.00; 
+                    $adv_payment->cheque_no = $request->input('payment_type') == 'cheque' ? $request->input('cheque_no') : null;
+                    $adv_payment->cheque_date = $request->input('payment_type') == 'cheque' ? $request->input('cheque_date') : null;
+                    $adv_payment->transection_id = $request->input('payment_type') == 'online' ? $request->input('transection_id') : null;
+                    $adv_payment->adv_pay_with_vat = $adv_received; 
+
                     $adv_payment->month = $employee_salary->month; 
                     $adv_payment->description = $request->description; 
                     $adv_payment->entry_type = 'dr'; 
                     $adv_payment->balance = $current_adv_balance-$request->adv_received; 
                     $adv_payment->save();
+
+                    // Update the company ledger
+                    $lastLedger = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->latest()->first();
+                    $oldBankBalance = $lastLedger ? $lastLedger->bank_balance : 0;
+                    $oldCashBalance = $lastLedger ? $lastLedger->cash_balance : 0;
+                    $newBankBalance=$oldBankBalance;
+                    if($request->input('payment_type') !== 'cash'){
+                        $newBankBalance = $request->input('payment_type') !== 'cash' ? ($oldBankBalance + $adv_received) : $oldBankBalance;
+                        $bank=Bank::find($request->bank_id);
+                        $bank->update(['balance'=>$bank->balance+$adv_received]);
+                    }
+                    $newCashBalance = $request->input('payment_type') === 'cash' ? ($oldCashBalance + $adv_received) : $oldCashBalance;
+                    Ledger::create([
+                        'bank_id' => $request->input('payment_type') !== 'cash' ? $request->input('bank_id'):null, 
+                        'description' => 'Received Advance Payment',
+                        'cr_amt' => $adv_received,
+                        'payment_type' => $request->input('payment_type'),
+                        'cash_amt' => $request->input('payment_type') == 'cash' ? $adv_received : 0.00,
+                        'cheque_amt' => $request->input('payment_type') == 'cheque' ? $adv_received : 0.00,
+                        'online_amt' => $request->input('payment_type') == 'online' ? $adv_received : 0.00,
+                        'pos_amt' => $request->input('payment_type') == 'pos' ? $adv_received : 0.00,
+                        'bank_balance' => $newBankBalance,
+                        'cash_balance' => $newCashBalance,
+                        'entry_type' => 'cr',
+                        'person_id' => 1, // Admin or Company 
+                        'person_type' => 'App\Models\User', 
+                        'link_id' => $adv_payment->id, 
+                        'link_name' => 'adv_paid',
+                        'referenceable_id' =>  $employee_salary->user_id,
+                        'referenceable_type' => 'App\Models\User',
+                        'cheque_no' => $request->input('payment_type') == 'cheque' ? $request->input('cheque_no') : null,
+                        'cheque_date' => $request->input('payment_type') == 'cheque' ? $request->input('cheque_date') : null,
+                        'transection_id' => $request->input('payment_type') == 'online' ? $request->input('transection_id') : null,
+                    ]);
                 }
 
                 if($request->filled('fine_received') && $request->fine_received>0){
@@ -668,6 +813,12 @@ class EmployeeController extends Controller
                         DB::rollBack();
                         return response()->json(['status' => 'error', 'message' => "Fine received amount should be less than or equal to fine amount."], 400);
                     }
+
+                    if(($paid_salary-$adv_received)<$fine_received){
+                        DB::rollBack();
+                        return response()->json(['status' => 'error', 'message' => "Fine received amount should be less than or equal to paid salary & advance received."], 400);
+                    }
+
                     // $paid_salary=$payable_salary-$request->adv_received;
                     $fine_rec_msg=" & Detected fine of ".$request->fine_received; 
                     $employee_salary->fine_received = $employee_salary->fine_received+$request->fine_received; 
@@ -680,11 +831,54 @@ class EmployeeController extends Controller
                     $vehicleFine->employee_id = $employee->id;
                     $vehicleFine->employee_salary_id = $employee_salary->id;
                     $vehicleFine->description = $request->description; 
-                    $vehicleFine->payment_type = 'dr'; 
+                    $vehicleFine->entry_type = 'dr'; 
                     $vehicleFine->month = $employee_salary->month; 
+
+                    $vehicleFine->bank_id = $request->input('payment_type') !== 'cash' ? $request->input('bank_id'):null;
+                    $vehicleFine->cash_amt = $request->input('payment_type') == 'cash' ? $fine_received : 0.00;
+                    $vehicleFine->cheque_amt = $request->input('payment_type') == 'cheque' ? $fine_received : 0.00; 
+                    $vehicleFine->online_amt = $request->input('payment_type') == 'online' ? $fine_received : 0.00; 
+                    $vehicleFine->cheque_no = $request->input('payment_type') == 'cheque' ? $request->input('cheque_no') : null;
+                    $vehicleFine->cheque_date = $request->input('payment_type') == 'cheque' ? $request->input('cheque_date') : null;
+                    $vehicleFine->transection_id = $request->input('payment_type') == 'online' ? $request->input('transection_id') : null;
+
                     $vehicleFine->fine_received = $request->fine_received; 
                     $vehicleFine->balance = $current_fine_balance-$request->fine_received; 
                     $vehicleFine->save();
+
+                    // Update the company ledger
+                    $lastLedger = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->latest()->first();
+                    $oldBankBalance = $lastLedger ? $lastLedger->bank_balance : 0;
+                    $oldCashBalance = $lastLedger ? $lastLedger->cash_balance : 0;
+                    $newBankBalance=$oldBankBalance;
+                    if($request->input('payment_type') !== 'cash'){
+                        $newBankBalance = $request->input('payment_type') !== 'cash' ? ($oldBankBalance + $fine_received) : $oldBankBalance;
+                        $bank=Bank::find($request->bank_id);
+                        $bank->update(['balance'=>$bank->balance+$fine_received]);
+                    }
+                    $newCashBalance = $request->input('payment_type') === 'cash' ? ($oldCashBalance + $fine_received) : $oldCashBalance;
+                    Ledger::create([
+                        'bank_id' => $request->input('payment_type') !== 'cash' ? $request->input('bank_id'):null, 
+                        'description' => 'Received Fine Payment',
+                        'cr_amt' => $fine_received,
+                        'payment_type' => $request->input('payment_type'),
+                        'cash_amt' => $request->input('payment_type') == 'cash' ? $fine_received : 0.00,
+                        'cheque_amt' => $request->input('payment_type') == 'cheque' ? $fine_received : 0.00,
+                        'online_amt' => $request->input('payment_type') == 'online' ? $fine_received : 0.00,
+                        'pos_amt' => $request->input('payment_type') == 'pos' ? $fine_received : 0.00,
+                        'bank_balance' => $newBankBalance,
+                        'cash_balance' => $newCashBalance,
+                        'entry_type' => 'cr',
+                        'person_id' => 1, // Admin or Company 
+                        'person_type' => 'App\Models\User', 
+                        'link_id' => $vehicleFine->id, 
+                        'link_name' => 'vehicle_employee_fine',
+                        'referenceable_id' =>  $employee_salary->user_id,
+                        'referenceable_type' => 'App\Models\User',
+                        'cheque_no' => $request->input('payment_type') == 'cheque' ? $request->input('cheque_no') : null,
+                        'cheque_date' => $request->input('payment_type') == 'cheque' ? $request->input('cheque_date') : null,
+                        'transection_id' => $request->input('payment_type') == 'online' ? $request->input('transection_id') : null,
+                    ]);
                 }
 
                 //if i want to pay hold salary or add hold salary
@@ -699,6 +893,7 @@ class EmployeeController extends Controller
                     $employee_salary->remaining_salary = $add_hold_salary; 
                 }
 
+                $employee_salary->bonus = $bonus; 
                 $employee_salary->paid_salary = $paid_salary; 
                 $employee_salary->attendance_per = $attendance_per; 
                 $employee_salary->status = 'paid'; 
@@ -706,6 +901,40 @@ class EmployeeController extends Controller
                 $employee_salary->transection_type = $request->transection_type; 
                 $employee_salary->save();
 
+
+                // Update the company ledger
+                $lastLedger = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->latest()->first();
+                $oldBankBalance = $lastLedger ? $lastLedger->bank_balance : 0;
+                $oldCashBalance = $lastLedger ? $lastLedger->cash_balance : 0;
+                $newBankBalance = $oldBankBalance;
+                if($request->input('payment_type') !== 'cash'){
+                    $newBankBalance = $request->input('payment_type') !== 'cash' ? ($oldBankBalance -$paid_salary) : $oldBankBalance;
+                    $bank=Bank::find($request->bank_id);
+                    $bank->update(['balance'=>$bank->balance- $paid_salary]);
+                }
+                $newCashBalance = $request->input('payment_type') === 'cash' ? ($oldCashBalance - $paid_salary) : $oldCashBalance;
+                Ledger::create([
+                    'bank_id' => $request->input('payment_type') !== 'cash' ? $request->input('bank_id'):null, 
+                    'description' => 'Paid Employee Salary',
+                    'dr_amt' => $paid_salary,
+                    'cr_amt' => 0.00,
+                    'payment_type' => $request->input('payment_type'),
+                    'cash_amt' => $request->input('payment_type') == 'cash' ? $paid_salary : 0.00,
+                    'cheque_amt' => $request->input('payment_type') == 'cheque' ? $paid_salary : 0.00,
+                    'online_amt' => $request->input('payment_type') == 'online' ? $paid_salary : 0.00,
+                    'bank_balance' => $newBankBalance,
+                    'cash_balance' => $newCashBalance,
+                    'entry_type' => 'dr',
+                    'person_id' => 1, // Admin or Company 
+                    'person_type' => 'App\Models\User', 
+                    'link_id' => $employee_salary->id, 
+                    'link_name' => 'employee_salary',
+                    'referenceable_id' =>  $employee_salary->user_id,
+                    'referenceable_type' => 'App\Models\User',
+                    'cheque_no' => $request->input('payment_type') == 'cheque' ? $request->input('cheque_no') : null,
+                    'cheque_date' => $request->input('payment_type') == 'cheque' ? $request->input('cheque_date') : null,
+                    'transection_id' => $request->input('payment_type') == 'online' ? $request->input('transection_id') : null,
+                ]);
                 DB::commit();
                 return response()->json(['status' => 'success','message' => "Salary paid based on $attendance_per% attendance$advance_recv_msg $fine_rec_msg: $paid_salary"]);
             } else {
@@ -729,7 +958,28 @@ class EmployeeController extends Controller
                 'user_id' => 'required|exists:users,id', 
                 'adv_received' => 'required|numeric', 
                 'description' => 'nullable|max:255', 
+                'payment_type' => 'required|in:cash,cheque,online', 
             ]);
+
+            if ($request->input('payment_type') == 'cheque') {
+                $request->validate([
+                    'bank_id' => 'required|exists:banks,id',
+                    'cheque_no' => 'required|string|max:100',
+                    'cheque_date' => 'required|date',
+                ]);
+            }else if($request->input('payment_type') == 'online'){
+                $request->validate([
+                    'bank_id' => 'required|exists:banks,id',
+                    'transection_id' => 'required|string|max:100',
+                ]);
+            }
+            
+            // Call the function to check balances
+            $balanceCheck = $this->checkCompanyBalance($request->input('payment_type'),$request->adv_received,$request->input('bank_id'));
+            if ($balanceCheck !== true) {
+                return $balanceCheck;
+            }
+
             $employee = Employee::where('user_id', $request->user_id)->first();
             if (!$employee) {
                 DB::rollBack();
@@ -744,22 +994,66 @@ class EmployeeController extends Controller
             
             $currentMonth = now()->format('Y-m'); // Get current month (e.g., "2024-10")
             $employee_salary = EmployeeSalary::where('month', $currentMonth)->where('user_id',$request->user_id)->first();
+            $adv_received=$request->adv_received;
 
             $adv_payment=new EmployeeAdvancePayment;
             $adv_payment->user_id = $request->user_id; 
             $adv_payment->employee_id = $employee->id; 
             $adv_payment->employee_salary_id = $employee_salary->id;
-            $adv_payment->received_payment = $request->adv_received; 
+            $adv_payment->received_payment = $adv_received; 
             $adv_payment->month = $employee_salary->month; 
             $adv_payment->description = $request->description; 
-            $adv_payment->payment_type = 'dr'; 
-            $adv_payment->balance = $employee->current_adv_balance-$request->adv_received; 
+
+            $adv_payment->bank_id = $request->input('payment_type') !== 'cash' ? $request->input('bank_id'):null;
+            $adv_payment->cash_amt = $request->input('payment_type') == 'cash' ? $adv_received : 0.00;
+            $adv_payment->cheque_amt = $request->input('payment_type') == 'cheque' ? $adv_received : 0.00; 
+            $adv_payment->online_amt = $request->input('payment_type') == 'online' ? $adv_received : 0.00; 
+            $adv_payment->cheque_no = $request->input('payment_type') == 'cheque' ? $request->input('cheque_no') : null;
+            $adv_payment->cheque_date = $request->input('payment_type') == 'cheque' ? $request->input('cheque_date') : null;
+            $adv_payment->transection_id = $request->input('payment_type') == 'online' ? $request->input('transection_id') : null;
+            
+            $adv_payment->entry_type = 'dr'; 
+            $adv_payment->balance = $employee->current_adv_balance-$adv_received; 
             $adv_payment->save();
 
-            $employee_salary->adv_received = $employee_salary->adv_received+$request->adv_received; 
+            $employee_salary->adv_received = $employee_salary->adv_received+$adv_received; 
             $employee_salary->save();
-            DB::commit();
 
+            // Update the company ledger
+            $lastLedger = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->latest()->first();
+            $oldBankBalance = $lastLedger ? $lastLedger->bank_balance : 0;
+            $oldCashBalance = $lastLedger ? $lastLedger->cash_balance : 0;
+            $newBankBalance=$oldBankBalance;
+            if($request->input('payment_type') !== 'cash'){
+                $newBankBalance = $request->input('payment_type') !== 'cash' ? ($oldBankBalance + $adv_received) : $oldBankBalance;
+                $bank=Bank::find($request->bank_id);
+                $bank->update(['balance'=>$bank->balance+$adv_received]);
+            }
+            $newCashBalance = $request->input('payment_type') === 'cash' ? ($oldCashBalance + $adv_received) : $oldCashBalance;
+            Ledger::create([
+                'bank_id' => $request->input('payment_type') !== 'cash' ? $request->input('bank_id'):null, 
+                'description' => 'Received Advance Payment',
+                'cr_amt' => $adv_received,
+                'payment_type' => $request->input('payment_type'),
+                'cash_amt' => $request->input('payment_type') == 'cash' ? $adv_received : 0.00,
+                'cheque_amt' => $request->input('payment_type') == 'cheque' ? $adv_received : 0.00,
+                'online_amt' => $request->input('payment_type') == 'online' ? $adv_received : 0.00,
+                'pos_amt' => $request->input('payment_type') == 'pos' ? $adv_received : 0.00,
+                'bank_balance' => $newBankBalance,
+                'cash_balance' => $newCashBalance,
+                'entry_type' => 'cr',
+                'person_id' => 1, // Admin or Company 
+                'person_type' => 'App\Models\User', 
+                'link_id' => $adv_payment->id, 
+                'link_name' => 'adv_paid',
+                'referenceable_id' =>  $employee_salary->user_id,
+                'referenceable_type' => 'App\Models\User',
+                'cheque_no' => $request->input('payment_type') == 'cheque' ? $request->input('cheque_no') : null,
+                'cheque_date' => $request->input('payment_type') == 'cheque' ? $request->input('cheque_date') : null,
+                'transection_id' => $request->input('payment_type') == 'online' ? $request->input('transection_id') : null,
+            ]);
+
+            DB::commit();
             return response()->json(['status' => 'success', 'message' => 'Payment received successfully!']);
         } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
@@ -881,8 +1175,8 @@ class EmployeeController extends Controller
                     'person_type' => 'App\Models\User', 
                     'link_id' => $vehicleFine->id, 
                     'link_name' => 'vehicle_employee_fine',
-                    'referenceable_id' =>  $vehicleFine->id,
-                    'referenceable_type' => 'App\Models\VehicleEmployeeFine',
+                    'referenceable_id' =>  $vehicle->user_id,
+                    'referenceable_type' => 'App\Models\User',
                     'cheque_no' => $request->input('payment_type') == 'cheque' ? $request->input('cheque_no') : null,
                     'cheque_date' => $request->input('payment_type') == 'cheque' ? $request->input('cheque_date') : null,
                     'transection_id' => $request->input('payment_type') == 'online' ? $request->input('transection_id') : null,

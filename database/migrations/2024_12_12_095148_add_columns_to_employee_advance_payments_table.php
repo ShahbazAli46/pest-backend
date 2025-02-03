@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::table('employee_advance_payments', function (Blueprint $table) {
             $table->string('description')->nullable();
             $table->decimal('received_payment', 15, 2)->default(0.00);
-            $table->enum('payment_type',['dr','cr'])->default('cr');
+            $table->enum('entry_type',['dr','cr'])->default('cr');
             $table->decimal('balance', 15, 2)->default(0.00);
         });
     }
@@ -27,7 +27,7 @@ return new class extends Migration
         Schema::table('employee_advance_payments', function (Blueprint $table) {
             $table->dropColumn('description');
             $table->dropColumn('received_payment');
-            $table->dropColumn('payment_type');
+            $table->dropColumn('entry_type');
             $table->dropColumn('balance');
         });
     }

@@ -9,7 +9,9 @@ class EmployeeAdvancePayment extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id','employee_id','employee_salary_id','advance_payment','month','description','received_payment','payment_type','balance'];
+    protected $fillable = ['user_id','employee_id','employee_salary_id','advance_payment','month','description','received_payment','entry_type','balance',
+        'vat_per','vat_amount','adv_pay_with_vat','bank_id','payment_type','cash_amt','cheque_amt','online_amt','cheque_no','cheque_date','transection_id'
+    ];
 
     public function user()
     {

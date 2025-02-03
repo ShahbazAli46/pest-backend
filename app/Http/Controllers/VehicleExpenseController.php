@@ -71,7 +71,7 @@ class VehicleExpenseController extends Controller
             }
             
             $requestData = $request->all(); 
-
+            $vehicle=Vehicle::find($request->vehicle_id);
             // Calculate VAT amount
             $total_amt = ($request->input('fuel_amount')+$request->input('oil_amount')+$request->input('maintenance_amount'));
             $vatPer = $request->input('vat_per', 0); // Default to 0 if vat_per is not provided
@@ -129,8 +129,8 @@ class VehicleExpenseController extends Controller
                 'person_type' => 'App\Models\User', 
                 'link_id' => $vehicle_expense->id, 
                 'link_name' => 'vehicle_expense',
-                'referenceable_id' =>  $vehicle_expense->id,
-                'referenceable_type' => 'App\Models\VehicleExpense',
+                'referenceable_id' =>  $vehicle->user_id,
+                'referenceable_type' => 'App\Models\User',
                 'cheque_no' => $request->input('payment_type') == 'cheque' ? $request->input('cheque_no') : null,
                 'cheque_date' => $request->input('payment_type') == 'cheque' ? $request->input('cheque_date') : null,
                 'transection_id' => in_array($request->input('payment_type'), ['online', 'pos']) ? $request->input('transection_id') : null,

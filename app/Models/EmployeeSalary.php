@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class EmployeeSalary extends Model
 {
     use HasFactory;
-    protected $fillable = ['user_id','employee_id', 'basic_salary','allowance','other','total_salary','adv_paid','paid_salary','attendance_per','paid_at', 'month', 'status','total_fines','adv_received','payable_salary','transection_type','remaining_salary','fine_received'];
+    protected $fillable = ['user_id','employee_id', 'basic_salary','allowance','other','bonus','total_salary','adv_paid','paid_salary','attendance_per','paid_at', 'month', 'status','total_fines','adv_received','payable_salary','transection_type','remaining_salary','fine_received'];
     public function user()
     {
         return $this->belongsTo(User::class);
