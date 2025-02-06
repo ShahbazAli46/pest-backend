@@ -93,8 +93,8 @@ class JobController extends Controller
             //create invoices
             $data=$res->original['data'];
             $job_services=JobService::where('job_id',$data['job_id'])->get();
-            $this->generateServiceInvoice($data['job_id'],Job::class,$request->user_id,$res->original['data']['grand_total'],now(),$job_services);
-           
+            // $this->generateServiceInvoice($data['job_id'],Job::class,$request->user_id,$res->original['data']['grand_total'],now(),$job_services);
+
             // $invoice=ServiceInvoice::create([
             //     'invoiceable_id'=>$data['job_id'],
             //     'invoiceable_type'=>Job::class,

@@ -8,6 +8,7 @@ use App\Models\JobServiceReport;
 use App\Models\JobServiceReportArea;
 use App\Models\JobServiceReportProduct;
 use App\Models\Product;
+use App\Models\Quote;
 use App\Models\ServiceInvoice;
 use App\Models\ServiceInvoiceDetail;
 use App\Models\Stock;
@@ -91,7 +92,6 @@ class JobServiceReportController extends Controller
                     if ($quantityCheck !== true) {
                         return $quantityCheck;
                     }
-                   
                 }
 
                 $requestData = $request->all(); 
@@ -105,8 +105,8 @@ class JobServiceReportController extends Controller
                 // Create the job service report
                 $job_report = JobServiceReport::create($requestData);
                 if($job_report){
-                    $inv_products=[];
-                    $total_price=0;
+                    $extra_products=[];
+                    $total_extra=0;
                     // Insert addresses into JobServiceReportArea
                     foreach ($request->input('addresses') as $address) {
                         JobServiceReportArea::create([
@@ -132,10 +132,10 @@ class JobServiceReportController extends Controller
                             'is_extra' => $product['is_extra'] ?? 0,
                         ]);
 
-                        // if($product['is_extra']==1){
-                            array_push($inv_products,$product);
-                            $total_price+=$product['price'];
-                        // }
+                        if($product['is_extra']==1){
+                            array_push($extra_products,$product);
+                            $total_extra+=$product['price'];
+                        }
 
                         // Add sales manager stock entry 
                         $stock = Stock::where(['product_id'=> $product['product_id'],'person_id'=>$job->captain_id,'person_type'=>'App\Models\User'])->latest()->first();
@@ -157,32 +157,8 @@ class JobServiceReportController extends Controller
                     }
 
                     //create invoices
-                    if(count($inv_products) > 0){
-                        $this->generateServiceInvoice($job->id,Job::class,$job->user_id,$total_price,now(),$inv_products,'Product');
-                        //link jobs with invoices
-                        $this->linkJobsToInvoice($job->quote_id);
-                    }
-
-                    // $invoice=ServiceInvoice::create([
-                    //     'invoiceable_id'=>$job->id,
-                    //     'invoiceable_type'=>Job::class,
-                    //     'user_id'=>$job->user_id,
-                    //     'issued_date'=>now(),
-                    //     'total_amt'=>$total_extra,
-                    //     'paid_amt'=>0.00,
-                    // ]);
-                    // if($invoice){
-                    //     foreach($inv_products as $product){
-                    //         ServiceInvoiceDetail::create([
-                    //             'service_invoice_id'=>$invoice->id,
-                    //             'itemable_id'=>$product['product_id'],
-                    //             'itemable_type'=>Product::class,
-                    //             'job_type'=>'one_time',
-                    //             'rate'=>$product['price'],
-                    //             'sub_total'=>$product['price']
-                    //         ]);
-                    //     }
-                    // }
+                    $total_price = $job->grand_total + $total_extra;
+                    $this->generateServiceInvoice($job->id,$total_price,$extra_products);
 
                     DB::commit();
                     return response()->json(['status' => 'success','message' => 'Job Service Report Added Successfully','data'=>$job_report]);
