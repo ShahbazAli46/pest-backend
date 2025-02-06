@@ -82,7 +82,7 @@ class QuoteController extends Controller
                 'tag' => 'nullable|string|max:100',
                 'duration_in_months' => 'required|integer|min:1',
                 // 'is_food_watch_account' => 'boolean',
-                'billing_method' => 'required|in:installments,monthly,service,one_time',
+                'billing_method' => 'required|in:service',//installments,monthly,one_time
                 // 'dis_per' => 'nullable|numeric|min:0',
                 'dis_amt' => 'nullable|numeric|min:0',
                 'vat_per' => 'nullable|numeric|min:0',
@@ -318,6 +318,7 @@ class QuoteController extends Controller
                     }
                 }
                 
+                /*
                 //create invoices
                 $installments=0;
                 if($quote->billing_method == 'installments'){
@@ -334,33 +335,11 @@ class QuoteController extends Controller
                 $installmentDatesArr=$this->generateInstallmentDates($quote->duration_in_months,$installments);
                 for($i=1; $i<=$installments; $i++){
                     $this->generateServiceInvoice($quote->id,Quote::class,$quote->user_id,$inst_total/$installments,$installmentDatesArr[$i-1],$quote->quoteServices);
-
-                    // $invoice=ServiceInvoice::create([
-                    //     'invoiceable_id'=>$quote->id,
-                    //     'invoiceable_type'=>Quote::class,
-                    //     'user_id'=>$quote->user_id,
-                    //     'issued_date'=>now(),
-                    //     'total_amt'=>$inst_total/$installments,
-                    //     'paid_amt'=>0.00,
-                    // ]);
-                    // if($invoice){
-                    //     $quot_services=$quote->quoteServices;
-                    //     foreach($quot_services as $service){
-                    //         ServiceInvoiceDetail::create([
-                    //             'service_invoice_id'=>$invoice->id,
-                    //             'itemable_id'=>$service->service_id,
-                    //             'itemable_type'=>Service::class,
-                    //             'job_type'=>$service->job_type,
-                    //             'rate'=>$service->rate,
-                    //             'sub_total'=>$service->sub_total
-                    //         ]);
-                    //     }
-                    // }
                 }
 
                 //link jobs with invoices
                 $this->linkJobsToInvoice($quote->id);
-
+                
 
                 // Update the CLIENT ledger
                 $user=User::find($quote->user_id);
@@ -377,9 +356,9 @@ class QuoteController extends Controller
                     'person_id' => $quote->user_id,
                     'person_type' => 'App\Models\User',
                 ]);
-
-                DB::commit();
+                */
                 
+                DB::commit();
                 // Attempt to send the quote mail
                 try {
                     Mail::to($quote->user->email)->send(new \App\Mail\QuoteMail($quote));
@@ -421,7 +400,7 @@ class QuoteController extends Controller
                     DB::rollBack();
                     return response()->json(['status' => 'error','message' => 'The Contract has Already been Cancelled.'],500);
                 }
-
+                /*
                 $unpaidTotal = ServiceInvoice::where('status', 'unpaid')->where('invoiceable_type', Quote::class)->where('invoiceable_id', $quote->id)
                 ->select(DB::raw('SUM(total_amt - paid_amt) as unpaid_total'))
                 ->value('unpaid_total');
@@ -443,7 +422,7 @@ class QuoteController extends Controller
                         'person_id' => $quote->user_id,
                         'person_type' => 'App\Models\User',
                     ]);
-                }
+                }*/
             }else{
                 $msg_type='Quote';
                 if($quote->contract_cancelled_at!=null){
