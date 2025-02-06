@@ -255,7 +255,7 @@ trait GeneralTrait
                         'service_invoice_id'=>$invoice->id,
                         'itemable_id'=>$item['product_id'],
                         'itemable_type'=>Product::class,
-                        'job_type'=>'one_time',
+                        'job_type'=>'one_time',//service
                         'rate'=>$item['price'],
                         'sub_total'=>$item['price']
                     ]);

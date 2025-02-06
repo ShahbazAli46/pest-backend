@@ -106,7 +106,7 @@ class JobServiceReportController extends Controller
                 $job_report = JobServiceReport::create($requestData);
                 if($job_report){
                     $inv_products=[];
-                    $total_extra=0;
+                    $total_price=0;
                     // Insert addresses into JobServiceReportArea
                     foreach ($request->input('addresses') as $address) {
                         JobServiceReportArea::create([
@@ -132,10 +132,10 @@ class JobServiceReportController extends Controller
                             'is_extra' => $product['is_extra'] ?? 0,
                         ]);
 
-                        if($product['is_extra']==1){
+                        // if($product['is_extra']==1){
                             array_push($inv_products,$product);
-                            $total_extra+=$product['price'];
-                        }
+                            $total_price+=$product['price'];
+                        // }
 
                         // Add sales manager stock entry 
                         $stock = Stock::where(['product_id'=> $product['product_id'],'person_id'=>$job->captain_id,'person_type'=>'App\Models\User'])->latest()->first();
@@ -154,12 +154,13 @@ class JobServiceReportController extends Controller
                             'link_id' => $jobServiceProduct->id,
                             'link_name' => 'use_stock', 
                         ]);
-            
                     }
 
                     //create invoices
                     if(count($inv_products) > 0){
-                        $this->generateServiceInvoice($job->id,Job::class,$job->user_id,$total_extra,now(),$inv_products,'Product');
+                        $this->generateServiceInvoice($job->id,Job::class,$job->user_id,$total_price,now(),$inv_products,'Product');
+                        //link jobs with invoices
+                        $this->linkJobsToInvoice($job->quote_id);
                     }
 
                     // $invoice=ServiceInvoice::create([
