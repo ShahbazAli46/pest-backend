@@ -10,7 +10,7 @@ class ServiceInvoice extends Model
     use HasFactory;
     public $table="service_invoices";
 
-    protected $fillable = ['service_invoice_id','invoiceable_id','invoiceable_type','user_id','issued_date','total_amt','paid_amt','status','job_ids','user_invoice_id','address_id','promise_date','assigned_user_id'];
+    protected $fillable = ['service_invoice_id','invoiceable_id','invoiceable_type','user_id','issued_date','total_amt','paid_amt','status','job_ids','user_invoice_id','address_id','promise_date','assigned_user_id','job_id'];
 
     public function invoiceable()
     {
@@ -57,6 +57,10 @@ class ServiceInvoice extends Model
         return 'No Title'; // Default if none exists
     }
 
+    public function job()
+    {
+        return $this->belongsTo(Job::class);
+    }
     //add custom product id according to id
     protected static function boot()
     {

@@ -34,7 +34,7 @@ class JobServiceReportController extends Controller
             $job_service_reports=$job_service_report_query->get();
             return response()->json(['data' => $job_service_reports]);
         }else{
-            $job_service_report=JobServiceReport::with(['areas','usedProducts.product','job.user'])->find($id);
+            $job_service_report=JobServiceReport::with(['areas','usedProducts.product','job.user','job.serviceInvoice'])->find($id);
             if ($job_service_report) {
                 $job_service_report->pest_found_services = $job_service_report->getPestFoundServices();
                 $job_service_report->treatment_methods = $job_service_report->getTreatmentMethods(); 

@@ -311,6 +311,7 @@ class EmployeeController extends Controller
                     $requestData['payment_type'] = 'cash';
                     $requestData['description'] = $request->name;
                     $requestData['expense_date'] = now();
+                    $requestData['branch_id'] = $employee->branch_id;
                      
                     $expense=Expense::create($requestData);
 

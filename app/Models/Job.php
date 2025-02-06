@@ -81,6 +81,11 @@ class Job extends Model
         return $this->hasMany(JobRescheduleDetail::class);
     }
 
+    public function serviceInvoice()
+    {
+        return $this->hasOne(ServiceInvoice::class);
+    }
+
     public function scopeWithActiveQuoteOrCompletedJobs($query)
     {
         return $query->where(function ($query) {

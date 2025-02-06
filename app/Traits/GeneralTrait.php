@@ -228,7 +228,6 @@ trait GeneralTrait
     {
         // $ivc_id,$inv_type,$user_id,,$issued_date;
         $job=Job::find($job_id);
-        $job_ids[] = $job_id;
 
         if($job->quote_id!=null){
             $inv_id=$job->quote_id;
@@ -248,7 +247,7 @@ trait GeneralTrait
             'paid_amt'=>0.00,
             //should be add vat amt and vat_per
             'address_id'=> $inv_data->client_address_id,
-            'job_ids' => json_encode($job_ids)
+            'job_id' => $job_id
         ]);
 
         if($invoice){
@@ -283,7 +282,7 @@ trait GeneralTrait
             $newCliCashBalance = $oldCliCashBalance + $total_amt;
             $cli_ledger=Ledger::create([
                 'bank_id' => null, 
-                'description' => 'Invoice Payment for client ' . $user->name,
+                'description' => 'Job Completed '.now().', Invoice #' . $invoice->service_invoices,
                 'dr_amt' => $total_amt,
                 'payment_type' => 'none',
                 'entry_type' => 'dr',  
