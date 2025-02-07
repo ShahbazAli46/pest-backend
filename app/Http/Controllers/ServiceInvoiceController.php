@@ -77,12 +77,13 @@ class ServiceInvoiceController extends Controller
                 'service_invoice_id' => 'required|integer|exists:service_invoices,id', 
                 'payment_type' => 'required|in:cash,cheque,online,pos',
                 'description' => 'nullable|string|max:255',
-                'is_all_amt_pay' =>'nullable|in:1,0'
+                'is_all_amt_pay' =>'nullable|in:1,0',
+                'is_settlement' =>'nullable|in:1,0',
             ]);
             
             if(!$request->has('is_all_amt_pay') || $request->is_all_amt_pay!=1){
                 $request->validate([      
-                   'paid_amt' => 'required|numeric|min:0.01',
+                   'paid_amt' => 'required|numeric|min:0.00',
                 ]);
             }
 
@@ -121,10 +122,24 @@ class ServiceInvoiceController extends Controller
                     }
                 }
                 $invoice->save();
+
+                //settlement logic here
+                $setl_amt=0.00;
+                $is_setl=false;
+                if($invoice->status=='unpaid' && $request->input('is_settlement')){
+                    $invoice->status='paid';
+                    $setl_amt=round($invoice->total_amt-$invoice->paid_amt,2);
+                    $invoice->settlement_amt=$setl_amt;
+                    $invoice->settlement_at=now();
+                    $is_setl=true;
+                }
+                $invoice->update();
+
                 ServiceInvoiceAmtHistory::create([
                     'service_invoice_id' => $invoice->id,
                     'user_id' => $invoice->user_id,
                     'paid_amt' => $paid_amt,
+                    'settlement_amt' => $setl_amt,
                     'description' => $request->description,
                     'remaining_amt' => $invoice->total_amt-$invoice->paid_amt,
                 ]);
@@ -147,6 +162,26 @@ class ServiceInvoiceController extends Controller
                     'referenceable_id' => $auth_user->id,
                     'referenceable_type' => 'App\Models\User',
                 ]);
+
+                if($is_setl){
+                    // Update the CLIENT ledger
+                    $lastClientLedger = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => $invoice->user_id])->latest()->first();
+                    $oldCliCashBalance = $lastClientLedger ? $lastClientLedger->cash_balance : 0;
+                    $newCliCashBalance = $oldCliCashBalance - $setl_amt;
+                    
+                    $cli_ledger=Ledger::create([
+                        'bank_id' => null,  // Assuming null if no specific bank is involved
+                        'description' => 'Amount for Settlement ' . $invoice->service_invoice_id,
+                        'cr_amt' => $setl_amt,
+                        'payment_type' => 'settelment',
+                        'entry_type' => 'cr',  
+                        'cash_balance' => $newCliCashBalance,
+                        'person_id' => $invoice->user_id,
+                        'person_type' => 'App\Models\User',
+                        'referenceable_id' => $auth_user->id,
+                        'referenceable_type' => 'App\Models\User',
+                    ]);
+                }
 
                 // Update the company ledger
                 if($auth_user->role_id!=6 && $request->input('payment_type') === 'cash'){

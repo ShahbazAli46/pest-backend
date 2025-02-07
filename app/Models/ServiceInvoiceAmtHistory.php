@@ -10,7 +10,7 @@ class ServiceInvoiceAmtHistory extends Model
     use HasFactory;
 
     public $table="service_invoice_amt_history";
-    protected $fillable = ['service_invoice_id','user_id','paid_amt','remaining_amt','description'];
+    protected $fillable = ['service_invoice_id','user_id','paid_amt','remaining_amt','description','settlement_amt'];
 
     public function serviceInvoice()
     {

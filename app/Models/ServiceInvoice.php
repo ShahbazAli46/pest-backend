@@ -10,7 +10,9 @@ class ServiceInvoice extends Model
     use HasFactory;
     public $table="service_invoices";
 
-    protected $fillable = ['service_invoice_id','invoiceable_id','invoiceable_type','user_id','issued_date','total_amt','paid_amt','status','job_ids','user_invoice_id','address_id','promise_date','assigned_user_id','job_id'];
+    protected $fillable = ['service_invoice_id','invoiceable_id','invoiceable_type','user_id','issued_date','total_amt','paid_amt','status','job_ids','user_invoice_id','address_id','promise_date','assigned_user_id','job_id'
+    ,'settlement_amt','settlement_at','is_taken_cheque'];
+
 
     public function invoiceable()
     {

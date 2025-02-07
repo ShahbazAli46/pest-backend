@@ -18,7 +18,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->decimal('dr_amt', 15, 2)->default(0.00);
             $table->decimal('cr_amt', 15, 2)->default(0.00);
-            $table->enum('payment_type',['cash','cheque','online','pos','opening_balance','none'])->nullable();
+            $table->enum('payment_type',['cash','cheque','online','pos','opening_balance','none','settelment'])->nullable();
             $table->decimal('cash_amt', 15, 2)->default(0.00);
             $table->decimal('pos_amt', 15, 2)->default(0.00);
             $table->decimal('cheque_amt', 15, 2)->default(0.00);
