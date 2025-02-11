@@ -307,7 +307,6 @@ class ServiceInvoiceController extends Controller
         return response()->json(['data' => $invoices]);
     }
 
-
     public function getAssignedStates(Request $request,$rec_officer_id=null){
         $invoices = ServiceInvoice::withActiveOrPaidInvoices()
         ->with([
@@ -340,5 +339,43 @@ class ServiceInvoiceController extends Controller
             $invoice->makeHidden('invoiceable'); 
         });
         return response()->json(['data' => $invoices]);
+    }
+
+    public function getSettlementInvoices(Request $request){
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
+            $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay(); // Use endOfDay to include the entire day
+            
+            $invoices = ServiceInvoice::withActiveOrPaidInvoices()->with(['user.client.referencable', 'invoiceable','address'])->whereBetween('settlement_at', [$startDate, $endDate]);
+
+            // Apply user_id filter if present
+            if ($request->has('user_id')) {
+                $invoices->where('user_id', $request->input('user_id'));
+            }
+
+            $invoices = $invoices->get();
+
+            // Add title in the response
+            $invoices->each(function($invoice) {
+                $invoice->title = $invoice->title; 
+                $invoice->makeHidden('invoiceable');
+            });
+            return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $invoices]);
+        }else{
+            $invoices=ServiceInvoice::withActiveOrPaidInvoices()->with(['user.client.referencable','invoiceable','address'])->whereNotNull('settlement_at');
+
+            // Apply user_id filter if present
+            if ($request->has('user_id')) {
+                $invoices->where('user_id', $request->input('user_id'));
+            }
+
+            $invoices = $invoices->get();
+
+            $invoices->each(function($invoice) {
+                $invoice->title = $invoice->title; 
+                $invoice->makeHidden('invoiceable'); 
+            });
+            return response()->json(['data' => $invoices]);
+        }
     }
 }

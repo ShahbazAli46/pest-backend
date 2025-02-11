@@ -189,9 +189,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('service_invoices/{id?}',[ServiceInvoiceController::class,'index'])->name('service_invoices');
     Route::post('service_invoices/add_payment',[ServiceInvoiceController::class,'addPayment'])->name('service_invoices.add_payment');
     Route::get('service_invoices/assign_invoice/states/{ro_id?}',[ServiceInvoiceController::class,'getAssignedStates'])->name('service_invoices.assign_invoice.states');
-    
-    Route::get('outstandings',[ServiceInvoiceController::class,'outstandings'])->name('outstandings');
+    Route::get('service_invoices/settlement/get',[ServiceInvoiceController::class,'getSettlementInvoices'])->name('service_invoices.settlement.get');
 
+
+    Route::get('outstandings',[ServiceInvoiceController::class,'outstandings'])->name('outstandings');
 
     //received cash records
     Route::get('received_cash_record/{id?}',[ReceivedCashRecordController::class,'index'])->name('received_cash_records');
