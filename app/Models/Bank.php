@@ -10,7 +10,7 @@ class Bank extends Model
     use HasFactory;
     public $table="banks";
 
-    protected $fillable = ['bank_name','balance'];
+    protected $fillable = ['bank_name','balance','is_company_bank'];
 
     public function expense()
     {

@@ -13,6 +13,7 @@ use App\Models\ServiceInvoice;
 use App\Models\ServiceInvoiceAmtHistory;
 use App\Models\User;
 use App\Models\Vendor;
+use App\Traits\LedgerTrait;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -20,6 +21,8 @@ use Illuminate\Support\Facades\DB;
 
 class ServiceInvoiceController extends Controller
 {
+    use LedgerTrait;
+
     public function index(Request $request,$id=null){
         if($id==null){
             // Check if date filters are present
@@ -97,11 +100,17 @@ class ServiceInvoiceController extends Controller
                 ]);                
             }else if($request->input('payment_type') == 'online' || $request->input('payment_type') == 'pos'){
                 $request->validate([
-                    'bank_id' => 'required|exists:banks,id',
+                    // 'bank_id' => 'required|exists:banks,id',
                     'transection_id' => 'required|string|max:100',
                 ]);
+                $company_bank=$this->getCompanyBank();
+                if(!$company_bank){
+                    DB::rollBack();
+                    return response()->json(['status' => 'error','message' => 'Company Bank Not Found.'],404);
+                }
+                $request->bank_id=$company_bank->id;
             }
-         
+            
             $invoice=ServiceInvoice::withActiveQuote()->findOrFail($request->service_invoice_id);
 
             $paid_amt=0;
@@ -123,7 +132,7 @@ class ServiceInvoiceController extends Controller
                         AdvanceCheque::create([
                             'user_id' => $invoice->user_id,
                             'description' => $request->description,
-                            'bank_id' => $request->input('bank_id')??null,
+                            'bank_id' => $request->bank_id??null,
                             'cheque_no' => $request->input('cheque_no')??null,
                             'cheque_date' => $request->input('cheque_date')??null,
                             'cheque_amount' => $paid_amt,
@@ -152,7 +161,7 @@ class ServiceInvoiceController extends Controller
                             AdvanceCheque::create([
                                 'user_id' => $invoice->user_id,
                                 'description' => $request->description,
-                                'bank_id' => $request->input('bank_id')??null,
+                                'bank_id' => $request->bank_id??null,
                                 'cheque_no' => $request->input('cheque_no')??null,
                                 'cheque_date' => $request->input('cheque_date')??null,
                                 'cheque_amount' => $paid_amt,
@@ -248,41 +257,38 @@ class ServiceInvoiceController extends Controller
                         'client_ledger_id'=>$cli_ledger->id
                     ]);
                 }else{
-                    if($request->input('payment_type') != 'cheque')
-                    {
-                        $lastLedger = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->latest()->first();
-                        $oldBankBalance = $lastLedger ? $lastLedger->bank_balance : 0;
-                        $oldCashBalance = $lastLedger ? $lastLedger->cash_balance : 0;
-                        $newBankBalance=$oldBankBalance;
-                        if($request->input('payment_type') !== 'cash'){
-                            $newBankBalance = $request->input('payment_type') !== 'cash' ? ($oldBankBalance + $paid_amt) : $oldBankBalance;
-                            $bank=Bank::find($request->bank_id);
-                            $bank->update(['balance'=>$bank->balance+$paid_amt]);
-                        }
-                        $newCashBalance = $request->input('payment_type') === 'cash' ? ($oldCashBalance + $paid_amt) : $oldCashBalance;
-                        Ledger::create([
-                            'bank_id' => $request->input('payment_type') !== 'cash' ? $request->input('bank_id'):null, 
-                            'description' => 'Received Payment',
-                            'cr_amt' => $paid_amt,
-                            'payment_type' => $request->input('payment_type'),
-                            'cash_amt' => $request->input('payment_type') == 'cash' ? $paid_amt : 0.00,
-                            // 'cheque_amt' => $request->input('payment_type') == 'cheque' ? $paid_amt : 0.00,
-                            'online_amt' => $request->input('payment_type') == 'online' ? $paid_amt : 0.00,
-                            'pos_amt' => $request->input('payment_type') == 'pos' ? $paid_amt : 0.00,
-                            'bank_balance' => $newBankBalance,
-                            'cash_balance' => $newCashBalance,
-                            'entry_type' => 'cr',
-                            'person_id' => 1, // Admin or Company 
-                            'person_type' => 'App\Models\User', 
-                            'link_id' => $cli_ledger->id, 
-                            'link_name' => 'client_ledger',
-                            'referenceable_id' =>  $invoice->user_id,
-                            'referenceable_type' => 'App\Models\User',
-                            // 'cheque_no' => $request->input('payment_type') == 'cheque' ? $request->input('cheque_no') : null,
-                            // 'cheque_date' => $request->input('payment_type') == 'cheque' ? $request->input('cheque_date') : null,
-                            'transection_id' => in_array($request->input('payment_type'), ['online', 'pos']) ? $request->input('transection_id') : null,
-                        ]);
+                    $lastLedger = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->latest()->first();
+                    $oldBankBalance = $lastLedger ? $lastLedger->bank_balance : 0;
+                    $oldCashBalance = $lastLedger ? $lastLedger->cash_balance : 0;
+                    $newBankBalance=$oldBankBalance;
+                    if($request->input('payment_type') !== 'cash'){
+                        $newBankBalance = $request->input('payment_type') !== 'cash' ? ($oldBankBalance + $paid_amt) : $oldBankBalance;
+                        $bank=Bank::find($request->bank_id);
+                        $bank->update(['balance'=>$bank->balance+$paid_amt]);
                     }
+                    $newCashBalance = $request->input('payment_type') === 'cash' ? ($oldCashBalance + $paid_amt) : $oldCashBalance;
+                    Ledger::create([
+                        'bank_id' => $request->input('payment_type') !== 'cash' ? $request->bank_id:null, 
+                        'description' => 'Received Payment',
+                        'cr_amt' => $paid_amt,
+                        'payment_type' => $request->input('payment_type'),
+                        'cash_amt' => $request->input('payment_type') == 'cash' ? $paid_amt : 0.00,
+                        // 'cheque_amt' => $request->input('payment_type') == 'cheque' ? $paid_amt : 0.00,
+                        'online_amt' => $request->input('payment_type') == 'online' ? $paid_amt : 0.00,
+                        'pos_amt' => $request->input('payment_type') == 'pos' ? $paid_amt : 0.00,
+                        'bank_balance' => $newBankBalance,
+                        'cash_balance' => $newCashBalance,
+                        'entry_type' => 'cr',
+                        'person_id' => 1, // Admin or Company 
+                        'person_type' => 'App\Models\User', 
+                        'link_id' => $cli_ledger->id, 
+                        'link_name' => 'client_ledger',
+                        'referenceable_id' =>  $invoice->user_id,
+                        'referenceable_type' => 'App\Models\User',
+                        // 'cheque_no' => $request->input('payment_type') == 'cheque' ? $request->input('cheque_no') : null,
+                        // 'cheque_date' => $request->input('payment_type') == 'cheque' ? $request->input('cheque_date') : null,
+                        'transection_id' => in_array($request->input('payment_type'), ['online', 'pos']) ? $request->input('transection_id') : null,
+                    ]);
                 }
 
                 //calculate commision

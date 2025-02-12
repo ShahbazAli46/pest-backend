@@ -107,7 +107,10 @@ trait LedgerTrait
         return true; // If balance is sufficient
     }
     
-
+    public function getCompanyBank(){
+        $com_bank=Bank::where('is_company_bank',1)->first();
+        return $com_bank;
+    }
 
     // public function reCalculateCompanyTranBlnc($startingLedgerId,$previousBalance)
     // {

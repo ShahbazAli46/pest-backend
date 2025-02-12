@@ -5,12 +5,15 @@ namespace App\Http\Controllers;
 use App\Models\Bank;
 use App\Models\Customer;
 use App\Models\Ledger;
+use App\Traits\LedgerTrait;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class CustomerController extends Controller
-{
+{   
+    use LedgerTrait;
+
     public function index($id=null){
         if($id==null){
             $customers=Customer::all();
@@ -72,7 +75,7 @@ class CustomerController extends Controller
             DB::beginTransaction();
             $request->validate([
                 'customer_id' => ['required', 'exists:customers,id'],
-                'payment_type' => 'required|in:cash,cheque,online',
+                'payment_type' => 'required|in:cash,online',//cheque process is pending
                 'description' => 'nullable|string',
                 'amount' => 'required|numeric|min:0',
                 'vat_per' => 'nullable|numeric|min:0|max:100',
@@ -80,18 +83,30 @@ class CustomerController extends Controller
 
             if ($request->input('payment_type') == 'cheque') {
                 $request->validate([
-                    'bank_id' => 'required|exists:banks,id',
+                    // 'bank_id' => 'required|exists:banks,id',
                     'cheque_no' => 'required|string|max:100',
                     'cheque_date' => 'required|date',
                 ]);                
             }else if($request->input('payment_type') == 'online'){
                 $request->validate([
-                    'bank_id' => 'required|exists:banks,id',
+                    // 'bank_id' => 'required|exists:banks,id',
                     'transection_id' => 'required|string|max:100',
                 ]);
+                
             }
-            
+
             $requestData = $request->all(); 
+
+            if($request->input('payment_type') == 'online'){
+                $company_bank=$this->getCompanyBank();
+                if(!$company_bank){
+                    DB::rollBack();
+                    return response()->json(['status' => 'error','message' => 'Company Bank Not Found.'],404);
+                }
+                $requestData['bank_id']=$company_bank->id;
+                $request->bank_id=$company_bank->id;
+            }
+
             // Calculate VAT amount
             $amount = $request->input('amount');
             $vatPer = $request->input('vat_per', 0); 

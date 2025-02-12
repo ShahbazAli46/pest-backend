@@ -43,37 +43,53 @@ class BankController extends Controller
     //Store
     public function store(Request $request)
     {
-        try {
-            DB::beginTransaction();
-            $validateData=$request->validate([        
+        try {    
+            DB::beginTransaction();          
+            $request->validate([
                 'bank_name' => 'required|string|max:100|unique:banks,bank_name',
-                'balance' =>  'required|numeric|min:0'
+                'is_company_bank' => [
+                    'nullable', 
+                    'integer',
+                    function ($attribute, $value, $fail) {
+                        if ($value == 1 && Bank::where('is_company_bank', 1)->exists()) {
+                            $fail('Only one bank can be set as a company bank.');
+                        }
+                    }
+                ],
             ]);
+            
+            if ($request->input('is_company_bank') == 1) {
+                $request->validate([
+                    'balance' =>  'required|numeric|min:0'
+                ]);                
+            }
+            
+            $validateData = $request->all(); 
 
             $bank=Bank::create($validateData);
             if($bank){
-
-                //Compnay ledger
-                $lastLedger = Ledger::where(['person_type'=> 'App\Models\User','person_id'=>1])->latest()->first();
-                $oldBankBalance = $lastLedger ? $lastLedger->bank_balance : 0;
-                $oldCashBalance = $lastLedger ? $lastLedger->cash_balance : 0;
-                $newBankBalance = $oldBankBalance + $validateData['balance'];
-                Ledger::create([
-                    'bank_id' => $bank->id,
-                    'description' => 'Initial Balance for bank ' . $bank->bank_name,
-                    'dr_amt' => 0,  
-                    'cr_amt' => $validateData['balance'],  
-                    'payment_type' => 'opening_balance',
-                    'cash_amt' => 0.00,  
-                    'bank_balance' => $newBankBalance,  
-                    'cash_balance' => $oldCashBalance,  
-                    'entry_type' => 'cr',  
-                    'person_id' => 1,  
-                    'person_type' => 'App\Models\User',  // Admin or Company
-                    'link_id' => null,  
-                    'link_name' => null,  
-                ]);
-
+                if($bank->is_company_bank==1){
+                    //Compnay ledger
+                    $lastLedger = Ledger::where(['person_type'=> 'App\Models\User','person_id'=>1])->latest()->first();
+                    $oldBankBalance = $lastLedger ? $lastLedger->bank_balance : 0;
+                    $oldCashBalance = $lastLedger ? $lastLedger->cash_balance : 0;
+                    $newBankBalance = $oldBankBalance + $validateData['balance'];
+                    Ledger::create([
+                        'bank_id' => $bank->id,
+                        'description' => 'Initial Balance for bank ' . $bank->bank_name,
+                        'dr_amt' => 0,  
+                        'cr_amt' => $validateData['balance'],  
+                        'payment_type' => 'opening_balance',
+                        'cash_amt' => 0.00,  
+                        'bank_balance' => $newBankBalance,  
+                        'cash_balance' => $oldCashBalance,  
+                        'entry_type' => 'cr',  
+                        'person_id' => 1,  
+                        'person_type' => 'App\Models\User',  // Admin or Company
+                        'link_id' => null,  
+                        'link_name' => null,  
+                    ]);
+                }
                 DB::commit();
                 return response()->json(['status' => 'success','message' => 'Bank Added Successfully']);
             }else{

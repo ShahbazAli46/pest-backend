@@ -124,12 +124,5 @@ class AdminController extends Controller
             DB::rollBack();
             return response()->json(['status' => 'error','message' => 'Failed to Add Client. ' .$e->getMessage()],500);
         }
-
-
-        
-
-         
-
-
     }
 }
