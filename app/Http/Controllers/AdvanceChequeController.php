@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class AdvanceChequeController extends Controller
 {
@@ -44,8 +45,16 @@ class AdvanceChequeController extends Controller
         }
     }
 
-    public function changeStatus($id,$status){
+    public function changeStatus($id,$status,$date){
         try {
+            $validator = Validator::make(['date' => $date], [
+                'date' => 'required|date', 
+            ]);
+        
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()->first()], 422);
+            }
+
             $advance_cheque=AdvanceCheque::with(['linkable'])->findOrFail($id);
             DB::beginTransaction();
 
@@ -64,7 +73,7 @@ class AdvanceChequeController extends Controller
             $bank_id=$company_bank->id;
 
 
-            $advance_cheque->update(['status' =>$status,'status_updated_at'=>now()]);
+            $advance_cheque->update(['status' =>$status,'status_updated_at'=>$date]);
             $type=$status=='paid'?'Paid':'Deferred';
             $message='Cheque '.$type.' Successfully.';
 
@@ -88,7 +97,7 @@ class AdvanceChequeController extends Controller
                         $ServInvModel->status='paid';
                         $setl_amt=round($ServInvModel->total_amt-$ServInvModel->paid_amt,2);
                         $ServInvModel->settlement_amt=$setl_amt;
-                        $ServInvModel->settlement_at=now();
+                        $ServInvModel->settlement_at=$date;
                         $is_setl=true;
                     }
                     $ServInvModel->update();
