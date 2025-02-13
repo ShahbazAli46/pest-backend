@@ -45,17 +45,21 @@ class AdvanceChequeController extends Controller
         }
     }
 
-    public function changeStatus($id,$status,$date){
+    public function changeStatus(Request $request){
         try {
-            $validator = Validator::make(['date' => $date], [
+            $request->validate([        
+                'id' => 'required|exists:advance_cheques,id', 
+                'status' => 'required|in:paid,deferred', 
                 'date' => 'required|date', 
             ]);
-        
-            if ($validator->fails()) {
-                return response()->json(['errors' => $validator->errors()->first()], 422);
+            
+            if($request->status=='deferred'){
+                $request->validate([      
+                   'deferred_reason' => 'required|string|max:255',
+                ]);
             }
-
-            $advance_cheque=AdvanceCheque::with(['linkable'])->findOrFail($id);
+        
+            $advance_cheque=AdvanceCheque::with(['linkable'])->findOrFail($request->id);
             DB::beginTransaction();
 
             // only deferred || paid
@@ -72,16 +76,21 @@ class AdvanceChequeController extends Controller
             }
             $bank_id=$company_bank->id;
 
+            $advance_cheque->update(['status' =>$request->status,'status_updated_at'=>$request->date]);
+            if($request->status=='paid'){
+                $type='Paid';
+            }else{
+                $type='Deferred';
+                $advance_cheque->update(['deferred_reason' =>$request->deferred_reason]);
+            }
 
-            $advance_cheque->update(['status' =>$status,'status_updated_at'=>$date]);
-            $type=$status=='paid'?'Paid':'Deferred';
             $message='Cheque '.$type.' Successfully.';
 
             if($advance_cheque->linkable_type=='App\Models\ServiceInvoice'){
                 $ServInvModel = $advance_cheque->linkable;
                 $ServInvModel->update(['is_taken_cheque'=>0]);
 
-                if($status=='paid'){
+                if($request->status=='paid'){
                     $paid_amt=$advance_cheque->cheque_amount;
                     $ServInvModel->paid_amt=$ServInvModel->paid_amt+$paid_amt;
 
@@ -97,7 +106,7 @@ class AdvanceChequeController extends Controller
                         $ServInvModel->status='paid';
                         $setl_amt=round($ServInvModel->total_amt-$ServInvModel->paid_amt,2);
                         $ServInvModel->settlement_amt=$setl_amt;
-                        $ServInvModel->settlement_at=$date;
+                        $ServInvModel->settlement_at=$request->date;
                         $is_setl=true;
                     }
                     $ServInvModel->update();
@@ -107,7 +116,7 @@ class AdvanceChequeController extends Controller
                         'user_id' => $ServInvModel->user_id,
                         'paid_amt' => $paid_amt,
                         'settlement_amt' => $setl_amt,
-                        'description' => '$request->description',
+                        'description' => '',
                         'remaining_amt' => $ServInvModel->total_amt-$ServInvModel->paid_amt,
                     ]);
 
@@ -209,6 +218,9 @@ class AdvanceChequeController extends Controller
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
             return response()->json(['status'=>'error', 'message' => 'Cheque Not Found.'],404);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return response()->json(['status'=>'error','message' => $e->validator->errors()->first()], 422);
         } catch (Exception $e) {
             DB::rollBack();
             return response()->json(['status'=>'error','message' => 'Failed to Update Cheque Status. ' . $e->getMessage(),],500);

@@ -193,7 +193,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     //advance cheques
     Route::get('adv_cheques/{status}/{id?}',[AdvanceChequeController::class,'index'])->name('adv_cheques');
-    Route::get('adv_cheques/status/change/{id}/{status}/{date}', [AdvanceChequeController::class, 'changeStatus'])->where('status', 'paid|deferred');
+    // Route::get('adv_cheques/status/change/{id}/{status}/{date}', [AdvanceChequeController::class, 'changeStatus'])->where('status', 'paid|deferred');
+    Route::post('adv_cheques/status/change',[AdvanceChequeController::class,'changeStatus'])->name('adv_cheques.status.change');
 
     Route::get('outstandings',[ServiceInvoiceController::class,'outstandings'])->name('outstandings');
 

@@ -12,7 +12,7 @@ class AdvanceCheque extends Model
     public $table="advance_cheques";
 
     protected $fillable = [
-        'user_id','bank_id','description','cheque_amount','cheque_no','cheque_date','status','status_updated_at','linkable_id','linkable_type','settlement_amt'
+        'user_id','bank_id','description','cheque_amount','cheque_no','cheque_date','status','status_updated_at','linkable_id','linkable_type','settlement_amt','deferred_reason'
     ];
 
     public function bank()

@@ -28,6 +28,7 @@ return new class extends Migration
             
             $table->enum('status',['pending','paid','deferred'])->default('pending');
             $table->timestamp('status_updated_at')->nullable();
+            $table->string('deferred_reason')->nullable();
             $table->timestamps();
         });
     }
