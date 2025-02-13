@@ -128,6 +128,8 @@ class EmployeeController extends Controller
                 'commission_per' => 'required|numeric|min:0|max:100',
                 'country' => 'nullable|string|max:100',
                 'branch_id' => 'required|exists:branches,id', 
+                'joining_date' => 'required|string|date_format:Y-m-d|before_or_equal:today',
+                'remaining_off_days' => 'required|integer|min:0',
             ]);
 
             $requestData = $request->all(); 

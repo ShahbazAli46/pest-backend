@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\{AdminController, AdvanceChequeController, BankController, BranchController, BrandController,ClientController, CustomerController, DashboardController, DeviceController, EmployeeController, ExpenseCategoryController, ExpenseController, JobController, JobServiceReportController, ProductController, DeliveryNoteController, QuoteController, ReceivedCashRecordController, SalaryController, SaleOrderController, ServiceController, ServiceInvoiceController, SupplierController, TermsAndConditionController, TreatmentMethodController, UserAuthController, VehicleController, VehicleExpenseController, VendorController};
+use App\Http\Controllers\{AdminController, BankController, BranchController, BrandController,ClientController, CustomerController, DashboardController, DeviceController, EmployeeController, ExpenseCategoryController, ExpenseController, JobController, JobServiceReportController, ProductController, DeliveryNoteController, QuoteController, ReceivedCashRecordController, SalaryController, SaleOrderController, ServiceController, ServiceInvoiceController, SupplierController, TermsAndConditionController, TreatmentMethodController, UserAuthController, VehicleController, VehicleExpenseController, VendorController};
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -180,6 +180,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('job/start/{id}',[JobController::class,'startJob'])->name('job.start');
     Route::get('job/move/complete/{id}',[JobController::class,'moveToComplete'])->name('job.move.complete');
 
+    // Leave Applications
+    Route::get('leave-application/{id?}', [LeaveApplicationController::class, 'index'])->name('leave-application');
+    Route::post('leave-application/create', [LeaveApplicationController::class, 'store'])->name('leave-application.create');
+    Route::post('leave-application/update/{id}', [LeaveApplicationController::class, 'update'])->name('leave-application.update');
+    Route::get('leave-application/show/{id}', [LeaveApplicationController::class, 'show'])->name('leave-application.show');
+    Route::post('leave-application/delete/{id}', [LeaveApplicationController::class, 'destroy'])->name('leave-application.delete');
+
+
     //service report
     Route::get('job/service_report/{id}',[JobServiceReportController::class,'index'])->name('job.service_report');
     Route::post('job/service_report/create',[JobServiceReportController::class,'store'])->name('job.service_report.create');
@@ -189,14 +197,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('service_invoices/{id?}',[ServiceInvoiceController::class,'index'])->name('service_invoices');
     Route::post('service_invoices/add_payment',[ServiceInvoiceController::class,'addPayment'])->name('service_invoices.add_payment');
     Route::get('service_invoices/assign_invoice/states/{ro_id?}',[ServiceInvoiceController::class,'getAssignedStates'])->name('service_invoices.assign_invoice.states');
-    Route::get('service_invoices/settlement/get',[ServiceInvoiceController::class,'getSettlementInvoices'])->name('service_invoices.settlement.get');
-
-    //advance cheques
-    Route::get('adv_cheques/{status}/{id?}',[AdvanceChequeController::class,'index'])->name('adv_cheques');
-    // Route::get('adv_cheques/status/change/{id}/{status}/{date}', [AdvanceChequeController::class, 'changeStatus'])->where('status', 'paid|deferred');
-    Route::post('adv_cheques/status/change',[AdvanceChequeController::class,'changeStatus'])->name('adv_cheques.status.change');
-
+    
     Route::get('outstandings',[ServiceInvoiceController::class,'outstandings'])->name('outstandings');
+
 
     //received cash records
     Route::get('received_cash_record/{id?}',[ReceivedCashRecordController::class,'index'])->name('received_cash_records');
