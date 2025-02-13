@@ -31,7 +31,7 @@ class ServiceInvoiceController extends Controller
                 $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay(); // Use endOfDay to include the entire day
                 
                 // it should apply due_date not issue_date so this is pending
-                $invoices = ServiceInvoice::withActiveOrPaidInvoices()->with(['user.client.referencable', 'invoiceable','address','assignedRecoveryOfficer'])->whereBetween('issued_date', [$startDate, $endDate]);
+                $invoices = ServiceInvoice::withActiveOrPaidInvoices()->with(['user.client.referencable', 'invoiceable','address','assignedRecoveryOfficer','advanceCheques'])->whereBetween('issued_date', [$startDate, $endDate]);
 
                 // Apply user_id filter if present
                 if ($request->has('user_id')) {
@@ -47,7 +47,7 @@ class ServiceInvoiceController extends Controller
                 });
                 return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $invoices]);
             }else{
-                $invoices=ServiceInvoice::withActiveOrPaidInvoices()->with(['user.client.referencable','invoiceable','address','assignedRecoveryOfficer','assignedHistories.employeeUser','job']);
+                $invoices=ServiceInvoice::withActiveOrPaidInvoices()->with(['user.client.referencable','invoiceable','address','assignedRecoveryOfficer','assignedHistories.employeeUser','job','advanceCheques']);
 
                 if ($request->has('start_promise_date') && $request->has('end_promise_date')) {
                     $startDate = \Carbon\Carbon::parse($request->input('start_promise_date'))->startOfDay();
@@ -68,7 +68,7 @@ class ServiceInvoiceController extends Controller
                 return response()->json(['data' => $invoices]);
             }
         }else{ 
-            $invoice=ServiceInvoice::with(['invoiceable','details.itemable','amountHistory','user.client','address','assignedHistories.employeeUser','assignedRecoveryOfficer','job'])->where('id',$id)->first();
+            $invoice=ServiceInvoice::with(['invoiceable','details.itemable','amountHistory','user.client','address','assignedHistories.employeeUser','assignedRecoveryOfficer','job','advanceCheques'])->where('id',$id)->first();
             $invoice->jobs = $invoice->getJobs(); 
             $invoice->title = $invoice->title; 
             return response()->json(['data' => $invoice]);
@@ -378,6 +378,7 @@ class ServiceInvoiceController extends Controller
             'invoiceable',
             'address',
             'assignedHistories.employeeUser',
+            'advanceCheques'
             // 'assignedRecoveryOfficer'
         ])
         ->whereHas('assignedHistories', function ($query) use ($request,$rec_officer_id) {
@@ -410,7 +411,7 @@ class ServiceInvoiceController extends Controller
             $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
             $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay(); // Use endOfDay to include the entire day
             
-            $invoices = ServiceInvoice::withActiveOrPaidInvoices()->with(['user.client.referencable', 'invoiceable','address'])->whereBetween('settlement_at', [$startDate, $endDate]);
+            $invoices = ServiceInvoice::withActiveOrPaidInvoices()->with(['user.client.referencable', 'invoiceable','address','advanceCheques'])->whereBetween('settlement_at', [$startDate, $endDate]);
 
             // Apply user_id filter if present
             if ($request->has('user_id')) {
@@ -426,7 +427,7 @@ class ServiceInvoiceController extends Controller
             });
             return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $invoices]);
         }else{
-            $invoices=ServiceInvoice::withActiveOrPaidInvoices()->with(['user.client.referencable','invoiceable','address'])->whereNotNull('settlement_at');
+            $invoices=ServiceInvoice::withActiveOrPaidInvoices()->with(['user.client.referencable','invoiceable','address','advanceCheques'])->whereNotNull('settlement_at');
 
             // Apply user_id filter if present
             if ($request->has('user_id')) {

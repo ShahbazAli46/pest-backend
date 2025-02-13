@@ -101,6 +101,12 @@ class ServiceInvoice extends Model
         );
     }
 
+    public function advanceCheques()
+    {
+        return $this->morphMany(AdvanceCheque::class, 'linkable');
+    }
+
+
     public function scopeWithActiveOrPaidInvoices($query)
     {
         return $query->where(function ($query) {
@@ -121,6 +127,4 @@ class ServiceInvoice extends Model
             });
         });
     }
-
-
 }

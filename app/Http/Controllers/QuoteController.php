@@ -449,7 +449,7 @@ class QuoteController extends Controller
     }
     
     public function getContractServiceInvoices($id){
-        $quote = Quote::with(['user.client.referencable', 'termAndCondition', 'quoteServices.service','quoteServices.quoteServiceDates','invoices'])->find($id);
+        $quote = Quote::with(['user.client.referencable', 'termAndCondition', 'quoteServices.service','quoteServices.quoteServiceDates','invoices.advanceCheques'])->find($id);
         if ($quote) {
             foreach ($quote->invoices as $invoice) {
                 $invoice->jobs = $invoice->getJobs();

@@ -226,5 +226,4 @@ class AdvanceChequeController extends Controller
             return response()->json(['status'=>'error','message' => 'Failed to Update Cheque Status. ' . $e->getMessage(),],500);
         } 
     }  
-
 }
