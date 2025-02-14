@@ -116,7 +116,7 @@ class AdvanceChequeController extends Controller
                         'user_id' => $ServInvModel->user_id,
                         'paid_amt' => $paid_amt,
                         'settlement_amt' => $setl_amt,
-                        'description' => '',
+                        'description' => 'Payment',
                         'remaining_amt' => $ServInvModel->total_amt-$ServInvModel->paid_amt,
                     ]);
 
@@ -171,7 +171,7 @@ class AdvanceChequeController extends Controller
                     $newCashBalance =  $oldCashBalance;
                     Ledger::create([
                         'bank_id' =>  $bank_id, 
-                        'description' => 'Received Payment',
+                        'description' => 'Cheque Amount Received',
                         'cr_amt' => $paid_amt,
                         'payment_type' => 'cheque',
                         'cash_amt' => 0.00,

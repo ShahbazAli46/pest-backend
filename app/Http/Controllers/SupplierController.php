@@ -101,15 +101,24 @@ class SupplierController extends Controller
 
             if ($request->input('payment_type') == 'cheque') {
                 $request->validate([
-                    'bank_id' => 'required|exists:banks,id',
+                    // 'bank_id' => 'required|exists:banks,id',
                     'cheque_no' => 'required|string|max:100',
                     'cheque_date' => 'required|date',
                 ]);                
             }else if($request->input('payment_type') == 'online'){
                 $request->validate([
-                    'bank_id' => 'required|exists:banks,id',
+                    // 'bank_id' => 'required|exists:banks,id',
                     'transection_id' => 'required|string|max:100',
                 ]);
+            }
+
+            if ($request->input('payment_type') == 'cheque' || $request->input('payment_type') == 'online') {
+                $company_bank=$this->getCompanyBank();
+                if(!$company_bank){
+                    DB::rollBack();
+                    return response()->json(['status' => 'error','message' => 'Company Bank Not Found.'],404);
+                }
+                $request->bank_id=$company_bank->id;
             }
             
             $requestData = $request->all(); 
@@ -123,16 +132,11 @@ class SupplierController extends Controller
             $requestData['total_amount'] = $amount + $vatAmount;
 
             // Call the function to check balances
-            $balanceCheck = $this->checkCompanyBalance(
-                $request->input('payment_type'),
-                $requestData['total_amount'],
-                $request->input('bank_id') 
-            );
+            $balanceCheck = $this->checkCompanyBalance($request->input('payment_type'),$requestData['total_amount'],$request->bank_id);
 
             if ($balanceCheck !== true) {
                 return $balanceCheck;
             }
-
         
             // Update the supplier ledger
             $lastSupLedger = Ledger::where(['person_type' => 'App\Models\Supplier', 'person_id' => $request->supplier_id])->latest()->first();
@@ -162,7 +166,7 @@ class SupplierController extends Controller
             }
             $newCashBalance = $request->input('payment_type') === 'cash' ? ($oldCashBalance - $requestData['total_amount']) : $oldCashBalance;
             Ledger::create([
-                'bank_id' => $request->input('payment_type') !== 'cash' ? $request->input('bank_id'):null, 
+                'bank_id' => $request->input('payment_type') !== 'cash' ? $request->bank_id:null, 
                 'description' => 'Add Payment',
                 'dr_amt' => $requestData['total_amount'],
                 'cr_amt' => 0.00,

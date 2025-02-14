@@ -573,15 +573,30 @@ class EmployeeController extends Controller
 
             if ($request->input('payment_type') == 'cheque') {
                 $request->validate([
-                    'bank_id' => 'required|exists:banks,id',
+                    // 'bank_id' => 'required|exists:banks,id',
                     'cheque_no' => 'required|string|max:100',
                     'cheque_date' => 'required|date',
                 ]);
             }else if($request->input('payment_type') == 'online'){
                 $request->validate([
-                    'bank_id' => 'required|exists:banks,id',
+                    // 'bank_id' => 'required|exists:banks,id',
                     'transection_id' => 'required|string|max:100',
                 ]);
+            }
+
+            if ($request->input('payment_type') == 'cheque' || $request->input('payment_type') == 'online') {
+                $company_bank=$this->getCompanyBank();
+                if(!$company_bank){
+                    DB::rollBack();
+                    return response()->json(['status' => 'error','message' => 'Company Bank Not Found.'],404);
+                }
+                $request->bank_id=$company_bank->id;  
+            }
+
+            // Call the function to check balances
+            $balanceCheck = $this->checkCompanyBalance($request->input('payment_type'),$request->adv_paid,$request->bank_id??null);
+            if ($balanceCheck !== true) {
+                return $balanceCheck;
             }
 
             $adv_paid=$request->input('adv_paid');
@@ -591,7 +606,6 @@ class EmployeeController extends Controller
             $vat_amount = ($adv_paid * $vatPer) / 100;
             $adv_paid_with_vat = $adv_paid + $vat_amount;
 
-    
             // Find the employee salary record
             $employee_salary = EmployeeSalary::find($request->employee_salary_id);
             if ($employee_salary) {
@@ -605,7 +619,7 @@ class EmployeeController extends Controller
                     $adv_payment->employee_salary_id = $employee_salary->id;
                     $adv_payment->advance_payment = $adv_paid; 
                     $adv_payment->month = $employee_salary->month; 
-                    $adv_payment->bank_id = $request->input('payment_type') !== 'cash' ? $request->input('bank_id'):null;
+                    $adv_payment->bank_id = $request->input('payment_type') !== 'cash' ? $request->bank_id:null;
 
 
                     $adv_payment->cash_amt = $request->input('payment_type') == 'cash' ? $adv_paid : 0.00;
@@ -638,7 +652,7 @@ class EmployeeController extends Controller
                     }
                     $newCashBalance = $request->input('payment_type') === 'cash' ? ($oldCashBalance - $adv_paid_with_vat) : $oldCashBalance;
                     Ledger::create([
-                        'bank_id' => $request->input('payment_type') !== 'cash' ? $request->input('bank_id'):null, 
+                        'bank_id' => $request->input('payment_type') !== 'cash' ? $request->bank_id:null, 
                         'description' => 'Advance Employee Payment',
                         'dr_amt' => $adv_paid_with_vat,
                         'cr_amt' => 0.00,
@@ -953,6 +967,7 @@ class EmployeeController extends Controller
         }
     }
 
+    // not use yet if will use then manage adv cheque and other logic
     public function advanceReceived(Request $request)
     {
         try{
@@ -977,11 +992,11 @@ class EmployeeController extends Controller
                 ]);
             }
             
-            // Call the function to check balances
-            $balanceCheck = $this->checkCompanyBalance($request->input('payment_type'),$request->adv_received,$request->input('bank_id'));
-            if ($balanceCheck !== true) {
-                return $balanceCheck;
-            }
+            // // Call the function to check balances
+            // $balanceCheck = $this->checkCompanyBalance($request->input('payment_type'),$request->adv_received,$request->input('bank_id'));
+            // if ($balanceCheck !== true) {
+            //     return $balanceCheck;
+            // }
 
             $employee = Employee::where('user_id', $request->user_id)->first();
             if (!$employee) {
@@ -1080,16 +1095,26 @@ class EmployeeController extends Controller
 
             if ($request->input('payment_type') == 'cheque') {
                 $request->validate([
-                    'bank_id' => 'required|exists:banks,id',
+                    // 'bank_id' => 'required|exists:banks,id',
                     'cheque_no' => 'required|string|max:100',
                     'cheque_date' => 'required|date',
                 ]);
             }else if($request->input('payment_type') == 'online'){
                 $request->validate([
-                    'bank_id' => 'required|exists:banks,id',
+                    // 'bank_id' => 'required|exists:banks,id',
                     'transection_id' => 'required|string|max:100',
                 ]);
             }
+
+            if ($request->input('payment_type') == 'cheque' || $request->input('payment_type') == 'online') {
+                $company_bank=$this->getCompanyBank();
+                if(!$company_bank){
+                    DB::rollBack();
+                    return response()->json(['status' => 'error','message' => 'Company Bank Not Found.'],404);
+                }
+                $request->bank_id=$company_bank->id;
+            }
+
 
             $fine_amt=$request->input('fine');
 
@@ -1120,11 +1145,7 @@ class EmployeeController extends Controller
                 }
 
                 // Call the function to check balances
-                $balanceCheck = $this->checkCompanyBalance(
-                    $request->input('payment_type'),
-                    $total_fine,
-                    $request->input('bank_id') 
-                );
+                $balanceCheck = $this->checkCompanyBalance($request->input('payment_type'),$total_fine,$request->bank_id);
 
                 if ($balanceCheck !== true) {
                     return $balanceCheck;
@@ -1135,7 +1156,7 @@ class EmployeeController extends Controller
                     'employee_user_id' => $vehicle->user_id,'vehicle_id' => $request->vehicle_id,'fine' => $fine_amt,'vat_per' => $vatPer,'vat_amount' => $vat_amount,
                     'total_fine' => $total_fine,'fine_date' => $request->fine_date,'employee_id' => $employee->id,'employee_salary_id' => $employee_salary->id,
                     'description' => $request->description,'entry_type' => 'cr', 'payment_type' =>  $request->input('payment_type'),
-                    'bank_id' => $request->input('payment_type') !== 'cash' ? $request->input('bank_id'):null,
+                    'bank_id' => $request->input('payment_type') !== 'cash' ? $request->bank_id:null,
                     'cash_amt' => $request->input('payment_type') == 'cash' ? $fine_amt : 0.00,
                     'cheque_amt' => $request->input('payment_type') == 'cheque' ? $fine_amt : 0.00, 
                     'online_amt' => $request->input('payment_type') == 'online' ? $fine_amt : 0.00, 
@@ -1163,7 +1184,7 @@ class EmployeeController extends Controller
                 }
                 $newCashBalance = $request->input('payment_type') === 'cash' ? ($oldCashBalance - $total_fine) : $oldCashBalance;
                 Ledger::create([
-                    'bank_id' => $request->input('payment_type') !== 'cash' ? $request->input('bank_id'):null, 
+                    'bank_id' => $request->input('payment_type') !== 'cash' ? $request->bank_id:null, 
                     'description' => 'Vehicle Employee Fine',
                     'dr_amt' => $total_fine,
                     'cr_amt' => 0.00,

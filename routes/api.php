@@ -51,7 +51,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('employee/salary/paid',[EmployeeController::class,'paidEmployeeSalary'])->name('employee.salary.paid');
     Route::post('employee/salary/advance',[EmployeeController::class,'paidAdvanceEmployee'])->name('employee.salary.advance');
     Route::post('employee/vehicle/fine',[EmployeeController::class,'vehicleEmployeeFine'])->name('employee.vehicle.fine');
-    Route::post('employee/adv_received',[EmployeeController::class,'advanceReceived'])->name('employee.adv_received');
+   
+    // not use yet if will use then manage adv cheque and other logic
+    // Route::post('employee/adv_received',[EmployeeController::class,'advanceReceived'])->name('employee.adv_received');
     
     Route::get('salary/detail/{month?}/{branch_id?}',[SalaryController::class,'getSalaryDetails'])->name('salary.detail');
 
