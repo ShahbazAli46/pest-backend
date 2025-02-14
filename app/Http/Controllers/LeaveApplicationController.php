@@ -13,7 +13,7 @@ class LeaveApplicationController extends Controller
      */
     public function index()
     {
-        $leaves = LeaveApplication::with(['employee', 'approver'])->orderBy('created_at', 'desc')->get();
+        $leaves = LeaveApplication::with(['employee.user', 'approver'])->orderBy('created_at', 'desc')->get();
         return response()->json($leaves);
     }
 

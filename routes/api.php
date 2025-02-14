@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\{AdminController, BankController, BranchController, BrandController,ClientController, CustomerController, DashboardController, DeviceController, EmployeeController, ExpenseCategoryController, ExpenseController, JobController, JobServiceReportController, ProductController, DeliveryNoteController, QuoteController, ReceivedCashRecordController, SalaryController, SaleOrderController, ServiceController, ServiceInvoiceController, SupplierController, TermsAndConditionController, TreatmentMethodController, UserAuthController, VehicleController, VehicleExpenseController, VendorController};
+use App\Http\Controllers\{AdminController, AdvanceChequeController, BankController, BranchController, BrandController,ClientController, CustomerController, DashboardController, DeviceController, EmployeeController, ExpenseCategoryController, ExpenseController, JobController, JobServiceReportController, ProductController, DeliveryNoteController, QuoteController, ReceivedCashRecordController, SalaryController, SaleOrderController, ServiceController, ServiceInvoiceController, SupplierController, TermsAndConditionController, TreatmentMethodController, UserAuthController, VehicleController, VehicleExpenseController, VendorController,LeaveApplicationController};
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -199,6 +199,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('service_invoices/{id?}',[ServiceInvoiceController::class,'index'])->name('service_invoices');
     Route::post('service_invoices/add_payment',[ServiceInvoiceController::class,'addPayment'])->name('service_invoices.add_payment');
     Route::get('service_invoices/assign_invoice/states/{ro_id?}',[ServiceInvoiceController::class,'getAssignedStates'])->name('service_invoices.assign_invoice.states');
+    Route::get('service_invoices/settlement/get',[ServiceInvoiceController::class,'getSettlementInvoices'])->name('service_invoices.settlement.get');
+
+    //advance cheques
+    Route::get('adv_cheques/{status}/{id?}',[AdvanceChequeController::class,'index'])->name('adv_cheques');
+    // Route::get('adv_cheques/status/change/{id}/{status}/{date}', [AdvanceChequeController::class, 'changeStatus'])->where('status', 'paid|deferred');
+    Route::post('adv_cheques/status/change',[AdvanceChequeController::class,'changeStatus'])->name('adv_cheques.status.change');
+    
     
     Route::get('outstandings',[ServiceInvoiceController::class,'outstandings'])->name('outstandings');
 
