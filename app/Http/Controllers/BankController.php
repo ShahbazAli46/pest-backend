@@ -136,4 +136,22 @@ class BankController extends Controller
             return response()->json(['status'=>'error','message' => 'Failed to Update Bank. ' . $e->getMessage(),500]);
         } 
     }
+
+    public function getPaidCheques(Request $request,$id=null){
+        if($id==null){
+            if($request->has('start_date') && $request->has('end_date')){
+                $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
+                $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
+                $ledgers = Ledger::with(['personable','bank'])->whereBetween('cheque_date', [$startDate, $endDate])->where(['person_type' => 'App\Models\User','person_id'=>1,'payment_type'=>'cheque','entry_type'=>'dr'])->get();
+                return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $ledgers]);
+            }else{
+                $ledgers = Ledger::with(['personable','bank'])->where(['person_type' => 'App\Models\User','person_id'=>1,'payment_type'=>'cheque','entry_type'=>'dr'])->get();
+                return response()->json(['data' => $ledgers]);
+            }
+        }else{
+            $ledger = Ledger::with(['personable','bank'])->where(['person_type' => 'App\Models\User','person_id'=>1,'payment_type'=>'cheque','entry_type'=>'dr','id'=>$id])->first();
+            return response()->json(['data' => $ledger]);
+        }
+
+    }
 }

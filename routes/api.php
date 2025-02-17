@@ -130,6 +130,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('bank/{id?}',[BankController::class,'index'])->name('bank');
     Route::post('bank/create',[BankController::class,'store'])->name('bank.create');
     Route::post('bank/update/{id}',[BankController::class,'update'])->name('bank.update');
+    Route::get('bank/cheques/paid/{id?}',[BankController::class,'getPaidCheques'])->name('bank.cheques.paid');
 
     // Expense Category
     Route::get('expense_category/{id?}',[ExpenseCategoryController::class,'index'])->name('expense_category');
@@ -208,7 +209,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
     
     
     Route::get('outstandings',[ServiceInvoiceController::class,'outstandings'])->name('outstandings');
-
 
     //received cash records
     Route::get('received_cash_record/{id?}',[ReceivedCashRecordController::class,'index'])->name('received_cash_records');

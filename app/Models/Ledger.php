@@ -46,4 +46,8 @@ class Ledger extends Model
         return null; 
     }
 
+    public function bank(){
+        return $this->belongsTo(Bank::class, 'bank_id');
+    }
+
 }
