@@ -17,7 +17,7 @@ return new class extends Migration
             $table->decimal('vat_amount', 15, 2)->default(0.00)->after('vat_per');
             $table->decimal('cheque_amt_without_vat', 15, 2)->default(0.00);
             $table->json('entry_row_data')->nullable();
-            $table->enum('entry_type',['vehicle_expense,expense,supplier_payment'])->nullable();
+            $table->enum('entry_type',['vehicle_expense','expense','supplier_payment'])->nullable();
         });
     }
 
