@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AdvanceCheque;
 use App\Models\Bank;
 use App\Models\Ledger;
 use App\Models\Vehicle;
@@ -80,6 +81,7 @@ class VehicleExpenseController extends Controller
             }
             
             $requestData = $request->all(); 
+            
             $vehicle=Vehicle::find($request->vehicle_id);
             // Calculate VAT amount
             $total_amt = ($request->input('fuel_amount')+$request->input('oil_amount')+$request->input('maintenance_amount'));
@@ -90,58 +92,85 @@ class VehicleExpenseController extends Controller
             $requestData['total_amt'] = $total_amt;
             $requestData['total_amount'] = $total_amt + $vatAmount;
 
-            // Call the function to check balances
-            $balanceCheck = $this->checkCompanyBalance($request->input('payment_type'),$requestData['total_amount'],$request->bank_id??null);
-            if ($balanceCheck !== true) {
-                return $balanceCheck;
+            if($request->input('payment_type') == 'online'){
+                // Call the function to check balances
+                $balanceCheck = $this->checkCompanyBalance($request->input('payment_type'),$requestData['total_amount'],$request->bank_id??null);
+                if ($balanceCheck !== true) {
+                    return $balanceCheck;
+                }
             }
             
-            $vehicle_expense=VehicleExpense::create($requestData);
+            if($request->input('payment_type') == 'cheque'){
+                AdvanceCheque::create([
+                    // 'user_id' => $invoice->user_id,
+                    'description' => $requestData['description'],
+                    'bank_id' => $request->bank_id??null,
+                    'cheque_no' => $request->input('cheque_no')??null,
+                    'cheque_date' => $request->input('cheque_date')??null,
+                    
+                    'linkable_id'=>$requestData['vehicle_id'],
+                    'linkable_type'=>Vehicle::class,
+                    'settlement_amt' => 0.00,
+                    'cheque_type' => 'pay',
+                    'vat_per' => $vatPer,
+                    'vat_amount' => $vatAmount,
+                    'cheque_amt_without_vat' => $total_amt,
+                    'cheque_amount' => $requestData['total_amount'],
+                    'entry_type' => 'vehicle_expense',
+                    'entry_row_data' => $requestData,
+                ]);
 
-            if($request->filled('oil_change_limit')){
-                Vehicle::where('id', $request->vehicle_id)->update(['oil_change_limit' => $request->oil_change_limit]);
+                DB::commit();
+                return response()->json(['status' => 'success','message' => 'Added Adv Cheque for Vehicle Expense Successfully']);
+            }else{
+                $vehicle_expense=VehicleExpense::create($requestData);
+    
+                if($request->filled('oil_change_limit')){
+                    Vehicle::where('id', $request->vehicle_id)->update(['oil_change_limit' => $request->oil_change_limit]);
+                }
+    
+                if($request->filled('meter_reading')){
+                    Vehicle::where('id', $request->vehicle_id)->update(['meter_reading' => $request->meter_reading]);
+                }
+                
+                // Update the company ledger
+                $lastLedger = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->latest()->first();
+                $oldBankBalance = $lastLedger ? $lastLedger->bank_balance : 0;
+                $oldCashBalance = $lastLedger ? $lastLedger->cash_balance : 0;
+                $newBankBalance = $oldBankBalance;
+                if($request->input('payment_type') !== 'cash'){
+                    $newBankBalance = $request->input('payment_type') !== 'cash' ? ($oldBankBalance - $requestData['total_amount']) : $oldBankBalance;
+                    $bank=Bank::find($request->bank_id);
+                    $bank->update(['balance'=>$bank->balance-$requestData['total_amount']]);
+                }
+                $newCashBalance = $request->input('payment_type') === 'cash' ? ($oldCashBalance - $requestData['total_amount']) : $oldCashBalance;
+                Ledger::create([
+                    'bank_id' => $request->input('payment_type') !== 'cash' ? $request->bank_id:null, 
+                    'description' => 'Vehicle Expense',
+                    'dr_amt' => $requestData['total_amount'],
+                    'cr_amt' => 0.00,
+                    'payment_type' => $request->input('payment_type'),
+                    'cash_amt' => $request->input('payment_type') == 'cash' ? $requestData['total_amount'] : 0.00,
+                    'cheque_amt' => $request->input('payment_type') == 'cheque' ? $requestData['total_amount'] : 0.00,
+                    'online_amt' => $request->input('payment_type') == 'online' ? $requestData['total_amount'] : 0.00,
+                    'bank_balance' => $newBankBalance,
+                    'cash_balance' => $newCashBalance,
+                    'entry_type' => 'dr',
+                    'person_id' => 1, // Admin or Company 
+                    'person_type' => 'App\Models\User', 
+                    'link_id' => $vehicle_expense->id, 
+                    'link_name' => 'vehicle_expense',
+                    'referenceable_id' =>  $vehicle->user_id,
+                    'referenceable_type' => 'App\Models\User',
+                    'cheque_no' => $request->input('payment_type') == 'cheque' ? $request->input('cheque_no') : null,
+                    'cheque_date' => $request->input('payment_type') == 'cheque' ? $request->input('cheque_date') : null,
+                    'transection_id' => in_array($request->input('payment_type'), ['online', 'pos']) ? $request->input('transection_id') : null,
+                ]);
+                
+                DB::commit();
+                return response()->json(['status' => 'success','message' => 'Vehicle Expense Added Successfully']);
             }
 
-            if($request->filled('meter_reading')){
-                Vehicle::where('id', $request->vehicle_id)->update(['meter_reading' => $request->meter_reading]);
-            }
-            
-            // Update the company ledger
-            $lastLedger = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->latest()->first();
-            $oldBankBalance = $lastLedger ? $lastLedger->bank_balance : 0;
-            $oldCashBalance = $lastLedger ? $lastLedger->cash_balance : 0;
-            $newBankBalance = $oldBankBalance;
-            if($request->input('payment_type') !== 'cash'){
-                $newBankBalance = $request->input('payment_type') !== 'cash' ? ($oldBankBalance - $requestData['total_amount']) : $oldBankBalance;
-                $bank=Bank::find($request->bank_id);
-                $bank->update(['balance'=>$bank->balance-$requestData['total_amount']]);
-            }
-            $newCashBalance = $request->input('payment_type') === 'cash' ? ($oldCashBalance - $requestData['total_amount']) : $oldCashBalance;
-            Ledger::create([
-                'bank_id' => $request->input('payment_type') !== 'cash' ? $request->bank_id:null, 
-                'description' => 'Vehicle Expense',
-                'dr_amt' => $requestData['total_amount'],
-                'cr_amt' => 0.00,
-                'payment_type' => $request->input('payment_type'),
-                'cash_amt' => $request->input('payment_type') == 'cash' ? $requestData['total_amount'] : 0.00,
-                'cheque_amt' => $request->input('payment_type') == 'cheque' ? $requestData['total_amount'] : 0.00,
-                'online_amt' => $request->input('payment_type') == 'online' ? $requestData['total_amount'] : 0.00,
-                'bank_balance' => $newBankBalance,
-                'cash_balance' => $newCashBalance,
-                'entry_type' => 'dr',
-                'person_id' => 1, // Admin or Company 
-                'person_type' => 'App\Models\User', 
-                'link_id' => $vehicle_expense->id, 
-                'link_name' => 'vehicle_expense',
-                'referenceable_id' =>  $vehicle->user_id,
-                'referenceable_type' => 'App\Models\User',
-                'cheque_no' => $request->input('payment_type') == 'cheque' ? $request->input('cheque_no') : null,
-                'cheque_date' => $request->input('payment_type') == 'cheque' ? $request->input('cheque_date') : null,
-                'transection_id' => in_array($request->input('payment_type'), ['online', 'pos']) ? $request->input('transection_id') : null,
-            ]);
-
-            DB::commit();
-            return response()->json(['status' => 'success','message' => 'Vehicle Expense Added Successfully']);
         } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
             return response()->json(['status'=> 'error','message' => $e->validator->errors()->first()], 422);

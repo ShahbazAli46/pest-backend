@@ -567,7 +567,7 @@ class EmployeeController extends Controller
                 'employee_salary_id' => 'required|exists:employee_salaries,id', 
                 'adv_paid' => 'required|numeric', 
                 'description' => 'nullable|max:255', 
-                'payment_type' => 'required|in:cash,cheque,online', 
+                'payment_type' => 'required|in:cash,online',//cheque process not used here 
                 'vat_per' => 'nullable|numeric|min:0|max:100',                
             ]);
 
@@ -591,12 +591,14 @@ class EmployeeController extends Controller
                     return response()->json(['status' => 'error','message' => 'Company Bank Not Found.'],404);
                 }
                 $request->bank_id=$company_bank->id;  
-            }
 
-            // Call the function to check balances
-            $balanceCheck = $this->checkCompanyBalance($request->input('payment_type'),$request->adv_paid,$request->bank_id??null);
-            if ($balanceCheck !== true) {
-                return $balanceCheck;
+                if($request->input('payment_type') == 'online'){
+                    // Call the function to check balances
+                    $balanceCheck = $this->checkCompanyBalance($request->input('payment_type'),$request->adv_paid,$request->bank_id??null);
+                    if ($balanceCheck !== true) {
+                        return $balanceCheck;
+                    }
+                }
             }
 
             $adv_paid=$request->input('adv_paid');
@@ -1089,7 +1091,7 @@ class EmployeeController extends Controller
                 'fine' => 'required|max:100',
                 'fine_date' => 'required|date',
                 'description' => 'nullable|max:255',
-                'payment_type' => 'required|in:cash,cheque,online', 
+                'payment_type' => 'required|in:cash,online', //cheque process not used here
                 'vat_per' => 'nullable|numeric|min:0|max:100',
             ]);
 

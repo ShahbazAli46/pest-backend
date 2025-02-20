@@ -20,11 +20,11 @@ class AdvanceChequeController extends Controller
 {
     use LedgerTrait;
 
-    public function index(Request $request,$status,$id=null)
+    public function index(Request $request,$type,$status,$id=null)
     {   
         if($id==null){
-            $adv_cheques=AdvanceCheque::with(['bank','user','linkable']);
-
+            $adv_cheques=AdvanceCheque::with(['bank','user','linkable'])->where('cheque_type',$type);
+ 
             if($status=='pending' || $status=='paid' || $status=='deferred'){
                 $adv_cheques->where('status',$status);
             }

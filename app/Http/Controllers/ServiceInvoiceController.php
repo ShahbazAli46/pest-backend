@@ -31,7 +31,10 @@ class ServiceInvoiceController extends Controller
                 $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay(); // Use endOfDay to include the entire day
                 
                 // it should apply due_date not issue_date so this is pending
-                $invoices = ServiceInvoice::withActiveOrPaidInvoices()->with(['user.client.referencable', 'invoiceable','address','assignedRecoveryOfficer','advanceCheques.bank'])->whereBetween('issued_date', [$startDate, $endDate]);
+                $invoices = ServiceInvoice::withActiveOrPaidInvoices()->with(['user.client.referencable', 'invoiceable','address','assignedRecoveryOfficer',
+                'advanceCheques' => function ($query) {
+                    $query->where('cheque_type', 'receive');
+                },'advanceCheques.bank'])->whereBetween('issued_date', [$startDate, $endDate]);
 
                 // Apply user_id filter if present
                 if ($request->has('user_id')) {
@@ -47,7 +50,10 @@ class ServiceInvoiceController extends Controller
                 });
                 return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $invoices]);
             }else{
-                $invoices=ServiceInvoice::withActiveOrPaidInvoices()->with(['user.client.referencable','invoiceable','address','assignedRecoveryOfficer','assignedHistories.employeeUser','job','advanceCheques.bank']);
+                $invoices=ServiceInvoice::withActiveOrPaidInvoices()->with(['user.client.referencable','invoiceable','address','assignedRecoveryOfficer','assignedHistories.employeeUser','job',
+                'advanceCheques' => function ($query) {
+                    $query->where('cheque_type', 'receive');
+                },'advanceCheques.bank']);
 
                 if ($request->has('start_promise_date') && $request->has('end_promise_date')) {
                     $startDate = \Carbon\Carbon::parse($request->input('start_promise_date'))->startOfDay();
@@ -68,7 +74,11 @@ class ServiceInvoiceController extends Controller
                 return response()->json(['data' => $invoices]);
             }
         }else{ 
-            $invoice=ServiceInvoice::with(['invoiceable','details.itemable','amountHistory','user.client','address','assignedHistories.employeeUser','assignedRecoveryOfficer','job','advanceCheques.bank'])->where('id',$id)->first();
+            $invoice=ServiceInvoice::with(['invoiceable','details.itemable','amountHistory','user.client','address','assignedHistories.employeeUser','assignedRecoveryOfficer','job',
+            'advanceCheques' => function ($query) {
+                $query->where('cheque_type', 'receive');
+            },'advanceCheques.bank'])->where('id',$id)->first();
+
             $invoice->jobs = $invoice->getJobs(); 
             $invoice->title = $invoice->title; 
             return response()->json(['data' => $invoice]);
@@ -139,6 +149,8 @@ class ServiceInvoiceController extends Controller
                             'linkable_id'=>$invoice->id,
                             'linkable_type'=>ServiceInvoice::class,
                             'settlement_amt' => $setl_amt,
+                            'cheque_type' => 'receive',
+                            'cheque_amt_without_vat' => $paid_amt,
                         ]);
                         $invoice->is_taken_cheque=1;
                         $invoice->save();
@@ -168,6 +180,8 @@ class ServiceInvoiceController extends Controller
                                 'linkable_id'=>$invoice->id,
                                 'linkable_type'=>ServiceInvoice::class,
                                 'settlement_amt' => $setl_amt,
+                                'cheque_type' => 'receive',
+                                'cheque_amt_without_vat' => $paid_amt,
                             ]);
                             $invoice->is_taken_cheque=1;
                             $invoice->save();
@@ -411,7 +425,10 @@ class ServiceInvoiceController extends Controller
             $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
             $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay(); // Use endOfDay to include the entire day
             
-            $invoices = ServiceInvoice::withActiveOrPaidInvoices()->with(['user.client.referencable', 'invoiceable','address','advanceCheques.bank'])->whereBetween('settlement_at', [$startDate, $endDate]);
+            $invoices = ServiceInvoice::withActiveOrPaidInvoices()->with(['user.client.referencable', 'invoiceable','address',
+            'advanceCheques' => function ($query) {
+                $query->where('cheque_type', 'receive');
+            },'advanceCheques.bank'])->whereBetween('settlement_at', [$startDate, $endDate]);
 
             // Apply user_id filter if present
             if ($request->has('user_id')) {
@@ -427,7 +444,10 @@ class ServiceInvoiceController extends Controller
             });
             return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $invoices]);
         }else{
-            $invoices=ServiceInvoice::withActiveOrPaidInvoices()->with(['user.client.referencable','invoiceable','address','advanceCheques.bank'])->whereNotNull('settlement_at');
+            $invoices=ServiceInvoice::withActiveOrPaidInvoices()->with(['user.client.referencable','invoiceable','address',
+            'advanceCheques' => function ($query) {
+                $query->where('cheque_type', 'receive');
+            },'advanceCheques.bank'])->whereNotNull('settlement_at');
 
             // Apply user_id filter if present
             if ($request->has('user_id')) {

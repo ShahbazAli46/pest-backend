@@ -203,7 +203,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('service_invoices/settlement/get',[ServiceInvoiceController::class,'getSettlementInvoices'])->name('service_invoices.settlement.get');
 
     //advance cheques
-    Route::get('adv_cheques/{status}/{id?}',[AdvanceChequeController::class,'index'])->name('adv_cheques');
+    Route::get('adv_cheques/{type}/{status}/{id?}',[AdvanceChequeController::class,'index'])->name('adv_cheques')->where('type', 'receive|pay');
     // Route::get('adv_cheques/status/change/{id}/{status}/{date}', [AdvanceChequeController::class, 'changeStatus'])->where('status', 'paid|deferred');
     Route::post('adv_cheques/status/change',[AdvanceChequeController::class,'changeStatus'])->name('adv_cheques.status.change');
     

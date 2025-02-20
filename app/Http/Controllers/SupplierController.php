@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AdvanceCheque;
 use App\Models\Bank;
 use App\Models\BankInfo;
 use App\Models\Ledger;
@@ -130,66 +131,91 @@ class SupplierController extends Controller
             
             // Calculate total_amount
             $requestData['total_amount'] = $amount + $vatAmount;
-
-            // Call the function to check balances
-            $balanceCheck = $this->checkCompanyBalance($request->input('payment_type'),$requestData['total_amount'],$request->bank_id);
-
-            if ($balanceCheck !== true) {
-                return $balanceCheck;
+            if($request->input('payment_type') == 'online'){
+                // Call the function to check balances
+                $balanceCheck = $this->checkCompanyBalance($request->input('payment_type'),$requestData['total_amount'],$request->bank_id);
+                if ($balanceCheck !== true) {
+                    return $balanceCheck;
+                }
             }
         
-            // Update the supplier ledger
-            $lastSupLedger = Ledger::where(['person_type' => 'App\Models\Supplier', 'person_id' => $request->supplier_id])->latest()->first();
-            $oldSupCashBalance = $lastSupLedger ? $lastSupLedger->cash_balance : 0;
-            $newSupCashBalance = $oldSupCashBalance - $requestData['total_amount'];
-            $supplier=Supplier::find($request->supplier_id);
-            $sup_ledger=Ledger::create([
-                'bank_id' => null,  // Assuming null if no specific bank is involved
-                'description' => $request->description,
-                'cr_amt' => $requestData['total_amount'],
-                'payment_type' => $request->input('payment_type'),
-                'entry_type' => 'cr',  
-                'cash_balance' => $newSupCashBalance,
-                'person_id' => $request->supplier_id,
-                'person_type' => 'App\Models\Supplier',
-            ]);
 
-            // Update the company ledger
-            $lastLedger = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->latest()->first();
-            $oldBankBalance = $lastLedger ? $lastLedger->bank_balance : 0;
-            $oldCashBalance = $lastLedger ? $lastLedger->cash_balance : 0;
-            $newBankBalance=$oldBankBalance;
-            if($request->input('payment_type') !== 'cash'){
-                $newBankBalance = $request->input('payment_type') !== 'cash' ? ($oldBankBalance - $requestData['total_amount']) : $oldBankBalance;
-                $bank=Bank::find($request->bank_id);
-                $bank->update(['balance'=>$bank->balance-$requestData['total_amount']]);
+            if($request->input('payment_type') == 'cheque'){
+                AdvanceCheque::create([
+                    // 'user_id' => $invoice->user_id,
+                    'description' => $requestData['description']??null,
+                    'bank_id' => $request->bank_id??null,
+                    'cheque_no' => $request->input('cheque_no')??null,
+                    'cheque_date' => $request->input('cheque_date')??null,
+                    
+                    'linkable_id'=>$request->supplier_id,
+                    'linkable_type'=>Supplier::class,
+                    'settlement_amt' => 0.00,
+                    'cheque_type' => 'pay',
+                    'vat_per' => $vatPer,
+                    'vat_amount' => $vatAmount,
+                    'cheque_amt_without_vat' => $amount,
+                    'cheque_amount' => $requestData['total_amount'],
+                    'entry_type' => 'supplier_payment',
+                    'entry_row_data' => $requestData,
+                ]);
+
+                DB::commit();
+                return response()->json(['status' => 'success','message' => 'Added Adv Cheque for Supplier Payment Successfully']);
+            }else{
+                // Update the supplier ledger
+                $lastSupLedger = Ledger::where(['person_type' => 'App\Models\Supplier', 'person_id' => $request->supplier_id])->latest()->first();
+                $oldSupCashBalance = $lastSupLedger ? $lastSupLedger->cash_balance : 0;
+                $newSupCashBalance = $oldSupCashBalance - $requestData['total_amount'];
+                $supplier=Supplier::find($request->supplier_id);
+                $sup_ledger=Ledger::create([
+                    'bank_id' => null,  // Assuming null if no specific bank is involved
+                    'description' => $request->description,
+                    'cr_amt' => $requestData['total_amount'],
+                    'payment_type' => $request->input('payment_type'),
+                    'entry_type' => 'cr',  
+                    'cash_balance' => $newSupCashBalance,
+                    'person_id' => $request->supplier_id,
+                    'person_type' => 'App\Models\Supplier',
+                ]);
+    
+                // Update the company ledger
+                $lastLedger = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->latest()->first();
+                $oldBankBalance = $lastLedger ? $lastLedger->bank_balance : 0;
+                $oldCashBalance = $lastLedger ? $lastLedger->cash_balance : 0;
+                $newBankBalance=$oldBankBalance;
+                if($request->input('payment_type') !== 'cash'){
+                    $newBankBalance = $request->input('payment_type') !== 'cash' ? ($oldBankBalance - $requestData['total_amount']) : $oldBankBalance;
+                    $bank=Bank::find($request->bank_id);
+                    $bank->update(['balance'=>$bank->balance-$requestData['total_amount']]);
+                }
+                $newCashBalance = $request->input('payment_type') === 'cash' ? ($oldCashBalance - $requestData['total_amount']) : $oldCashBalance;
+                Ledger::create([
+                    'bank_id' => $request->input('payment_type') !== 'cash' ? $request->bank_id:null, 
+                    'description' => 'Add Payment',
+                    'dr_amt' => $requestData['total_amount'],
+                    'cr_amt' => 0.00,
+                    'payment_type' => $request->input('payment_type'),
+                    'cash_amt' => $request->input('payment_type') == 'cash' ? $requestData['total_amount'] : 0.00,
+                    'cheque_amt' => $request->input('payment_type') == 'cheque' ? $requestData['total_amount'] : 0.00,
+                    'online_amt' => $request->input('payment_type') == 'online' ? $requestData['total_amount'] : 0.00,
+                    'bank_balance' => $newBankBalance,
+                    'cash_balance' => $newCashBalance,
+                    'entry_type' => 'dr',
+                    'person_id' => 1, // Admin or Company 
+                    'person_type' => 'App\Models\User', 
+                    'link_id' => $sup_ledger->id, 
+                    'link_name' => 'supplier_ledger',
+                    'referenceable_id' =>  $supplier->id,
+                    'referenceable_type' => 'App\Models\Supplier',
+                    'cheque_no' => $request->input('payment_type') == 'cheque' ? $request->input('cheque_no') : null,
+                    'cheque_date' => $request->input('payment_type') == 'cheque' ? $request->input('cheque_date') : null,
+                    'transection_id' => in_array($request->input('payment_type'), ['online', 'pos']) ? $request->input('transection_id') : null,
+                ]);
+    
+                DB::commit();
+                return response()->json(['status' => 'success','message' => 'Supplier Payment Added Successfully']);
             }
-            $newCashBalance = $request->input('payment_type') === 'cash' ? ($oldCashBalance - $requestData['total_amount']) : $oldCashBalance;
-            Ledger::create([
-                'bank_id' => $request->input('payment_type') !== 'cash' ? $request->bank_id:null, 
-                'description' => 'Add Payment',
-                'dr_amt' => $requestData['total_amount'],
-                'cr_amt' => 0.00,
-                'payment_type' => $request->input('payment_type'),
-                'cash_amt' => $request->input('payment_type') == 'cash' ? $requestData['total_amount'] : 0.00,
-                'cheque_amt' => $request->input('payment_type') == 'cheque' ? $requestData['total_amount'] : 0.00,
-                'online_amt' => $request->input('payment_type') == 'online' ? $requestData['total_amount'] : 0.00,
-                'bank_balance' => $newBankBalance,
-                'cash_balance' => $newCashBalance,
-                'entry_type' => 'dr',
-                'person_id' => 1, // Admin or Company 
-                'person_type' => 'App\Models\User', 
-                'link_id' => $sup_ledger->id, 
-                'link_name' => 'supplier_ledger',
-                'referenceable_id' =>  $supplier->id,
-                'referenceable_type' => 'App\Models\Supplier',
-                'cheque_no' => $request->input('payment_type') == 'cheque' ? $request->input('cheque_no') : null,
-                'cheque_date' => $request->input('payment_type') == 'cheque' ? $request->input('cheque_date') : null,
-                'transection_id' => in_array($request->input('payment_type'), ['online', 'pos']) ? $request->input('transection_id') : null,
-            ]);
-
-            DB::commit();
-            return response()->json(['status' => 'success','message' => 'Supplier Payment Added Successfully']);
         } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
             return response()->json(['status'=> 'error','message' => $e->validator->errors()->first()], 422);
