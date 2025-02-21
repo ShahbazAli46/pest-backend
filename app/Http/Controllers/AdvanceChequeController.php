@@ -9,6 +9,8 @@ use App\Models\Expense;
 use App\Models\Ledger;
 use App\Models\ServiceInvoiceAmtHistory;
 use App\Models\User;
+use App\Models\Vehicle;
+use App\Models\VehicleExpense;
 use App\Traits\LedgerTrait;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -260,6 +262,51 @@ class AdvanceChequeController extends Controller
                     ]);
 
                     $advance_cheque->update(['linkable_id' =>$expense->id,'linkable_type'=>Expense::class]);
+                }else if($advance_cheque->entry_type=='vehicle_expense'){
+                    $vehicle_expense=VehicleExpense::create($requestData);
+                    $vehicle=Vehicle::find($requestData['vehicle_id']);
+    
+                    if (isset($requestData['oil_change_limit']) && !empty($requestData['oil_change_limit'])) {
+                        Vehicle::where('id', $requestData['vehicle_id'])->update(['oil_change_limit' => $requestData['oil_change_limit']]);
+                    }
+        
+                    if (isset($requestData['meter_reading']) && !empty($requestData['meter_reading'])) {
+                        Vehicle::where('id', $requestData['vehicle_id'])->update(['meter_reading' => $requestData['meter_reading']]);
+                    }
+                    
+                    // Update the company ledger
+                    $lastLedger = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => 1])->latest()->first();
+                    $oldBankBalance = $lastLedger ? $lastLedger->bank_balance : 0;
+                    $oldCashBalance = $lastLedger ? $lastLedger->cash_balance : 0;
+                    
+                    $newBankBalance = $oldBankBalance - $requestData['total_amount'];
+                    $company_bank->update(['balance'=>$company_bank->balance-$requestData['total_amount']]);
+                    
+                    $newCashBalance = $oldCashBalance;
+                    Ledger::create([
+                        'bank_id' => $bank_id, 
+                        'description' => 'Vehicle Expense',
+                        'dr_amt' => $requestData['total_amount'],
+                        'cr_amt' => 0.00,
+                        'payment_type' => 'cheque',
+                        'cash_amt' => 0.00,
+                        'cheque_amt' => $requestData['total_amount'],
+                        'online_amt' => 0.00,
+                        'bank_balance' => $newBankBalance,
+                        'cash_balance' => $newCashBalance,
+                        'entry_type' => 'dr',
+                        'person_id' => 1, // Admin or Company 
+                        'person_type' => 'App\Models\User', 
+                        'link_id' => $vehicle_expense->id, 
+                        'link_name' => 'vehicle_expense',
+                        'referenceable_id' =>  $vehicle->user_id,
+                        'referenceable_type' => 'App\Models\User',
+                        'cheque_no' => $requestData['cheque_no'],
+                        'cheque_date' => $requestData['cheque_date'],
+                        'transection_id' =>  null,
+                    ]);
+
+                    $advance_cheque->update(['linkable_id' =>$vehicle_expense->id,'linkable_type'=>VehicleExpense::class]);
                 }
             }
             
