@@ -20,6 +20,7 @@ return new class extends Migration
             $table->date('expiry_date')->nullable(); // Expiry date
             $table->boolean('notified')->default(false); // Whether notification has been sent
             $table->text('remarks')->nullable(); // Type of item (e.g., "license", "agreement")
+            $table->string('file_path')->nullable();
             $table->timestamps();
         });
     }

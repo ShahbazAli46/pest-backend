@@ -18,6 +18,7 @@ class RenewableItemModel extends Model
         'expiry_date',
         'notified',
         'remarks',
+        'file_path',
     ];
 
 }

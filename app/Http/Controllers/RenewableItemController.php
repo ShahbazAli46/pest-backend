@@ -64,6 +64,10 @@ class RenewableItemController extends Controller
         if ($validator->fails())
             $this->responsee(false, $validator->errors()->all());
         else{
+            if ($request->hasFile('file')) {
+                $filePath = $request->file('file')->store('renewable_items', 'public');
+                $request->merge(['file_path' => $filePath]);
+            }
             $this->data = RenewableItemModel::create($request->all());
             if($this->data){
                     $this->s_msg = 'Client has been added successfully';
@@ -105,6 +109,10 @@ class RenewableItemController extends Controller
         else{
             $this->data = RenewableItemModel::find($id);
             if($this->data){
+                if ($request->hasFile('file')) {
+                    $filePath = $request->file('file')->store('renewable_items', 'public');
+                    $request->merge(['file_path' => $filePath]);
+                }
                 if($this->data->update($request->all())){
                     $this->s_msg = 'Client has been updated successfully';
                     $this->responsee(true);
