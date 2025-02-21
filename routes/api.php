@@ -227,9 +227,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::prefix('renewable-items')->group(function () {
         Route::get('/', [RenewableItemController::class, 'index'])->name('renewable-items.index');
         Route::post('/create', [RenewableItemController::class, 'store'])->name('renewable-items.store');
-        Route::get('/{id}/show', [RenewableItemController::class, 'show'])->name('renewable-items.show');
+        Route::get('/{id}/show', [RenewableItemController::class, 'edit'])->name('renewable-items.show');
         Route::put('/{id}/update', [RenewableItemController::class, 'update'])->name('renewable-items.update');
-        Route::delete('/{id}/delete', [RenewableItemController::class, 'destroy'])->name('renewable-items.destroy');
+        Route::delete('/{id}/delete', [RenewableItemController::class, 'delete'])->name('renewable-items.destroy');
     });
 
     Route::post('logout',[UserAuthController::class,'logout'])->name('logout');
