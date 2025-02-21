@@ -9,7 +9,7 @@ class Device extends Model
 {
     use HasFactory;
     public $table="devices";
-    protected $fillable = ['name','model','code_no','desc','user_id','employee_id'];
+    protected $fillable = ['name','model','code_no','desc','user_id','employee_id', 'price'];
 
     public function user()
     {

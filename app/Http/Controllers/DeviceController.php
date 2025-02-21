@@ -33,6 +33,7 @@ class DeviceController extends Controller
                 'code_no'            => 'nullable|string|max:100',
                 'desc'               => 'nullable|string|max:255',
                 'user_id'            => 'nullable|exists:users,id', 
+                'price'              => 'nullable|numeric|min:0', 
             ]);
 
             $device=Device::create($validateData);
@@ -119,6 +120,7 @@ class DeviceController extends Controller
                 'model'              => 'nullable|string|max:100',
                 'code_no'            => 'nullable|string|max:100',
                 'desc'               => 'nullable|string|max:255',
+                'price'              => 'nullable|numeric|min:0', 
             ]);
          
             $device = Device::findOrFail($id);

@@ -18,3 +18,6 @@ yarn-error.log
 /.idea
 /.vscode
 /public/upload
+docker-compose.override.yml
+*.zip
+
