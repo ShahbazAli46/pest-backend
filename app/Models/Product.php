@@ -48,8 +48,12 @@ class Product extends Model
         return $value ? asset($value) : null;
     }
 
-    public function latestStock()
+    public function latestDeliveryStock()
     {
-        return $this->hasOne(Stock::class)->latest(); // Fetch only the latest stock
+        return $this->hasOne(Stock::class)
+        ->where('person_id', 1)
+        ->where('person_type', 'AppModelsUser')
+        ->where('link_name', 'delivery_note_detail')
+        ->latest(); // Fetch only the latest stock
     }
 }
