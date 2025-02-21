@@ -20,7 +20,7 @@ class ProductController extends Controller
             $products = Product::with(['attachments', 'stocks' => function ($query) {
                 $query->select('id', 'product_id', 'total_qty', 'remaining_qty','avg_price')->where('person_id', 1)
                     ->whereIn('id', function ($subQuery) {
-                        $subQuery->select(DB::raw('MAX(id)'))->from('stocks')->where('person_id', 1)->groupBy('product_id');
+                        $subQuery->select(DB::raw('MAX(id)'))->from('stocks')->where('person_id', 1)->where('link_name', 'delivery_note_detail')->groupBy('product_id');
                     });
             }])->orderBy('id', 'DESC')->get();
             return response()->json(['data' => $products]);
@@ -28,6 +28,7 @@ class ProductController extends Controller
             $product = Product::with(['attachments','stocks' => function ($query) use ($id) {
                 $query->select('id', 'product_id', 'total_qty', 'remaining_qty','avg_price')
                     ->where('product_id', $id)
+                    ->where('link_name', 'delivery_note_detail')
                     ->where('person_id', 1)->orderBy('id', 'DESC')->limit(1);
             }])->where('id', $id)->first();
             

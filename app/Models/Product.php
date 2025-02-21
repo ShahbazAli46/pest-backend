@@ -52,7 +52,7 @@ class Product extends Model
     {
         return $this->hasOne(Stock::class)
         ->where('person_id', 1)
-        ->where('person_type', 'AppModelsUser')
+        ->where('person_type', User::class)
         ->where('link_name', 'delivery_note_detail')
         ->latest(); // Fetch only the latest stock
     }
