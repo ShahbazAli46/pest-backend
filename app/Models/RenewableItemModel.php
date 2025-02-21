@@ -21,4 +21,9 @@ class RenewableItemModel extends Model
         'file_path',
     ];
 
+    public function getFilePathAttribute($value)
+    {
+        return $value ? asset($value) : null;
+    }
+
 }

@@ -39,20 +39,19 @@ class DeliveryNoteController extends Controller
         }
     }
 
-    //
     public function store(Request $request)
     {
         try {
             DB::beginTransaction();
     
-            // Convert the comma-separated strings into arrays
             $request->merge([
-                'product_id' => explode(',', $request->input('product_id')),
-                'quantity' => explode(',', $request->input('quantity')),
-                'price' => explode(',', $request->input('price')),
-                'vat_per' => $request->input('vat_per') ? explode(',', $request->input('vat_per')) : [], // Handle optional vat_per
+                'product_id' => $this->ensureArray($request->input('product_id')),
+                'quantity' => $this->ensureArray($request->input('quantity')),
+                'price' => $this->ensureArray($request->input('price')),
+                'vat_per' => $request->has('vat_per') ? $this->ensureArray($request->input('vat_per')) : [],
             ]);
-    
+
+
             // Now validate the input
             $validatedData = $request->validate([
                 'supplier_id' => 'required|exists:suppliers,id',
@@ -186,4 +185,10 @@ class DeliveryNoteController extends Controller
         }
     }
 
+    //
+    private function ensureArray($value) {
+        if (is_null($value)) return []; 
+        if (is_array($value)) return $value; 
+        return explode(',', (string) $value);
+    }
 }
