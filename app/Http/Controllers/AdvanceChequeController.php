@@ -93,8 +93,8 @@ class AdvanceChequeController extends Controller
                 $advance_cheque->update(['deferred_reason' =>$request->deferred_reason]);
             }
 
+            $message='Cheque '.$type.' Successfully.';
             if($advance_cheque->cheque_type=='receive'){
-                $message='Cheque '.$type.' Successfully.';
                 if($advance_cheque->linkable_type=='App\Models\ServiceInvoice'){
                     $ServInvModel = $advance_cheque->linkable;
                     $ServInvModel->update(['is_taken_cheque'=>0]);
@@ -312,7 +312,7 @@ class AdvanceChequeController extends Controller
                     $advance_cheque->update(['linkable_id' =>$vehicle_expense->id,'linkable_type'=>VehicleExpense::class]);
                 }else if($advance_cheque->entry_type=='supplier_payment'){
                     // Update the supplier ledger
-                    $lastSupLedger = Ledger::where(['person_type' => 'App\Models\Supplier', 'person_id' => $request->supplier_id])->latest()->first();
+                    $lastSupLedger = Ledger::where(['person_type' => 'App\Models\Supplier', 'person_id' => $requestData['supplier_id']])->latest()->first();
                     $oldSupCashBalance = $lastSupLedger ? $lastSupLedger->cash_balance : 0;
                     $newSupCashBalance = $oldSupCashBalance - $requestData['total_amount'];
                     $supplier=Supplier::find($requestData['supplier_id']);

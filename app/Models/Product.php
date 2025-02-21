@@ -47,4 +47,9 @@ class Product extends Model
     {
         return $value ? asset($value) : null;
     }
+
+    public function latestStock()
+    {
+        return $this->hasOne(Stock::class)->latest(); // Fetch only the latest stock
+    }
 }
