@@ -156,6 +156,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('admin/dashboard',[AdminController::class,'getAdminDashboard'])->name('admin.dashboard');
     Route::post('admin/cash_balance/add',[AdminController::class,'addCashBalanceAdd'])->name('admin.cash_balance.add');
 
+    Route::get('company/receives/get',[AdminController::class,'getCompanyReceives'])->name('company.receives.get');
+    Route::get('company/payments/get',[AdminController::class,'getCompanyPayments'])->name('company.payments.get');
+
+
     // Terms And Condition
     Route::get('terms_and_condition/{id?}',[TermsAndConditionController::class,'index'])->name('terms_and_condition');
     Route::post('terms_and_condition/create',[TermsAndConditionController::class,'store'])->name('terms_and_condition.create');
