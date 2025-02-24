@@ -25,10 +25,16 @@ class JobServiceReportController extends Controller
         if($id == 'all'){
             $job_service_report_query=JobServiceReport::with(['usedProducts.product.latestDeliveryStock', 
             'job' => function ($query) {
-                $query->select('id', 'captain_id');
+                $query->select('id', 'captain_id','user_id');
             },
             'job.captain' => function ($query) {
                 $query->select('id', 'name');
+            },
+            'job.user' => function ($query) {
+                $query->select('id','name');
+            },
+            'job.user.client' => function ($query) {
+                $query->select('id','firm_name','user_id');
             }])->orderBy('id', 'DESC');
 
             // Check if date filters are present
