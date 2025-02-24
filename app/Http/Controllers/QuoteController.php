@@ -33,6 +33,12 @@ class QuoteController extends Controller
             
             if($type=='contracted'){
                 $quotes->where('is_contracted', 1);
+                $quotes->with(['jobs' => function ($query) {
+                    $query->select('quote_id')
+                          ->selectRaw("CAST(COUNT(*) AS CHAR) as total_jobs")
+                          ->selectRaw('SUM(CASE WHEN is_completed = 1 THEN 1 ELSE 0 END) as completed_jobs')
+                          ->groupBy('quote_id');
+                }]);
             }
 
             // Check if date filters are present
