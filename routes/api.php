@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\{AdminController, AdvanceChequeController, BankController, BranchController, BrandController,ClientController, CustomerController, DashboardController, DeviceController, EmployeeController, ExpenseCategoryController, ExpenseController, JobController, JobServiceReportController, ProductController, DeliveryNoteController, QuoteController, ReceivedCashRecordController, SalaryController, SaleOrderController, ServiceController, ServiceInvoiceController, SupplierController, TermsAndConditionController, TreatmentMethodController, UserAuthController, VehicleController, VehicleExpenseController, VendorController,LeaveApplicationController, RenewableItemController};
+use App\Http\Controllers\{AdminController, StockReportController, AdvanceChequeController, BankController, BranchController, BrandController,ClientController, CustomerController, DashboardController, DeviceController, EmployeeController, ExpenseCategoryController, ExpenseController, JobController, JobServiceReportController, ProductController, DeliveryNoteController, QuoteController, ReceivedCashRecordController, SalaryController, SaleOrderController, ServiceController, ServiceInvoiceController, SupplierController, TermsAndConditionController, TreatmentMethodController, UserAuthController, VehicleController, VehicleExpenseController, VendorController,LeaveApplicationController, RenewableItemController};
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -31,6 +31,15 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('dashboard/expense_collection',[DashboardController::class,'getExpenseCollection'])->name('dashboard.expense_collection');
     Route::get('dashboard/bank_collection',[DashboardController::class,'getBankCollection'])->name('dashboard.bank_collection');
     Route::get('dashboard/monthly_financial_report/{month?}',[DashboardController::class,'getMonthlyFinancialReport'])->name('dashboard.monthly_financial_report');
+    
+    //Stock Report
+    Route::get('stock-report',[StockReportController::class,'index'])->name('stock-report.index');
+    // Route::get('dashboard/count_jobs',[DashboardController::class,'getCountJobs'])->name('dashboard.count_jobs');
+    // Route::get('dashboard/cash_collection',[DashboardController::class,'getCashCollection'])->name('dashboard.cash_collection');
+    // Route::get('dashboard/pos_collection',[DashboardController::class,'getPosCollection'])->name('dashboard.pos_collection');
+    // Route::get('dashboard/expense_collection',[DashboardController::class,'getExpenseCollection'])->name('dashboard.expense_collection');
+    // Route::get('dashboard/bank_collection',[DashboardController::class,'getBankCollection'])->name('dashboard.bank_collection');
+    // Route::get('dashboard/monthly_financial_report/{month?}',[DashboardController::class,'getMonthlyFinancialReport'])->name('dashboard.monthly_financial_report');
     
     // Employee
     Route::get('employee/{id?}',[EmployeeController::class,'index'])->name('employee');
