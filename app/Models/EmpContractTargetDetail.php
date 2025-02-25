@@ -9,7 +9,7 @@ class EmpContractTargetDetail extends Model
 {
     use HasFactory;
 
-    public $table="emp_contract_targets";
+    public $table="emp_contract_targets_details";
     protected $fillable = ['emp_contract_target_id','user_id','employee_id','month','contract_id','amount','type','detail'];
 
     /**
