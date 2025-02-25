@@ -38,7 +38,7 @@ class ClientController extends Controller
     public function getReference(Request $request)
     {
         // Get active employees with role filtering
-        $all_active_employees = User::notFired()->whereIn('role_id', ['2', '3', '4', '6'])->get()
+        $all_active_employees = User::notFired()->whereIn('role_id', ['2', '3', '4', '6' ,'7' ,'8' ,'9'])->get()
             ->map(function ($user) {
                 return [
                     'id' => $user->id,
