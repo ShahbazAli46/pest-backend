@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\EmpContractTarget;
 use App\Models\EmployeeCommission;
 use App\Models\EmployeeSalary;
 use App\Models\User;
@@ -24,12 +25,12 @@ class GenerateSalariesCommissions extends Command
      */
     protected $description = 'Generate salaries & Commissions for all employees at the start of the month';
 
-    /**
+    /** 
      * Execute the console command.
      */
     public function handle()
     {
-        $employee_not_fired=User::notFired()->with('employee')->whereIn('role_id',[2,3,4,6])->get();
+        $employee_not_fired=User::notFired()->with('employee')->whereIn('role_id',[2,3,4,6,7,8,9])->get();
         $currentMonth = now()->format('Y-m'); // Get current month (e.g., "2024-10")
 
         foreach ($employee_not_fired as $user) {
@@ -62,6 +63,29 @@ class GenerateSalariesCommissions extends Command
                     'status' => 'unpaid',
                 ]);
             }
+            
+            if($user->role_id==8 || $user->role_id==9){
+                // Create contract target entry for the current month
+                $existingTarget = EmpContractTarget::where('user_id', $user->id)->where('month', $currentMonth)->first();
+                if(!$existingTarget) {
+
+                    $lastMonth = now()->subMonth()->format('Y-m'); // Get last month in 'YYYY-MM' format
+                    $lastMonthTarget = EmpContractTarget::where('user_id', $user->id)->where('month', $lastMonth)->first();
+                    $remaining_target = $lastMonthTarget?$lastMonthTarget->remaining_target:0;
+
+                    EmpContractTarget::create([
+                        'user_id' =>$user->id,
+                        'employee_id' => $user->employee->id,
+                        'month' => $currentMonth,
+                        'base_target' => $user->employee->contract_target,
+                        'contract_target' => $user->employee->contract_target+$remaining_target,
+                        'achieved_target' => 0,
+                        'cancelled_contract_amt' => 0,
+                        'remaining_target' =>  $user->employee->contract_target+$remaining_target,
+                    ]);
+                }
+            }
+
         }
 
         $vendors=Vendor::all();

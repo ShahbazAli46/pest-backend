@@ -23,6 +23,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'Sales-Manager',        //4
             'Client',               //5
             'Accountant',           //6
+            'Recovery-Officer',     //7
+            'Sales-Officer',        //8
+            'Sales-Man',            //9
         ];
 
         // Loop through and create or update each role
@@ -158,7 +161,7 @@ class RolesAndPermissionsSeeder extends Seeder
             ['name' => 'Customer Add Pyament', 'icon'=>'', 'api_route' => 'customer.add_payment','frontend_url'=>'customer/add_payment', 'is_main'=>0, 'parent_api_route'=>'customer'],
             ['name' => 'Get Customer Leger', 'icon'=>'', 'api_route' => 'customer.ledger.get','frontend_url'=>'customer/ledger/get', 'is_main'=>0, 'parent_api_route'=>'customer'],
             
-            //Sales Ordre
+            //Sales Order
             ['name' => 'View Sale Order', 'icon'=>'', 'api_route' => 'sale_order','frontend_url'=>'sale_order', 'is_main'=>1],
             ['name' => 'Create Sale Order', 'icon'=>'', 'api_route' => 'sale_order.create','frontend_url'=>'sale_order/create', 'is_main'=>0, 'parent_api_route'=>'sale_order'],
         

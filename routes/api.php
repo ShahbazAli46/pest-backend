@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\{AdminController, StockReportController, AdvanceChequeController, BankController, BranchController, BrandController,ClientController, CustomerController, DashboardController, DeviceController, EmployeeController, ExpenseCategoryController, ExpenseController, JobController, JobServiceReportController, ProductController, DeliveryNoteController, QuoteController, ReceivedCashRecordController, SalaryController, SaleOrderController, ServiceController, ServiceInvoiceController, SupplierController, TermsAndConditionController, TreatmentMethodController, UserAuthController, VehicleController, VehicleExpenseController, VendorController,LeaveApplicationController, RenewableItemController};
+use App\Http\Controllers\{AdminController, StockReportController, AdvanceChequeController, BankController, BranchController, BrandController,ClientController, CustomerController, DashboardController, DeviceController, EmployeeController, ExpenseCategoryController, ExpenseController, JobController, JobServiceReportController, ProductController, DeliveryNoteController, QuoteController, ReceivedCashRecordController, SalaryController, SaleOrderController, ServiceController, ServiceInvoiceController, SupplierController, TermsAndConditionController, TreatmentMethodController, UserAuthController, VehicleController, VehicleExpenseController, VendorController,LeaveApplicationController, RenewableItemController, VisitController};
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -161,6 +161,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::get('company/receives/get',[AdminController::class,'getCompanyReceives'])->name('company.receives.get');
     Route::get('company/payments/get',[AdminController::class,'getCompanyPayments'])->name('company.payments.get');
+
+    //visits
+    Route::post('visit/create',[VisitController::class,'store'])->name('visit.create');
 
 
     // Terms And Condition

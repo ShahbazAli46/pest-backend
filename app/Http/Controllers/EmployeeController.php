@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bank;
+use App\Models\EmpContractTarget;
 use App\Models\Employee;
 use App\Models\EmployeeAdvancePayment;
 use App\Models\EmployeeCommission;
@@ -101,7 +102,7 @@ class EmployeeController extends Controller
     }
 
     public function getFiredEmployees(){
-        $employees=User::fired()->with(['employee','role:id,name'])->whereIn('role_id',[2,3,4,6,7])->orderBy('id', 'DESC')->get();
+        $employees=User::fired()->with(['employee','role:id,name'])->whereIn('role_id',[2,3,4,6,7,8,9])->orderBy('id', 'DESC')->get();
         return response()->json(['data' => $employees]);
     }
 
@@ -114,7 +115,7 @@ class EmployeeController extends Controller
                 'name' => 'required|string|max:255',
                 'email' => 'required|string|email|unique:users|max:255',
                 'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Max file size 2MB
-                'role_id' => 'required|exists:roles,id|in:2,3,4,6,7', // Assuming there's a roles table
+                'role_id' => 'required|exists:roles,id|in:2,3,4,6,7,8,9', // Assuming there's a roles table
                 'phone_number' => 'nullable|string|max:50',
                 'target' => 'nullable|numeric|min:0',
                 'profession' => 'nullable|string',
@@ -130,6 +131,7 @@ class EmployeeController extends Controller
                 'branch_id' => 'required|exists:branches,id', 
                 'joining_date' => 'required|string|date_format:Y-m-d|before_or_equal:today',
                 'remaining_off_days' => 'required|integer|min:0',
+                'contract_target' => 'nullable|numeric|min:0',
             ]);
 
             $requestData = $request->all(); 
@@ -162,7 +164,6 @@ class EmployeeController extends Controller
                     'status' => 'unpaid',
                 ]);
                 
-                
                 // Create commission entry for the current month
                 EmployeeCommission::create([
                     'referencable_id' => $user['data']->id,
@@ -172,6 +173,20 @@ class EmployeeController extends Controller
                     'month' => $currentMonth,
                     'status' => 'unpaid',
                 ]);
+
+                if($requestData['role_id']==8 || $requestData['role_id']==9){
+                    // Create contract target entry for the current month
+                    EmpContractTarget::create([
+                        'user_id' => $user['data']->id,
+                        'employee_id' => $employee->id,
+                        'month' => $currentMonth,
+                        'base_target' =>  $employee->contract_target,
+                        'contract_target' => $employee->contract_target,
+                        'achieved_target' => 0,
+                        'cancelled_contract_amt' => 0,
+                        'remaining_target' =>  $employee->contract_target,
+                    ]);
+                }
 
                 // $message="A employee has been added into system by ".$user['data']->name;
                 DB::commit();
@@ -344,7 +359,6 @@ class EmployeeController extends Controller
                 }
             }
 
-
             if ($emp_docs) {
                 $emp_docs->update($data);
                 $message = 'Employee document updated successfully.';
@@ -461,7 +475,7 @@ class EmployeeController extends Controller
 
     public function fireEmployee($user_id){
         try {
-            $employee_user=User::where('id',$user_id)->whereIn('role_id',[2,3,4,6,7])->first();
+            $employee_user=User::where('id',$user_id)->whereIn('role_id',[2,3,4,6,7,8,9])->first();
             if($employee_user){
                 if($employee_user->fired_at==null){
                     $employee_user->fired_at=now();
@@ -482,7 +496,7 @@ class EmployeeController extends Controller
 
     public function reActiveEmployee($user_id){
         try {
-            $employee_user=User::where('id',$user_id)->whereIn('role_id',[2,3,4,6,7])->first();
+            $employee_user=User::where('id',$user_id)->whereIn('role_id',[2,3,4,6,7,8,9])->first();
             if($employee_user){
                 if($employee_user->fired_at!=null){
                     $employee_user->fired_at=null;
