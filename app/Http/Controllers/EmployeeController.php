@@ -35,7 +35,7 @@ class EmployeeController extends Controller
     
     public function index(Request $request,$id=null){
         if($id==null){
-            $employees=User::notFired()->with(['employee.documents','role:id,name','branch'])->whereIn('role_id',[2,3,4,6,7,8,9])->orderBy('id', 'DESC')->get();
+            $employees=User::notFired()->with(['employee.documents','role:id,name','branch'])->whereIn('role_id',[2,3,4,6,7,8,9,10])->orderBy('id', 'DESC')->get();
             //sales manager only
             // foreach($employees as $key=>$employee){
             //     if($employee->role_id==4){
@@ -45,7 +45,7 @@ class EmployeeController extends Controller
             // }
             return response()->json(['data' => $employees]);
         }else{
-            $employee=User::with(['employee.documents','devices','assignedVehicles','branch'])->where('id',$id)->whereIn('role_id',[2,3,4,6,7,8,9])->first();
+            $employee=User::with(['employee.documents','devices','assignedVehicles','branch'])->where('id',$id)->whereIn('role_id',[2,3,4,6,7,8,9,10])->first();
             if ($employee && $employee->role_id == 4) {
                 $employee->load([
                     'captainJobs' => function($query) {
@@ -96,35 +96,13 @@ class EmployeeController extends Controller
                     }
                     $employee->assigned_invoices=$assignedInvoices;     
                 }
-            }else if($employee && $employee->role_id == 8 || $employee && $employee->role_id == 9){
-                $currentMonth = now()->format('Y-m'); // Get current month (e.g., "2024-10")
-                $employee->load([
-                    'empContractTargets' => function($query) use ($currentMonth) {
-                        $query->where('month', '=', $currentMonth)->with(['details']);
-                    }
-                ]);
-
-                if($request->has('start_date') && $request->has('end_date')){
-                    $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
-                    $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
-                    $employee->load([
-                        'visits' => function($query) use ($startDate,$endDate) {
-                            $query->whereBetween('visit_date', [$startDate, $endDate])->with(['userClient']);
-                        }
-                    ]);
-                    return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $employee]);
-                }else{
-                    $employee->load(['visits' => function ($query) {
-                        $query->with('userClient');
-                    }]);
-                }
             }
             return response()->json(['data' => $employee]);
         }
     }
 
     public function getFiredEmployees(){
-        $employees=User::fired()->with(['employee','role:id,name'])->whereIn('role_id',[2,3,4,6,7,8,9])->orderBy('id', 'DESC')->get();
+        $employees=User::fired()->with(['employee','role:id,name'])->whereIn('role_id',[2,3,4,6,7,8,9,10])->orderBy('id', 'DESC')->get();
         return response()->json(['data' => $employees]);
     }
 
@@ -137,7 +115,7 @@ class EmployeeController extends Controller
                 'name' => 'required|string|max:255',
                 'email' => 'required|string|email|unique:users|max:255',
                 'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Max file size 2MB
-                'role_id' => 'required|exists:roles,id|in:2,3,4,6,7,8,9', // Assuming there's a roles table
+                'role_id' => 'required|exists:roles,id|in:2,3,4,6,7,8,9,10', // Assuming there's a roles table
                 'phone_number' => 'nullable|string|max:50',
                 'target' => 'nullable|numeric|min:0',
                 'profession' => 'nullable|string',
@@ -497,7 +475,7 @@ class EmployeeController extends Controller
 
     public function fireEmployee($user_id){
         try {
-            $employee_user=User::where('id',$user_id)->whereIn('role_id',[2,3,4,6,7,8,9])->first();
+            $employee_user=User::where('id',$user_id)->whereIn('role_id',[2,3,4,6,7,8,9,10])->first();
             if($employee_user){
                 if($employee_user->fired_at==null){
                     $employee_user->fired_at=now();
@@ -518,7 +496,7 @@ class EmployeeController extends Controller
 
     public function reActiveEmployee($user_id){
         try {
-            $employee_user=User::where('id',$user_id)->whereIn('role_id',[2,3,4,6,7,8,9])->first();
+            $employee_user=User::where('id',$user_id)->whereIn('role_id',[2,3,4,6,7,8,9,10])->first();
             if($employee_user){
                 if($employee_user->fired_at!=null){
                     $employee_user->fired_at=null;
@@ -1453,6 +1431,23 @@ class EmployeeController extends Controller
         $recovery_officers=User::notFired()->with(['employee.documents','role:id,name'])->withCount('assignedInvoices')->where('role_id',7)->orderBy('id', 'DESC')->get();
         return response()->json(['data' => $recovery_officers]);
     }
+
+    public function getEmployeeContractTarget($user_id){
+        $employee=User::notFired()->with(['employee','role:id,name','branch'])->whereIn('role_id',[8,9])->where('id',$user_id)->first();
+
+        if($employee){
+            $currentMonth = now()->format('Y-m'); // Get current month (e.g., "2024-10")
+            $employee->load([
+                'empContractTargets' => function($query) use ($currentMonth) {
+                    $query->where('month', '=', $currentMonth)->with(['details']);
+                }
+            ]);
+            return response()->json(['data' => $employee]);
+        }else{
+            return response()->json(['status' => 'error','message' => 'Employee Not Found.'], 400);
+        }
+    }
+
 
     //get all sales managers and its number of assign job and complete jobs
     // if ($request->has('start_date') && $request->has('end_date')) {

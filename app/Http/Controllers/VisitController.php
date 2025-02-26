@@ -13,15 +13,30 @@ class VisitController extends Controller
     use GeneralTrait;
 
     //Get
-    // public function index($id=null){
-    //     if($id==null){
-    //         $visits=Visit::orderBy('id', 'DESC')->get();
-    //         return response()->json(['data' => $visits]);
-    //     }else{
-    //         $visit=Visit::find($id);
-    //         return response()->json(['data' => $visit]);
-    //     }
-    // }
+    public function index(Request $request,$user_id,$id=null){
+
+        if($id==null){
+            $visits=Visit::with('userClient')->orderBy('id', 'DESC')->where('user_id',$user_id);
+
+            // if ($request->has('user_client_id')) {
+            //     $inspection_report_query->where('user_client_id', $request->input('user_client_id'));
+            // }
+
+            if($request->has('start_date') && $request->has('end_date')){
+                $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
+                $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
+                $visits=$visits->whereBetween('visit_date', [$startDate, $endDate])->get();
+                return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $visits]);
+            }
+
+            $visits=$visits->get();
+
+            return response()->json(['data' => $visits]);
+        }else{
+            $visit=Visit::with('userClient')->where('user_id',$user_id)->where('id',$id)->first();
+            return response()->json(['data' => $visit]);
+        }
+    }
 
     //Store
     public function store(Request $request)

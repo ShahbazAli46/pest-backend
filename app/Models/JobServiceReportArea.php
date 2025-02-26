@@ -16,4 +16,5 @@ class JobServiceReportArea extends Model
         return $this->belongsTo(JobServiceReport::class, 'job_service_report_id');
     }
 
+    
 }

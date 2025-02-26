@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\{AdminController, StockReportController, AdvanceChequeController, BankController, BranchController, BrandController,ClientController, CustomerController, DashboardController, DeviceController, EmployeeController, ExpenseCategoryController, ExpenseController, JobController, JobServiceReportController, ProductController, DeliveryNoteController, QuoteController, ReceivedCashRecordController, SalaryController, SaleOrderController, ServiceController, ServiceInvoiceController, SupplierController, TermsAndConditionController, TreatmentMethodController, UserAuthController, VehicleController, VehicleExpenseController, VendorController,LeaveApplicationController, RenewableItemController, VisitController};
+use App\Http\Controllers\{AdminController, StockReportController, AdvanceChequeController, BankController, BranchController, BrandController,ClientController, CustomerController, DashboardController, DeviceController, EmployeeController, ExpenseCategoryController, ExpenseController, JobController, JobServiceReportController, ProductController, DeliveryNoteController, InspectionReportController, QuoteController, ReceivedCashRecordController, SalaryController, SaleOrderController, ServiceController, ServiceInvoiceController, SupplierController, TermsAndConditionController, TreatmentMethodController, UserAuthController, VehicleController, VehicleExpenseController, VendorController,LeaveApplicationController, RenewableItemController, VisitController};
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -47,7 +47,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('employee/fired_at/{id}',[EmployeeController::class,'fireEmployee'])->name('employee.fired_at');
     Route::get('employee/reactive/{id}',[EmployeeController::class,'reActiveEmployee'])->name('employee.reactive');
     Route::get('employee/fired/get',[EmployeeController::class,'getFiredEmployees'])->name('employee.fired.get');
-    
+    Route::get('employee/contract/target/get/{user_id}',[EmployeeController::class,'getEmployeeContractTarget'])->name('employee.contract.target.get');
 
     Route::get('employee/salary/get',[EmployeeController::class,'getEmployeeSalary'])->name('employee.salary.get');
     Route::get('employee/salary/set_salary_on_per/{id}/{per}',[EmployeeController::class,'setSalaryOnPer'])->name('employee.salary.set_salary_on_per');
@@ -163,8 +163,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('company/payments/get',[AdminController::class,'getCompanyPayments'])->name('company.payments.get');
 
     //visits
+    Route::get('visit/get/{user_id}/{id?}',[VisitController::class,'index'])->name('visit.get');
     Route::post('visit/create',[VisitController::class,'store'])->name('visit.create');
 
+    //Inspection Report
+    Route::get('inspection/report/get/{id?}',[InspectionReportController::class,'index'])->name('inspection.report.get');
+    Route::post('inspection/report/create',[InspectionReportController::class,'store'])->name('inspection.report.create');
+    
 
     // Terms And Condition
     Route::get('terms_and_condition/{id?}',[TermsAndConditionController::class,'index'])->name('terms_and_condition');
