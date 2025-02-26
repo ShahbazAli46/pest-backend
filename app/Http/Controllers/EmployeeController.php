@@ -109,12 +109,14 @@ class EmployeeController extends Controller
                     $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
                     $employee->load([
                         'visits' => function($query) use ($startDate,$endDate) {
-                            $query->whereBetween('visit_date', [$startDate, $endDate]);
+                            $query->whereBetween('visit_date', [$startDate, $endDate])->with(['userClient']);
                         }
                     ]);
                     return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $employee]);
                 }else{
-                    $employee->load(['visits']);
+                    $employee->load(['visits' => function ($query) {
+                        $query->with('userClient');
+                    }]);
                 }
             }
             return response()->json(['data' => $employee]);

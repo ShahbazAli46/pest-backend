@@ -15,16 +15,14 @@ class VisitController extends Controller
     //Get
     // public function index($id=null){
     //     if($id==null){
-    //         $branches=Branch::orderBy('id', 'DESC')->get();
-    //         return response()->json(['data' => $branches]);
+    //         $visits=Visit::orderBy('id', 'DESC')->get();
+    //         return response()->json(['data' => $visits]);
     //     }else{
-    //         $branch=Branch::find($id);
-    //         return response()->json(['data' => $branch]);
+    //         $visit=Visit::find($id);
+    //         return response()->json(['data' => $visit]);
     //     }
     // }
 
-    // protected $fillable = ['user_id','employee_id','client_id','description','status','current_contract_end_date','visit_date'];
-    
     //Store
     public function store(Request $request)
     {
@@ -36,14 +34,14 @@ class VisitController extends Controller
                 'status' => 'required|string|in:Interested,Not-Interested,Contracted,Quoted',
                 'current_contract_end_date' => 'nullable|date|required_if:status,Contracted',
                 'visit_date' => 'required|string',
-                'client_id' => 'required|exists:users,id', 
+                'user_client_id' => 'required|exists:users,id', 
                 'latitude' => 'required|string',
                 'longitude' => 'required|string',
                 'follow_up_date' => 'nullable|date',
                 'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:5120'
             ]);
 
-            $client_user=User::where('role_id',5)->where('id',$request->client_id)->first();
+            $client_user=User::where('role_id',5)->where('id',$request->user_client_id)->first();
             if(!$client_user){
                 DB::rollBack();
                 return response()->json(['status' => 'error','message' => 'The specified user does not have the Client.'], 400);

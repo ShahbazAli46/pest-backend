@@ -10,7 +10,7 @@ class Visit extends Model
     use HasFactory;
 
     public $table="visits";
-    protected $fillable = ['user_id','employee_id','client_id','description','status','current_contract_end_date','visit_date','latitude','longitude','follow_up_date','images'];
+    protected $fillable = ['user_id','employee_id','user_client_id','description','status','current_contract_end_date','visit_date','latitude','longitude','follow_up_date','images'];
     
     protected $casts = [
         'images' => 'array', 
@@ -24,9 +24,9 @@ class Visit extends Model
     /**
      * Get the client associated with the visit.
      */
-    public function client()
+    public function userClient()
     {
-        return $this->belongsTo(Client::class, 'client_id');
+        return $this->belongsTo(User::class, 'user_client_id');
     }
 
     public function getImagesAttribute($value)
