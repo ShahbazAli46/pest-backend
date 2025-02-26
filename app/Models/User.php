@@ -138,6 +138,16 @@ class User extends Authenticatable
     {
         return $this->hasMany(ServiceInvoice::class, 'assigned_user_id');
     }
+
+    public function empContractTargets()
+    {
+        return $this->hasMany(EmpContractTarget::class, 'user_id');
+    }
+    
+    public function visits()
+    {
+        return $this->hasMany(Visit::class, 'user_id');
+    }
     // Define a local query scope to filter active users
     // public function scopeActive($query)
     // {

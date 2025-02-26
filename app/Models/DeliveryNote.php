@@ -21,8 +21,6 @@ class DeliveryNote extends Model
         return $this->hasMany(DeliveryNoteDetail::class);
     }
 
-    
-
     //add custom sale book id according to id
     protected static function boot()
     {

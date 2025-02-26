@@ -27,7 +27,7 @@ class GenerateSalariesCommissions extends Command
 
     /** 
      * Execute the console command.
-     */
+     */ 
     public function handle()
     {
         $employee_not_fired=User::notFired()->with('employee')->whereIn('role_id',[2,3,4,6,7,8,9])->get();

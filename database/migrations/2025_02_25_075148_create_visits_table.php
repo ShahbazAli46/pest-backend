@@ -20,7 +20,7 @@ return new class extends Migration
             $table->unsignedBigInteger('client_id');
             $table->foreign('client_id')->references('id')->on('users')->onDelete('cascade');
             $table->text('description')->nullable();
-            $table->enum('status', ['Interested', 'Not-Interested', 'Contracted'])->default('Interested');
+            $table->enum('status', ['Interested', 'Not-Interested', 'Contracted' ,'Quoted'])->default('Interested');
             $table->date('current_contract_end_date')->nullable(); // Expiry date
             $table->timestamp('visit_date')->nullable(); 
             $table->string('latitude', 100)->nullable();

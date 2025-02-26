@@ -4,11 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Visit;
+use App\Traits\GeneralTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class VisitController extends Controller
 {
+    use GeneralTrait;
+
     //Get
     // public function index($id=null){
     //     if($id==null){
@@ -30,12 +33,14 @@ class VisitController extends Controller
             $validateData=$request->validate([    
                 'user_id' => 'required|exists:users,id', 
                 'description' => 'nullable|string',
-                'status' => 'required|string|in:Interested,Not-Interested,Contracted',
+                'status' => 'required|string|in:Interested,Not-Interested,Contracted,Quoted',
                 'current_contract_end_date' => 'nullable|date|required_if:status,Contracted',
                 'visit_date' => 'required|string',
                 'client_id' => 'required|exists:users,id', 
                 'latitude' => 'required|string',
                 'longitude' => 'required|string',
+                'follow_up_date' => 'nullable|date',
+                'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:5120'
             ]);
 
             $client_user=User::where('role_id',5)->where('id',$request->client_id)->first();
@@ -43,6 +48,14 @@ class VisitController extends Controller
                 DB::rollBack();
                 return response()->json(['status' => 'error','message' => 'The specified user does not have the Client.'], 400);
             }
+
+            $uploadedImages = [];
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $image) {
+                    $uploadedImages[] = $this->saveImage($image, 'visits');
+                }
+            }
+            $validateData['images'] = $uploadedImages;
 
             $user=User::with(['employee'])->whereIn('role_id',[8,9])->where('id',$request->user_id)->first();
             if(!$user){
