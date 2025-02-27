@@ -148,6 +148,15 @@ class User extends Authenticatable
     {
         return $this->hasMany(Visit::class, 'user_id');
     }
+
+
+    public function clientInspectionReports()
+    {
+        return $this->hasMany(InspectionReport::class, 'user_client_id');
+    }
+    
+
+
     // Define a local query scope to filter active users
     // public function scopeActive($query)
     // {
