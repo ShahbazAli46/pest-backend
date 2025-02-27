@@ -292,37 +292,6 @@ class QuoteController extends Controller
             $quote->update(['is_contracted'=>1,'contract_start_date'=>now(),'contract_end_date'=>$end_date,'trn'=>$request->trn,'license_no'=>$request->license_no,'is_food_watch_account'=>$request->is_food_watch_account]);
 
             if($quote){
-
-                // calculate contract target
-                $currentMonth = now()->format('Y-m'); // Get current month (e.g., "2024-10")
-                $client = User::with('client')->find($quote->user_id);
-
-                if ($client && $client->client && $client->client->referencable_type == "App\Models\User") {
-                    $salesUserData = User::whereIn('role_id', [8, 9])->where('id', $client->client->referencable_id)->first();
-
-                    if ($salesUserData) {
-                        $empContractTarget = EmpContractTarget::where('user_id', $salesUserData->id)->where('month', $currentMonth)->first();
-
-                        if ($empContractTarget) {
-                            $empContractTarget->update([
-                                'achieved_target' => $empContractTarget->achieved_target + $quote->grand_total,
-                                'remaining_target' => $empContractTarget->remaining_target - $quote->grand_total,
-                            ]);
-
-                            $empContractTarget->details()->create([
-                                'user_id' => $empContractTarget->user_id,
-                                'employee_id' => $empContractTarget->employee_id,
-                                'month' => $empContractTarget->month,
-                                'contract_id' => $quote->id,
-                                'amount' => $quote->grand_total,
-                                'type' => 'add',
-                            ]);
-                        }
-                    }
-                }
-
-
-
                 //create jobs
                 $uniqueServiceDates = $quote->quoteServiceDates()->select('service_date')->distinct()->get();
                 $requestData = $quote->toArray(); 

@@ -208,7 +208,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('leave-application/show/{id}', [LeaveApplicationController::class, 'show'])->name('leave-application.show');
     Route::post('leave-application/delete/{id}', [LeaveApplicationController::class, 'destroy'])->name('leave-application.delete');
 
-
     //service report
     Route::get('job/service_report/{id}',[JobServiceReportController::class,'index'])->name('job.service_report');
     Route::post('job/service_report/create',[JobServiceReportController::class,'store'])->name('job.service_report.create');

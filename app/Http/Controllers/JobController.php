@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\EmpContractTarget;
 use App\Models\Job;
 use App\Models\JobRescheduleDetail;
 use App\Models\JobService;
 use App\Models\Service;
 use App\Models\ServiceInvoice;
 use App\Models\ServiceInvoiceDetail;
+use App\Models\User;
 use App\Traits\GeneralTrait;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
@@ -297,6 +299,38 @@ class JobController extends Controller
             
             $job->update(['is_completed'=>1,'job_end_time'=>now()]);
             if($job){
+                if($job->quote_id!=null){
+                    $jobs=Job::where('quote_id',$job->quote_id)->where('is_completed',1)->count();
+                    if($jobs<=1){
+                        // calculate contract target
+                        $currentMonth = now()->format('Y-m'); // Get current month (e.g., "2024-10")
+                        $client = User::with('client')->find($job->quote->user_id);
+    
+                        if ($client && $client->client && $client->client->referencable_type == "App\Models\User") {
+                            $salesUserData = User::whereIn('role_id', [8, 9])->where('id', $client->client->referencable_id)->first();
+                            if ($salesUserData) {
+                                $empContractTarget = EmpContractTarget::where('user_id', $salesUserData->id)->where('month', $currentMonth)->first();
+    
+                                if ($empContractTarget) {
+                                    $empContractTarget->update([
+                                        'achieved_target' => $empContractTarget->achieved_target + $job->quote->grand_total,
+                                        'remaining_target' => $empContractTarget->remaining_target - $job->quote->grand_total,
+                                    ]);
+    
+                                    $empContractTarget->details()->create([
+                                        'user_id' => $empContractTarget->user_id,
+                                        'employee_id' => $empContractTarget->employee_id,
+                                        'month' => $empContractTarget->month,
+                                        'contract_id' => $job->quote_id,
+                                        'amount' => $job->quote->grand_total,
+                                        'type' => 'add',
+                                    ]);
+                                }
+                            }
+                        }
+                    }
+                }
+
                 DB::commit();
                 return response()->json(['status' => 'success','message' => 'Job Moved to Completed Successfully']);
             }else{
