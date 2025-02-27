@@ -1432,27 +1432,36 @@ class EmployeeController extends Controller
         return response()->json(['data' => $recovery_officers]);
     }
 
-    public function getSalesMans(Request $request){
-        $recovery_officers=User::notFired()->with(['employee.documents','role:id,name'])->where('role_id',9)->orderBy('id', 'DESC')->get();
+    public function getSalesMans($month=null){
+        if($month==null){
+            $month = now()->format('Y-m'); // Get current month (e.g., "2024-10")
+        }
+        $monthh=$month;
+        [$year, $month] = explode('-', $month);
 
-        $sale_mans =User::notFired()->with(['employee','role:id,name','branch','empContractTargets'=>function($query){
-            $currentMonth = now()->format('Y-m'); // Get current month (e.g., "2024-10")
-            $query->where('month', '=', $currentMonth);
+        $sale_mans =User::notFired()->with(['employee','role:id,name','branch','empContractTargets'=>function($query) use ($monthh){
+            $query->where('month', '=', $monthh);
         }])->where('role_id',9)->orderBy('id', 'DESC')->get();
 
         return response()->json(['data' => $sale_mans]);
     }
 
-    public function getEmployeeContractTarget($user_id){
+    public function getEmployeeContractTarget($user_id,$month=null){
         $employee=User::notFired()->with(['employee','role:id,name','branch'])->whereIn('role_id',[8,9])->where('id',$user_id)->first();
 
         if($employee){
-            $currentMonth = now()->format('Y-m'); // Get current month (e.g., "2024-10")
+            if($month==null){
+                $month = now()->format('Y-m'); // Get current month (e.g., "2024-10")
+            }
+            $monthh=$month;
+            [$year, $month] = explode('-', $month);
+
             $employee->load([
-                'empContractTargets' => function($query) use ($currentMonth) {
-                    $query->where('month', '=', $currentMonth)->with(['details']);
+                'empContractTargets' => function($query) use ($monthh) {
+                    $query->where('month', $monthh)->with(['details']);
                 }
             ]);
+
             return response()->json(['data' => $employee]);
         }else{
             return response()->json(['status' => 'error','message' => 'Employee Not Found.'], 400);

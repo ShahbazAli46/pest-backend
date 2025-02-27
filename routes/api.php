@@ -47,7 +47,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('employee/fired_at/{id}',[EmployeeController::class,'fireEmployee'])->name('employee.fired_at');
     Route::get('employee/reactive/{id}',[EmployeeController::class,'reActiveEmployee'])->name('employee.reactive');
     Route::get('employee/fired/get',[EmployeeController::class,'getFiredEmployees'])->name('employee.fired.get');
-    Route::get('employee/contract/target/get/{user_id}',[EmployeeController::class,'getEmployeeContractTarget'])->name('employee.contract.target.get');
+    Route::get('employee/contract/target/get/{user_id}/{month?}',[EmployeeController::class,'getEmployeeContractTarget'])->name('employee.contract.target.get');
 
     Route::get('employee/salary/get',[EmployeeController::class,'getEmployeeSalary'])->name('employee.salary.get');
     Route::get('employee/salary/set_salary_on_per/{id}/{per}',[EmployeeController::class,'setSalaryOnPer'])->name('employee.salary.set_salary_on_per');
@@ -56,7 +56,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('employee/vehicle/fine',[EmployeeController::class,'vehicleEmployeeFine'])->name('employee.vehicle.fine');
    
     //Sale Mans
-    Route::get('employee/sales_man/get',[EmployeeController::class,'getSalesMans'])->name('employee.sales_man.get');
+    Route::get('employee/sales_man/get/{month?}',[EmployeeController::class,'getSalesMans'])->name('employee.sales_man.get');
 
     // not use yet if will use then manage adv cheque and other logic
     // Route::post('employee/adv_received',[EmployeeController::class,'advanceReceived'])->name('employee.adv_received');
