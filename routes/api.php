@@ -55,6 +55,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('employee/salary/advance',[EmployeeController::class,'paidAdvanceEmployee'])->name('employee.salary.advance');
     Route::post('employee/vehicle/fine',[EmployeeController::class,'vehicleEmployeeFine'])->name('employee.vehicle.fine');
    
+    //Sale Mans
+    Route::get('employee/sales_man/get',[EmployeeController::class,'getSalesMans'])->name('employee.sales_man.get');
+
     // not use yet if will use then manage adv cheque and other logic
     // Route::post('employee/adv_received',[EmployeeController::class,'advanceReceived'])->name('employee.adv_received');
     

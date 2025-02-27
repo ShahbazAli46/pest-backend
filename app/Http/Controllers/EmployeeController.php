@@ -131,7 +131,7 @@ class EmployeeController extends Controller
                 'branch_id' => 'required|exists:branches,id', 
                 'joining_date' => 'required|string|date_format:Y-m-d|before_or_equal:today',
                 'remaining_off_days' => 'required|integer|min:0',
-                'contract_target' => 'nullable|numeric|min:0',
+                'contract_target' => 'nullable|numeric|min:0|required_if:role_id,8,9',
             ]);
 
             $requestData = $request->all(); 
@@ -1430,6 +1430,17 @@ class EmployeeController extends Controller
     public function getRecoveryOfficer(Request $request){
         $recovery_officers=User::notFired()->with(['employee.documents','role:id,name'])->withCount('assignedInvoices')->where('role_id',7)->orderBy('id', 'DESC')->get();
         return response()->json(['data' => $recovery_officers]);
+    }
+
+    public function getSalesMans(Request $request){
+        $recovery_officers=User::notFired()->with(['employee.documents','role:id,name'])->where('role_id',9)->orderBy('id', 'DESC')->get();
+
+        $sale_mans =User::notFired()->with(['employee','role:id,name','branch','empContractTargets'=>function($query){
+            $currentMonth = now()->format('Y-m'); // Get current month (e.g., "2024-10")
+            $query->where('month', '=', $currentMonth);
+        }])->where('role_id',9)->orderBy('id', 'DESC')->get();
+
+        return response()->json(['data' => $sale_mans]);
     }
 
     public function getEmployeeContractTarget($user_id){
