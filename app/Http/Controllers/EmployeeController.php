@@ -1490,6 +1490,26 @@ class EmployeeController extends Controller
         }
     }
 
+    public function getEmployeeRefIncome(Request $request,$id){
+        $employee=User::notFired()->with(['clients'])->whereIn('role_id',[2,3,4,6,7,8,9,10])->where('id',$id)->first();
+        if($employee){
+            $clientUserIds = $employee ? $employee->clients->pluck('user_id') : [];
+            $service_invoices=ServiceInvoice::whereIn('user_id',$clientUserIds);
+            if($request->has('start_date') && $request->has('end_date')){
+                $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
+                $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
+
+                $service_invoices=$service_invoices->whereBetween('issued_date', [$startDate, $endDate])->get();
+                return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $service_invoices]);
+            }else{
+                $service_invoices=$service_invoices->get();
+                return response()->json(['data' => $service_invoices]);
+            }
+        }else{  
+            return response()->json(['data' => 'Employee User Not Found'], 400);
+        }
+    }
+
     //get all sales managers and its number of assign job and complete jobs
     // if ($request->has('start_date') && $request->has('end_date')) {
     //     $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
