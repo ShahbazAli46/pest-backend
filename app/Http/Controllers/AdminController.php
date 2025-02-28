@@ -33,12 +33,12 @@ class AdminController extends Controller
             $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
             $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
 
-            $ledgers = Ledger::with(['personable'])->whereBetween('created_at', [$startDate, $endDate])
+            $ledgers = Ledger::with(['personable','referenceable'])->whereBetween('created_at', [$startDate, $endDate])
             ->whereIn('payment_type',['opening_balance','cash'])
             ->where(['person_type' => 'App\Models\User','person_id'=>1])->get();
             return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $ledgers]);
         }else{
-            $ledgers = Ledger::with(['personable'])
+            $ledgers = Ledger::with(['personable','referenceable'])
             ->where(['person_type' => 'App\Models\User','person_id'=>1])
             ->whereIn('payment_type',['opening_balance','cash'])
             ->get();
