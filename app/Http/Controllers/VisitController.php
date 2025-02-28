@@ -14,7 +14,6 @@ class VisitController extends Controller
 
     //Get
     public function index(Request $request,$user_id,$id=null){
-
         if($id==null){
             $visits=Visit::with('userClient')->orderBy('id', 'DESC')->where('user_id',$user_id);
 
@@ -38,6 +37,21 @@ class VisitController extends Controller
         }
     }
 
+
+    public function getVisits(Request $request){
+        $visits=Visit::with('userClient')->orderBy('id', 'DESC');
+
+        if($request->has('follow_up_start_date') && $request->has('follow_up_end_date')){
+            $startDate = \Carbon\Carbon::parse($request->input('follow_up_start_date'))->startOfDay();
+            $endDate = \Carbon\Carbon::parse($request->input('follow_up_end_date'))->endOfDay();
+            $visits=$visits->whereBetween('follow_up_date', [$startDate, $endDate])->get();
+            return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $visits]);
+        }
+
+        $visits=$visits->get();
+        return response()->json(['data' => $visits]);
+    }
+    
     //Store
     public function store(Request $request)
     {

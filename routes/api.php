@@ -170,6 +170,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     //visits
     Route::get('visit/get/{user_id}/{id?}',[VisitController::class,'index'])->name('visit.get');
+    Route::get('visit/filter/get',[VisitController::class,'getVisits'])->name('visit.filter.get');
     Route::post('visit/create',[VisitController::class,'store'])->name('visit.create');
 
     //Inspection Report
