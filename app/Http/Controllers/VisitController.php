@@ -39,7 +39,7 @@ class VisitController extends Controller
 
 
     public function getVisits(Request $request){
-        $visits=Visit::with('userClient')->orderBy('id', 'DESC');
+        $visits=Visit::with('userClient.client')->orderBy('id', 'DESC');
 
         if($request->has('follow_up_start_date') && $request->has('follow_up_end_date')){
             $startDate = \Carbon\Carbon::parse($request->input('follow_up_start_date'))->startOfDay();
