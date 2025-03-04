@@ -132,7 +132,9 @@ class EmployeeController extends Controller
                 'branch_id' => 'required|exists:branches,id', 
                 'joining_date' => 'required|string|date_format:Y-m-d|before_or_equal:today',
                 'remaining_off_days' => 'required|integer|min:0',
+                'base_target' => 'nullable|numeric|min:0|required_if:role_id,8,9',
                 'contract_target' => 'nullable|numeric|min:0|required_if:role_id,8,9',
+                'achieved_target' => 'nullable|numeric|min:0|required_if:role_id,8,9',
             ]);
 
             $requestData = $request->all(); 
@@ -181,11 +183,11 @@ class EmployeeController extends Controller
                         'user_id' => $user['data']->id,
                         'employee_id' => $employee->id,
                         'month' => $currentMonth,
-                        'base_target' =>  $employee->contract_target,
+                        'base_target' =>  $employee->base_target,
                         'contract_target' => $employee->contract_target,
-                        'achieved_target' => 0,
+                        'achieved_target' => $employee->achieved_target,
                         'cancelled_contract_amt' => 0,
-                        'remaining_target' =>  $employee->contract_target,
+                        'remaining_target' =>  $employee->contract_target-$employee->achieved_target,
                     ]);
                 }
 

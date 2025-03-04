@@ -15,7 +15,7 @@ class VisitController extends Controller
     //Get
     public function index(Request $request,$user_id,$id=null){
         if($id==null){
-            $visits=Visit::with(['userClient','clientAddress'])->orderBy('id', 'DESC')->where('user_id',$user_id);
+            $visits=Visit::with(['userClient.client','clientAddress'])->orderBy('id', 'DESC')->where('user_id',$user_id);
 
             // if ($request->has('user_client_id')) {
             //     $inspection_report_query->where('user_client_id', $request->input('user_client_id'));
@@ -32,7 +32,7 @@ class VisitController extends Controller
 
             return response()->json(['data' => $visits]);
         }else{
-            $visit=Visit::with(['userClient','clientAddress'])->where('user_id',$user_id)->where('id',$id)->first();
+            $visit=Visit::with(['userClient.client','clientAddress'])->where('user_id',$user_id)->where('id',$id)->first();
             return response()->json(['data' => $visit]);
         }
     }
