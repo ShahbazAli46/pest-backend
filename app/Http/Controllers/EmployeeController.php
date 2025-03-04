@@ -183,11 +183,11 @@ class EmployeeController extends Controller
                         'user_id' => $user['data']->id,
                         'employee_id' => $employee->id,
                         'month' => $currentMonth,
-                        'base_target' =>  $employee->base_target,
-                        'contract_target' => $employee->contract_target,
-                        'achieved_target' => $employee->achieved_target,
+                        'base_target' =>  $request->base_target,
+                        'contract_target' => $request->contract_target,
+                        'achieved_target' => $request->achieved_target,
                         'cancelled_contract_amt' => 0,
-                        'remaining_target' =>  $employee->contract_target-$employee->achieved_target,
+                        'remaining_target' =>  $request->contract_target-$request->achieved_target,
                     ]);
                 }
 
