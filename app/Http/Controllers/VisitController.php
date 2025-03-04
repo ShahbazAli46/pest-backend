@@ -15,7 +15,7 @@ class VisitController extends Controller
     //Get
     public function index(Request $request,$user_id,$id=null){
         if($id==null){
-            $visits=Visit::with('userClient')->orderBy('id', 'DESC')->where('user_id',$user_id);
+            $visits=Visit::with(['userClient','clientAddress'])->orderBy('id', 'DESC')->where('user_id',$user_id);
 
             // if ($request->has('user_client_id')) {
             //     $inspection_report_query->where('user_client_id', $request->input('user_client_id'));
@@ -32,14 +32,13 @@ class VisitController extends Controller
 
             return response()->json(['data' => $visits]);
         }else{
-            $visit=Visit::with('userClient')->where('user_id',$user_id)->where('id',$id)->first();
+            $visit=Visit::with(['userClient','clientAddress'])->where('user_id',$user_id)->where('id',$id)->first();
             return response()->json(['data' => $visit]);
         }
     }
 
-
     public function getVisits(Request $request){
-        $visits=Visit::with('userClient.client')->orderBy('id', 'DESC');
+        $visits=Visit::with(['userClient.client','clientAddress'])->orderBy('id', 'DESC');
 
         if($request->has('follow_up_start_date') && $request->has('follow_up_end_date')){
             $startDate = \Carbon\Carbon::parse($request->input('follow_up_start_date'))->startOfDay();
@@ -64,6 +63,7 @@ class VisitController extends Controller
                 'current_contract_end_date' => 'nullable|date|required_if:status,Contracted',
                 'visit_date' => 'required|string',
                 'user_client_id' => 'required|exists:users,id', 
+                'client_address_id' => 'required|exists:client_addresses,id',
                 'latitude' => 'required|string',
                 'longitude' => 'required|string',
                 'follow_up_date' => 'nullable|date',
