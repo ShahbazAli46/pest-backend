@@ -1494,7 +1494,7 @@ class EmployeeController extends Controller
         $employee=User::notFired()->with(['clients'])->whereIn('role_id',[2,3,4,6,7,8,9,10])->where('id',$id)->first();
         if($employee){
             $clientUserIds = $employee ? $employee->clients->pluck('user_id') : [];
-            $service_invoices=ServiceInvoice::whereIn('user_id',$clientUserIds);
+            $service_invoices=ServiceInvoice::with(['user.client'])->whereIn('user_id',$clientUserIds);
             if($request->has('start_date') && $request->has('end_date')){
                 $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
                 $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
