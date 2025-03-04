@@ -91,6 +91,7 @@ class RenewableItemController extends Controller
             $this->responsee(false, $this->id_err);
         return $this->json_response($this->resp, $this->httpCode);
     }
+
     public function update(Request $request, $id)
     {
         // $input = $request->all();
@@ -124,6 +125,7 @@ class RenewableItemController extends Controller
         }
         return $this->json_response($this->resp, $this->httpCode);
     }
+
     public function delete($id)
     {
         if($id){

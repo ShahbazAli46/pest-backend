@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\{AdminController, StockReportController, AdvanceChequeController, BankController, BranchController, BrandController,ClientController, CustomerController, DashboardController, DeviceController, EmployeeController, ExpenseCategoryController, ExpenseController, JobController, JobServiceReportController, ProductController, DeliveryNoteController, InspectionReportController, QuoteController, ReceivedCashRecordController, SalaryController, SaleOrderController, ServiceController, ServiceInvoiceController, SupplierController, TermsAndConditionController, TreatmentMethodController, UserAuthController, VehicleController, VehicleExpenseController, VendorController,LeaveApplicationController, RenewableItemController, VisitController};
+use App\Http\Controllers\{AdminController, StockReportController, AdvanceChequeController, BankController, BranchController, BrandController,ClientController, CustomerController, DashboardController, DeviceController, EmployeeController, ExpenseCategoryController, ExpenseController, JobController, JobServiceReportController, ProductController, DeliveryNoteController, InspectionReportController, QuoteController, ReceivedCashRecordController, SalaryController, SaleOrderController, ServiceController, ServiceInvoiceController, SupplierController, TermsAndConditionController, TreatmentMethodController, UserAuthController, VehicleController, VehicleExpenseController, VendorController,LeaveApplicationController, PurchaseOrderController, RenewableItemController, VisitController};
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -249,7 +249,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/', [RenewableItemController::class, 'index'])->name('renewable-items.index');
         Route::post('/create', [RenewableItemController::class, 'store'])->name('renewable-items.store');
         Route::get('/{id}/show', [RenewableItemController::class, 'edit'])->name('renewable-items.show');
-        Route::put('/{id}/update', [RenewableItemController::class, 'update'])->name('renewable-items.update');
+        Route::post('/{id}/update', [RenewableItemController::class, 'update'])->name('renewable-items.update');
         Route::delete('/{id}/delete', [RenewableItemController::class, 'delete'])->name('renewable-items.destroy');
     });
 
