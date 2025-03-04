@@ -177,7 +177,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('inspection/report/get/{id?}',[InspectionReportController::class,'index'])->name('inspection.report.get');
     Route::post('inspection/report/create',[InspectionReportController::class,'store'])->name('inspection.report.create');
     
-
+    // Purchase Order
+    Route::get('purchase_order/get/{id?}',[PurchaseOrderController::class,'index'])->name('purchase_order.get');
+    Route::post('purchase_order/create',[PurchaseOrderController::class,'store'])->name('purchase_order.create');
+    Route::post('purchase_order/update/status/{po_id}',[PurchaseOrderController::class,'updateStatus'])->name('purchase_order.update.status');
+       
     // Terms And Condition
     Route::get('terms_and_condition/{id?}',[TermsAndConditionController::class,'index'])->name('terms_and_condition');
     Route::post('terms_and_condition/create',[TermsAndConditionController::class,'store'])->name('terms_and_condition.create');
