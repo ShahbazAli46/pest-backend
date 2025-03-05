@@ -155,6 +155,10 @@ class User extends Authenticatable
         return $this->hasMany(InspectionReport::class, 'user_client_id');
     }
     
+    public function employeeCommissions()
+    {
+        return $this->morphMany(EmployeeCommission::class, 'referencable');
+    }
 
 
     // Define a local query scope to filter active users

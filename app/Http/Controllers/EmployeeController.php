@@ -1465,6 +1465,13 @@ class EmployeeController extends Controller
                 }
             ]);
 
+
+            $employee->load([
+                'employeeCommissions' => function($query) use ($monthh) {
+                    $query->where('month', $monthh);
+                }
+            ]);
+
             return response()->json(['data' => $employee]);
         }else{
             return response()->json(['status' => 'error','message' => 'Employee Not Found.'], 400);
