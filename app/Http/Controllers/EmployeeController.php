@@ -1444,6 +1444,8 @@ class EmployeeController extends Controller
 
         $sale_mans =User::notFired()->with(['employee','role:id,name','branch','empContractTargets'=>function($query) use ($monthh){
             $query->where('month', '=', $monthh);
+        },'employeeCommissions'=>function($query) use ($monthh){
+            $query->where('month', '=', $monthh);
         }])->where('role_id',9)->orderBy('id', 'DESC')->get();
 
         return response()->json(['data' => $sale_mans]);
