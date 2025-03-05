@@ -193,6 +193,19 @@ class PurchaseOrderController extends Controller
         }
     }
 
+    public function delete($id)
+    {
+        $purchaseOrder = PurchaseOrder::with('details')->find($id);
+        if (!$purchaseOrder) {
+            return response()->json(['message' => 'Purchase Order not Found'], 404);
+        }
+    
+        $purchaseOrder->details()->delete();
+        $purchaseOrder->delete();
+    
+        return response()->json(['message' => 'Purchase Order Deleted Successfully']);
+    }
+
     //
     private function ensureArray($value) {
         if (is_null($value)) return []; 
