@@ -105,7 +105,7 @@ class PurchaseOrderController extends Controller
         }
     }
 
-    public function updateStatus(Request $request,$id){
+    public function update(Request $request,$id){
         try {
             DB::beginTransaction();
 
@@ -114,13 +114,15 @@ class PurchaseOrderController extends Controller
                 DB::rollBack();
                 return response()->json(['status' => 'error', 'message' => 'Purchase Order Already Processed.'], 400);
             }
+
             $request->merge([
-                'approve_order_detail_id' => $this->ensureArray($request->input('approve_order_detail_id')),
+                'approve_order_detail_id' => $request->has('approve_order_detail_id') ? $this->ensureArray($request->input('approve_order_detail_id')) : [],
+                'qty' => $request->has('qty') ? $this->ensureArray($request->input('qty')) : [],
             ]);
             $validatedData = $request->validate([
                 'approve_order_detail_id'   => 'nullable|array',
                 'approve_order_detail_id.*' => [
-                    'nullable',
+                    'required',
                     'exists:purchase_order_details,id',
                     function ($attribute, $value, $fail) use ($id) {
                         // Ensure the detail belongs to this purchase order
@@ -134,31 +136,48 @@ class PurchaseOrderController extends Controller
                         }
                     }
                 ],
+                'qty' => 'nullable|array|min:0',
+                'qty.*' => 'required|numeric|min:1',
             ]);
     
-            // Update Purchase Order Status
-            $purchase_order->update([
-                'status' => 'processed',
-                'status_change_date' => now(),
-            ]);
+            $approvedIds = $validatedData['approve_order_detail_id'] ?? [];
+            $quantities = $validatedData['qty'] ?? [];
     
-            // Approve selected details and reject the rest
-            $approvedIds = $request->approve_order_detail_id ?? []; // Get approved IDs or empty array
-    
-            // Reject all first
+            if (count($approvedIds) !== count($quantities)) {
+                DB::rollBack();
+                return response()->json(['status' => 'error', 'message' => 'Mismatch between approved order detail IDs and quantities.'], 422);
+            }
+
             $purchase_order->details()->update([
                 'status' => 'rejected',
                 'status_change_date' => now(),
             ]);
             
-            // Approve only the selected ones
-            if (!empty($approvedIds)) {
-                PurchaseOrderDetail::whereIn('id', $approvedIds)
-                    ->update([
+            // Approve only the selected ones and update quantity
+            foreach ($approvedIds as $index => $detailId) {
+                $purchaseOrderDetail = PurchaseOrderDetail::find($detailId);
+                if ($purchaseOrderDetail) {
+                    $newQty = $quantities[$index];
+                    $subTotal = $newQty * $purchaseOrderDetail->price;
+                    $vatAmount = ($subTotal * $purchaseOrderDetail->vat_per) / 100;
+                    $grandTotal = $subTotal + $vatAmount;
+
+                    $purchaseOrderDetail->update([
+                        'qty' => $newQty,
+                        'sub_total' => $subTotal,
+                        'vat_amt' => $vatAmount,
+                        'grand_total' => $grandTotal,
                         'status' => 'approved',
                         'status_change_date' => now(),
                     ]);
+                }
             }
+
+            // Update Purchase Order Status
+            $purchase_order->update([
+                'status' => 'processed',
+                'status_change_date' => now(),
+            ]);
 
             DB::commit();
             return response()->json(['status' => 'success', 'message' => 'Purchase Order Processed Successfully!']);

@@ -180,7 +180,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Purchase Order
     Route::get('purchase_order/get/{id?}',[PurchaseOrderController::class,'index'])->name('purchase_order.get');
     Route::post('purchase_order/create',[PurchaseOrderController::class,'store'])->name('purchase_order.create');
-    Route::post('purchase_order/update/status/{po_id}',[PurchaseOrderController::class,'updateStatus'])->name('purchase_order.update.status');
+    Route::post('purchase_order/update/{po_id}',[PurchaseOrderController::class,'update'])->name('purchase_order.update');
        
     // Terms And Condition
     Route::get('terms_and_condition/{id?}',[TermsAndConditionController::class,'index'])->name('terms_and_condition');
