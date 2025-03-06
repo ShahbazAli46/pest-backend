@@ -103,7 +103,7 @@ class VehicleExpenseController extends Controller
             if($request->input('payment_type') == 'cheque'){
                 AdvanceCheque::create([
                     // 'user_id' => $invoice->user_id,
-                    'description' => $requestData['description'],
+                    'description' => 'Vehicle Expense',
                     'bank_id' => $request->bank_id??null,
                     'cheque_no' => $request->input('cheque_no')??null,
                     'cheque_date' => $request->input('cheque_date')??null,
