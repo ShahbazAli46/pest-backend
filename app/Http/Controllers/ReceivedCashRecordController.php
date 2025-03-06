@@ -75,6 +75,8 @@ class ReceivedCashRecordController extends Controller
                     'person_type' => 'App\Models\User', 
                     'link_id' => $received_cash_record->client_ledger_id, 
                     'link_name' => 'client_ledger',
+                    'referenceable_id' =>  $received_cash_record->client_user_id,
+                    'referenceable_type' => 'App\Models\User',
                 ]);
                 $received_cash_record->status='approved';
                 $received_cash_record->update();
