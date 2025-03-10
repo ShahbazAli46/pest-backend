@@ -106,6 +106,7 @@ class QuoteController extends Controller
                 'services.*.detail.*.rate' => 'required|numeric|min:1', 
                 // 'services.*.detail.*.dates' => 'required|array', 
                 // 'services.*.detail.*.dates.*' => 'required|date', 
+                'branch_id' => 'required|exists:branches,id', 
             ]);
 
             if ($request->input('billing_method') == 'installments') {
