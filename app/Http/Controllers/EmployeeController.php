@@ -286,6 +286,7 @@ class EmployeeController extends Controller
                 'file' => 'nullable|mimes:jpeg,png,jpg,gif,pdf,doc,docx|max:5120',
                 'process_date' => 'nullable|date',
                 'process_amt' => 'nullable|numeric|min:0',
+                'document_identification_number' => 'nullable|string|max:150',
             ]);
             //add condtion here
             $employee = Employee::where('user_id', $request->user_id)->first();
@@ -296,7 +297,7 @@ class EmployeeController extends Controller
 
             $emp_docs = EmployeeDocs::where('employee_user_id', $request->user_id)->where('name', $request->name)->first();
     
-            $data = $request->only(['name', 'status', 'start', 'expiry', 'desc','process_date']);
+            $data = $request->only(['name', 'status', 'start', 'expiry', 'desc','process_date','document_identification_number']);
 
             $data['employee_user_id'] = $request->user_id;
             $data['employee_id'] = $employee->id;
