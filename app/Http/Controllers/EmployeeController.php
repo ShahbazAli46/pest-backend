@@ -1443,12 +1443,28 @@ class EmployeeController extends Controller
         $monthh=$month;
         [$year, $month] = explode('-', $month);
 
+        $startDate = \Carbon\Carbon::createFromDate($year, $month, 1)->startOfMonth();
+        $endDate = \Carbon\Carbon::createFromDate($year, $month, 1)->endOfMonth();
+        
         $sale_mans =User::notFired()->with(['employee','role:id,name','branch','empContractTargets'=>function($query) use ($monthh){
             $query->where('month', '=', $monthh);
         },'employeeCommissions'=>function($query) use ($monthh){
             $query->where('month', '=', $monthh);
-        }])->where('role_id',9)->orderBy('id', 'DESC')->get();
+        },'clients'])->where('role_id',9)->orderBy('id', 'DESC')->get();
 
+
+        $sale_mans->map(function ($salesman) use ($startDate, $endDate) {
+            $clientUserIds = $salesman->clients->pluck('user_id')->toArray(); // Get client IDs
+    
+            $completedJobsTotal = Job::whereIn('user_id', $clientUserIds)
+                ->where('is_completed', 1) 
+                ->whereBetween('job_date', [$startDate, $endDate]) 
+                ->sum('grand_total'); 
+    
+            $salesman->completed_jobs_total = $completedJobsTotal;
+
+            $salesman->makeHidden(['clients']);
+        });
         return response()->json(['data' => $sale_mans]);
     }
 
