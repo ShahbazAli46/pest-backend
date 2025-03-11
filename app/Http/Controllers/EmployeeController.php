@@ -1459,8 +1459,9 @@ class EmployeeController extends Controller
             $completedJobsTotal = Job::whereIn('user_id', $clientUserIds)
                 ->where('is_completed', 1) 
                 ->whereBetween('job_date', [$startDate, $endDate]) 
-                ->sum('grand_total'); 
-    
+                ->selectRaw('COALESCE(SUM(grand_total), 0) as total') 
+                ->value('total'); 
+
             $salesman->completed_jobs_total = $completedJobsTotal;
 
             $salesman->makeHidden(['clients']);
