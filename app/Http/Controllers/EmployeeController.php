@@ -1435,54 +1435,135 @@ class EmployeeController extends Controller
         $recovery_officers=User::notFired()->with(['employee.documents','role:id,name'])->withCount('assignedInvoices')->where('role_id',7)->orderBy('id', 'DESC')->get();
         return response()->json(['data' => $recovery_officers]);
     }
-
-    public function getSalesMans($period = null)
-    {
-        if ($period === null) {
-            $period = now()->format('Y-m'); // Default: current month
+/*
+    public function getSalesMans($month=null){
+        if($month==null){
+            $month = now()->format('Y-m'); // Get current month (e.g., "2024-10")
         }
+        $monthh=$month;
+        [$year, $month] = explode('-', $month);
 
-        if (preg_match('/^\d{4}$/', $period)) {
-            // If the period is a full year (e.g., "2025")
-            $year = $period;
-            $startDate = \Carbon\Carbon::createFromDate($year, 1, 1)->startOfYear();
-            $endDate = ($year == now()->format('Y')) 
-                ? now() // If current year, set to today
-                : \Carbon\Carbon::createFromDate($year, 12, 31)->endOfYear();
-        } else {
-            // If the period is a month (e.g., "2024-10")
-            [$year, $month] = explode('-', $period);
-            $startDate = \Carbon\Carbon::createFromDate($year, $month, 1)->startOfMonth();
-            $endDate = \Carbon\Carbon::createFromDate($year, $month, 1)->endOfMonth();
-        }
+        $startDate = \Carbon\Carbon::createFromDate($year, $month, 1)->startOfMonth();
+        $endDate = \Carbon\Carbon::createFromDate($year, $month, 1)->endOfMonth();
+        
+        $sale_mans =User::notFired()->with(['employee','role:id,name','branch','empContractTargets'=>function($query) use ($monthh){
+            $query->where('month', '=', $monthh);
+        },'employeeCommissions'=>function($query) use ($monthh){
+            $query->where('month', '=', $monthh);
+        },'clients'])->where('role_id',9)->orderBy('id', 'DESC')->get();
 
-        $sale_mans = User::notFired()->with([
-            'employee',
-            'role:id,name',
-            'branch',
-            'empContractTargets' => function ($query) use ($period) {
-                $query->where('month', '=', $period);
-            },
-            'employeeCommissions' => function ($query) use ($period) {
-                $query->where('month', '=', $period);
-            },
-            'clients'
-        ])->where('role_id', 9)->orderBy('id', 'DESC')->get();
 
         $sale_mans->map(function ($salesman) use ($startDate, $endDate) {
-            $clientUserIds = $salesman->clients->pluck('user_id')->toArray();
-
+            $clientUserIds = $salesman->clients->pluck('user_id')->toArray(); // Get client IDs
+    
             $completedJobsTotal = Job::whereIn('user_id', $clientUserIds)
-                ->where('is_completed', 1)
-                ->whereBetween('job_date', [$startDate, $endDate])
-                ->selectRaw('COALESCE(SUM(grand_total), 0) as total')
-                ->value('total');
+                ->where('is_completed', 1) 
+                ->whereBetween('job_date', [$startDate, $endDate]) 
+                ->selectRaw('COALESCE(SUM(grand_total), 0) as total') 
+                ->value('total'); 
 
             $salesman->completed_jobs_total = $completedJobsTotal;
 
             $salesman->makeHidden(['clients']);
         });
-
+        return response()->json(['data' => $sale_mans]);
+    }
+ */
+    public function getSalesMans($period = null)
+    {
+        // Handle different period formats
+        if ($period === null) {
+            $period = now()->format('Y-m'); // Default: current month
+            $isYearlyMode = false;
+        } else {
+            // Check if the period is just a year (e.g., '2025')
+            $isYearlyMode = preg_match('/^\d{4}$/', $period);
+            
+            if (!$isYearlyMode && !preg_match('/^\d{4}-\d{2}$/', $period)) {
+                return response()->json(['error' => 'Invalid period format. Use YYYY-MM or YYYY'], 400);
+            }
+        }
+        
+        // Set date ranges based on period type
+        if ($isYearlyMode) {
+            $year = $period;
+            $startDate = \Carbon\Carbon::createFromDate($year, 1, 1)->startOfYear();
+            $endDate = \Carbon\Carbon::createFromDate($year, 12, 31)->endOfYear();
+        } else {
+            [$year, $month] = explode('-', $period);
+            $startDate = \Carbon\Carbon::createFromDate($year, $month, 1)->startOfMonth();
+            $endDate = \Carbon\Carbon::createFromDate($year, $month, 1)->endOfMonth();
+        }
+        
+        // Get salesmen data
+        $query = User::notFired()
+            ->with([
+                'employee',
+                'role:id,name',
+                'branch',
+                'clients'
+            ])
+            ->where('role_id', 9)
+            ->orderBy('id', 'DESC');
+        
+        // Handle commissions and targets differently for yearly vs monthly
+        if ($isYearlyMode) {
+            // For yearly view, get all targets/commissions in that year
+            $query->with([
+                'empContractTargets' => function($query) use ($year) {
+                    $query->where('month', 'like', $year.'-%');
+                },
+                'employeeCommissions' => function($query) use ($year) {
+                    $query->where('month', 'like', $year.'-%');
+                }
+            ]);
+        } else {
+            // For monthly view, keep existing behavior
+            $query->with([
+                'empContractTargets' => function($query) use ($period) {
+                    $query->where('month', '=', $period);
+                },
+                'employeeCommissions' => function($query) use ($period) {
+                    $query->where('month', '=', $period);
+                }
+            ]);
+        }
+        
+        $sale_mans = $query->get();
+        
+        // Calculate job totals
+        $sale_mans->map(function ($salesman) use ($startDate, $endDate, $isYearlyMode) {
+            $clientUserIds = $salesman->clients->pluck('user_id')->toArray();
+            
+            $completedJobsTotal = Job::whereIn('user_id', $clientUserIds)
+                ->where('is_completed', 1)
+                ->whereBetween('job_date', [$startDate, $endDate])
+                ->selectRaw('COALESCE(SUM(grand_total), 0) as total')
+                ->value('total');
+            
+            $salesman->completed_jobs_total = $completedJobsTotal;
+            
+            // Add period type indicator
+            $salesman->period_type = $isYearlyMode ? 'yearly' : 'monthly';
+            
+            // If yearly, maybe add monthly breakdown
+            if ($isYearlyMode) {
+                // Get monthly breakdown of completed jobs
+                $monthlyJobs = Job::whereIn('user_id', $clientUserIds)
+                    ->where('is_completed', 1)
+                    ->whereBetween('job_date', [$startDate, $endDate])
+                    ->selectRaw('MONTH(job_date) as month, COALESCE(SUM(grand_total), 0) as total')
+                    ->groupBy('month')
+                    ->get()
+                    ->pluck('total', 'month')
+                    ->toArray();
+                
+                $salesman->monthly_breakdown = $monthlyJobs;
+            }
+            
+            $salesman->makeHidden(['clients']);
+        });
+        
         return response()->json(['data' => $sale_mans]);
     }
 
