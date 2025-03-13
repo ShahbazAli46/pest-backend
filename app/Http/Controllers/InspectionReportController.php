@@ -60,8 +60,8 @@ class InspectionReportController extends Controller
             }                                                       
 
             $uploadedImages = [];
-            if ($request->hasFile('images')) {
-                foreach ($request->file('images') as $image) {
+            if ($request->hasFile('pictures')) {
+                foreach ($request->file('pictures') as $image) {
                     $uploadedImages[] = $this->saveImage($image, 'visits');
                 }
             }

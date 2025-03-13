@@ -30,4 +30,10 @@ class InspectionReport extends Model
         return $this->belongsTo(User::class, 'user_client_id');
     }
 
+    public function getPicturesAttribute($value)
+    {
+        return collect(json_decode($value, true))->map(fn($pic) => asset($pic))->toArray();
+    }
+
+
 }
