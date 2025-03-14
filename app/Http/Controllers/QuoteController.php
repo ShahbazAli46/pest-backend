@@ -44,6 +44,14 @@ class QuoteController extends Controller
                 }]);
             }
 
+            if ($request->has('employee_user_id')) {
+                $employee=User::notFired()->with(['clients'])->whereIn('role_id',[2,3,4,6,7,8,9,10])->where('id',$id)->first();
+                if($employee){
+                    $clientUserIds = $employee ? $employee->clients->pluck('user_id') : [];
+                    $quotes->whereIn('user_id',$clientUserIds);
+                }
+            }
+
             // Check if date filters are present
             if ($request->has('start_date') && $request->has('end_date')) {
                 $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
