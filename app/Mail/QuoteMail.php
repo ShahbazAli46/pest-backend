@@ -7,6 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Queue\SerializesModels;
 
 class QuoteMail extends Mailable
@@ -14,13 +15,15 @@ class QuoteMail extends Mailable
     use Queueable, SerializesModels;
 
     public $quote;
+    public $pdfPath;
 
     /**
      * Create a new message instance.
      */
-    public function __construct($quote)
+    public function __construct($quote, $pdfPath)
     {
         $this->quote = $quote;
+        $this->pdfPath = $pdfPath;
     }
 
     /**
@@ -46,10 +49,17 @@ class QuoteMail extends Mailable
     /**
      * Get the attachments for the message.
      *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
+     * @return array<int, Attachment>
      */
     public function attachments(): array
     {
-        return [];
+        $clientName = str_replace(' ', '_', $this->quote->user->name); // Replace spaces with underscores
+        $fileName = "{$clientName}_Quote.pdf";
+
+        return [
+            Attachment::fromPath($this->pdfPath)
+                ->as($fileName)
+                ->withMime('application/pdf'),
+        ];
     }
 }

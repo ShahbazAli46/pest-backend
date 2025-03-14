@@ -21,6 +21,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class QuoteController extends Controller
 {
@@ -221,7 +222,41 @@ class QuoteController extends Controller
                 
                 // Attempt to send the quote mail
                 try {
-                    Mail::to($quote->user->email)->send(new \App\Mail\QuoteMail($quote));
+                    $data['quote'] = $quote->load(['user', 'client', 'clientAddress', 'quoteServices.service', 'branch']);
+                    $data['quote']->uniqueQuoteServices = $data['quote']->quoteServices->unique('service_id');
+            
+                    // Convert number to words
+                    $amount = $data['quote']->grand_total;
+                    $data['quote']->amount_in_words = ucfirst($this->convertNumberToWords($amount));
+            
+                    // Generate the PDF
+                    $pdf = Pdf::setOptions([
+                        'isHtml5ParserEnabled' => true,
+                        'isPhpEnabled' => true,
+                        'isRemoteEnabled' => true,
+                        'defaultFont' => 'Arial',
+                        'chroot' => public_path(),  // For images access
+                        'debugCss' => false
+                    ])->loadView('emails.quote_pdf.quote_pdf', compact('data'));
+            
+                    // Set paper size and orientation
+                    $pdf->setPaper('A4', 'portrait');
+            
+                     // Define the public directory for PDFs
+                    $pdfDirectory = public_path('upload/pdfs/');
+                    if (!file_exists($pdfDirectory)) {
+                        mkdir($pdfDirectory, 0777, true); // Create directory if not exists
+                    }
+
+                    // Define the PDF file path
+                    $pdfPath = public_path('upload/pdfs/quote_' . $quote->id . '.pdf');
+
+                    // Save the PDF in public/uploads/pdfs
+                    file_put_contents($pdfPath, $pdf->output());
+
+                    // Attempt to send the quote mail with the PDF attachment
+                    Mail::to($quote->user->email)->send(new \App\Mail\QuoteMail($quote, $pdfPath));
+
                 } catch (\Exception $e) {
                     // Log the email error, but do not rollback
                     Log::error('Failed to send quote email: ' . $e->getMessage());
@@ -505,6 +540,30 @@ class QuoteController extends Controller
         return response()->json(['data' => $quote]);
     }
     
+    protected function convertNumberToWords($number) {
+        $words = array(
+            0 => '', 1 => 'one', 2 => 'two', 3 => 'three', 4 => 'four', 5 => 'five',
+            6 => 'six', 7 => 'seven', 8 => 'eight', 9 => 'nine', 10 => 'ten',
+            11 => 'eleven', 12 => 'twelve', 13 => 'thirteen', 14 => 'fourteen',
+            15 => 'fifteen', 16 => 'sixteen', 17 => 'seventeen', 18 => 'eighteen', 19 => 'nineteen',
+            20 => 'twenty', 30 => 'thirty', 40 => 'forty', 50 => 'fifty',
+            60 => 'sixty', 70 => 'seventy', 80 => 'eighty', 90 => 'ninety'
+        );
+
+        if ($number < 20) {
+            return $words[$number];
+        } elseif ($number < 100) {
+            return $words[($number - $number % 10)] . ' ' . $words[$number % 10];
+        } elseif ($number < 1000) {
+            return $words[floor($number / 100)] . ' hundred ' . convertNumberToWords($number % 100);
+        } elseif ($number < 1000000) {
+            return convertNumberToWords(floor($number / 1000)) . ' thousand ' . convertNumberToWords($number % 1000);
+        } elseif ($number < 1000000000) {
+            return convertNumberToWords(floor($number / 1000000)) . ' million ' . convertNumberToWords($number % 1000000);
+        } else {
+            return convertNumberToWords(floor($number / 1000000000)) . ' billion ' . convertNumberToWords($number % 1000000000);
+        }
+    }
     /*
     public function updateContractDate(Request $request){
         try {

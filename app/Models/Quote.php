@@ -57,4 +57,11 @@ class Quote extends Model
         return $this->morphMany(ServiceInvoice::class, 'invoiceable');
     }
 
+    public function clientAddress(){
+        return $this->belongsTo(ClientAddress::class);
+    }
+
+    public function branch(){
+        return $this->belongsTo(Branch::class);
+    }
 }
