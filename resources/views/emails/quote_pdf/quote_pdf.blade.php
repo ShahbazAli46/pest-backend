@@ -31,7 +31,7 @@
             bottom: 2cm;
             left: 0cm;
             right: 0cm;
-            height: 2cm;
+            height: 2.2cm;
             text-align: center;
         }
 
