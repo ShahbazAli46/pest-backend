@@ -57,9 +57,5 @@
         <p><strong>VAT:</strong> {{ $quote->vat_per }}% ({{ $quote->vat_amt }})</p>
         <p><strong>Grand Total:</strong> {{ $quote->grand_total }}</p>
     </div>
-
-    <a href="http://pestcontrol.worldcitizenconsultants.com/quotePdf/?id={{ $quote->id }}" title="for detail" class="button" style="color: white">
-        Click Here for Details
-    </a>
 </body>
 </html>
