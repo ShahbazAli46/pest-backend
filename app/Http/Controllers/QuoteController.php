@@ -555,13 +555,13 @@ class QuoteController extends Controller
         } elseif ($number < 100) {
             return $words[($number - $number % 10)] . ' ' . $words[$number % 10];
         } elseif ($number < 1000) {
-            return $words[floor($number / 100)] . ' hundred ' . convertNumberToWords($number % 100);
+            return $words[floor($number / 100)] . ' hundred ' . $this->convertNumberToWords($number % 100);
         } elseif ($number < 1000000) {
-            return convertNumberToWords(floor($number / 1000)) . ' thousand ' . convertNumberToWords($number % 1000);
+            return $this->convertNumberToWords(floor($number / 1000)) . ' thousand ' . $this->convertNumberToWords($number % 1000);
         } elseif ($number < 1000000000) {
-            return convertNumberToWords(floor($number / 1000000)) . ' million ' . convertNumberToWords($number % 1000000);
+            return $this->convertNumberToWords(floor($number / 1000000)) . ' million ' . $this->convertNumberToWords($number % 1000000);
         } else {
-            return convertNumberToWords(floor($number / 1000000000)) . ' billion ' . convertNumberToWords($number % 1000000000);
+            return $this->convertNumberToWords(floor($number / 1000000000)) . ' billion ' . $this->convertNumberToWords($number % 1000000000);
         }
     }
     /*

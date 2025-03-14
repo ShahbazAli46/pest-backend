@@ -227,38 +227,39 @@
                 @endforeach
             </ol>
         </div>
-
-        <table class="service-table">
-            <thead>
-                <tr>
-                    <th class="service-header">#</th>
-                    <th class="service-header">Service Description</th>
-                    <th class="service-header">Units</th>
-                    <th class="service-header">Rate (AED)</th>
-                    <th class="service-header">Frequency</th>
-                    <th class="service-header">Total</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($data['quote']->quoteServices as $quoteService) 
-                <tr>
-                    <td class="service-index">{{$loop->iteration}}</td>
-                    <td class="service-desc">
-                        <strong>{{$quoteService->service->service_title}}</strong>
-                        {{-- <br>
-                        - General Pest (Cockroaches, Flies, and Rodent) Control Service<br>
-                        - Al Aweer Factory - Monthly Two Times Service<br>
-                        - Ras Al Khor Warehouse - Monthly Two Times Service<br>
-                        - 09 Vehicles Monthly One-Time Service --}}
-                    </td>
-                    <td class="service-units">{{$quoteService->no_of_services}}</td>
-                    <td class="service-rate">{{$quoteService->rate}}</td>
-                    <td class="service-frequency" style=" text-transform: capitalize;">{{$quoteService->job_type}}</td>
-                    <td class="service-total">{{ number_format($quoteService->sub_total, 2) }}</td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
+        <div class="total-section">
+            <table class="service-table">
+                <thead>
+                    <tr>
+                        <th class="service-header">#</th>
+                        <th class="service-header">Service Description</th>
+                        <th class="service-header">Units</th>
+                        <th class="service-header">Rate (AED)</th>
+                        <th class="service-header">Frequency</th>
+                        <th class="service-header">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($data['quote']->quoteServices as $quoteService) 
+                    <tr>
+                        <td class="service-index">{{$loop->iteration}}</td>
+                        <td class="service-desc">
+                            <strong>{{$quoteService->service->service_title}}</strong>
+                            {{-- <br>
+                            - General Pest (Cockroaches, Flies, and Rodent) Control Service<br>
+                            - Al Aweer Factory - Monthly Two Times Service<br>
+                            - Ras Al Khor Warehouse - Monthly Two Times Service<br>
+                            - 09 Vehicles Monthly One-Time Service --}}
+                        </td>
+                        <td class="service-units">{{$quoteService->no_of_services}}</td>
+                        <td class="service-rate">{{$quoteService->rate}}</td>
+                        <td class="service-frequency" style=" text-transform: capitalize;">{{$quoteService->job_type}}</td>
+                        <td class="service-total">{{ number_format($quoteService->sub_total, 2) }}</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
         
         <div style="float:right; width:58%" class="total-section">
             <br>
