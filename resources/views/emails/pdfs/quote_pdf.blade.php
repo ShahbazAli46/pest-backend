@@ -150,7 +150,13 @@
     </div>
     
     <div class="footer">
-        <img src="{{ public_path('assets/pdf/compl_footer.svg') }}" width="100%" />
+        @if($data['quote']->branch->address=='Shop No. 1, Plot No. 3074, Eastern Sector, Al Zahya 1, Ajman - UAE')
+            <img src="{{ public_path('assets/pdf/compl_footer_ajman.svg') }}" width="100%" />
+        @elseif($data['quote']->branch->address=='Building No. 3702, Shop No 3 & 4, Muweilah Commercial area, Sharjah - UAE')
+            <img src="{{ public_path('assets/pdf/compl_footer_sharjah.svg') }}" width="100%" />
+        @else
+            <img src="{{ public_path('assets/pdf/compl_footer_dubai.svg') }}" width="100%" />
+        @endif
     </div>
     
     <div class="side-image">

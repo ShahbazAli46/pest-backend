@@ -270,7 +270,7 @@
                     application of permit to work.</li>
             </ul>
         </div>
-
+        <br>
         <div style="float:left; width:40%" class="total-section">
             <h4>{{$data['quote']->client->firm_name}}</h4><br><br><br><br>
             <p><b>__________________</b></p>
