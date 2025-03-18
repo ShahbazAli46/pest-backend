@@ -245,19 +245,17 @@ class QuoteController extends Controller
                         'defaultFont' => 'Arial',
                         'chroot' => public_path(),  // For images access
                         'debugCss' => false
-                    ])->loadView('emails.quote_pdf.quote_pdf', compact('data'));
+                    ])->loadView('emails.pdfs.quote_pdf', compact('data'));
             
                     // Set paper size and orientation
                     $pdf->setPaper('A4', 'portrait');
             
-                     // Define the public directory for PDFs
-                    $pdfDirectory = public_path('upload/pdfs/');
+                    $pdfDirectory = public_path('upload/pdfs/quotes/');
                     if (!file_exists($pdfDirectory)) {
                         mkdir($pdfDirectory, 0777, true); // Create directory if not exists
                     }
 
-                    // Define the PDF file path
-                    $pdfPath = public_path('upload/pdfs/quote_' . $quote->id . '.pdf');
+                    $pdfPath = public_path('upload/pdfs/quotes/quote_' . $quote->id . '.pdf');
 
                     // Save the PDF in public/uploads/pdfs
                     file_put_contents($pdfPath, $pdf->output());
@@ -370,50 +368,40 @@ class QuoteController extends Controller
                     }
                 }
                 
-                /*
-                //create invoices
-                $installments=0;
-                if($quote->billing_method == 'installments'){
-                    $installments=$quote->no_of_installments;
-                }else if($quote->billing_method == 'service'){
-                    $installments = $quote->jobs()->count();
-                }else if($quote->billing_method == 'monthly'){
-                    $installments=$quote->duration_in_months;
-                }else{
-                    $installments=1;
-                }
-                
-                $inst_total=$quote->grand_total;
-                $installmentDatesArr=$this->generateInstallmentDates($quote->duration_in_months,$installments);
-                for($i=1; $i<=$installments; $i++){
-                    $this->generateServiceInvoice($quote->id,Quote::class,$quote->user_id,$inst_total/$installments,$installmentDatesArr[$i-1],$quote->quoteServices);
-                }
-
-                //link jobs with invoices
-                $this->linkJobsToInvoice($quote->id);
-                
-
-                // Update the CLIENT ledger
-                $user=User::find($quote->user_id);
-                $lastClientLedger = Ledger::where(['person_type' => 'App\Models\User', 'person_id' => $quote->user_id])->latest()->first();
-                $oldCliCashBalance = $lastClientLedger ? $lastClientLedger->cash_balance : 0;
-                $newCliCashBalance = $oldCliCashBalance + $quote->grand_total;
-                $cli_ledger=Ledger::create([
-                    'bank_id' => null, 
-                    'description' => 'Quote Payment for client ' . $user->name,
-                    'dr_amt' => $quote->grand_total,
-                    'payment_type' => 'none',
-                    'entry_type' => 'dr',  
-                    'cash_balance' => $newCliCashBalance,
-                    'person_id' => $quote->user_id,
-                    'person_type' => 'App\Models\User',
-                ]);
-                */
-                
                 DB::commit();
                 // Attempt to send the quote mail
                 try {
-                    Mail::to($quote->user->email)->send(new \App\Mail\QuoteMail($quote));
+                    $data['quote'] = $quote->load(['user', 'client', 'clientAddress', 'quoteServices.service', 'branch']);
+                    $data['quote']->uniqueQuoteServices = $data['quote']->quoteServices->unique('service_id');
+            
+                    // Convert number to words
+                    $amount = $data['quote']->grand_total;
+                    $data['quote']->amount_in_words = ucfirst($this->convertNumberToWords($amount));
+            
+                    $pdf = Pdf::setOptions([
+                        'isHtml5ParserEnabled' => true,
+                        'isPhpEnabled' => true,
+                        'isRemoteEnabled' => true,
+                        'defaultFont' => 'Arial',
+                        'chroot' => public_path(),  // For images access
+                        'debugCss' => false
+                    ])->loadView('emails.pdfs.contract_pdf', compact('data'));
+            
+                    // Set paper size and orientation
+                    $pdf->setPaper('A4', 'portrait');
+            
+                    $pdfDirectory = public_path('upload/pdfs/contracts/');
+                    if (!file_exists($pdfDirectory)) {
+                        mkdir($pdfDirectory, 0777, true); // Create directory if not exists
+                    }
+
+                    $pdfPath = public_path('upload/pdfs/contracts/contract_' . $quote->id . '.pdf');
+
+                    // Save the PDF in public/uploads/pdfs
+                    file_put_contents($pdfPath, $pdf->output());
+
+                    // Attempt to send the quote mail with the PDF attachment
+                    Mail::to($quote->user->email)->send(new \App\Mail\QuoteMail($quote, $pdfPath));
                 } catch (\Exception $e) {
                     // Log the email error, but do not rollback
                     Log::error('Failed to send quote email: ' . $e->getMessage());
