@@ -28,7 +28,7 @@
         
         .footer {
             position: fixed;
-            bottom: 2cm;
+            bottom: 4.5cm;
             left: 0cm;
             right: 0cm;
             height: 2.2cm;
@@ -150,9 +150,9 @@
     </div>
     
     <div class="footer">
-        @if($data['quote']->branch->address=='Shop No. 1, Plot No. 3074, Eastern Sector, Al Zahya 1, Ajman - UAE')
+        @if($data['quote']->branch->id==9)
             <img src="{{ public_path('assets/pdf/compl_footer_ajman.svg') }}" width="100%" />
-        @elseif($data['quote']->branch->address=='Building No. 3702, Shop No 3 & 4, Muweilah Commercial area, Sharjah - UAE')
+        @elseif($data['quote']->branch->id==8)
             <img src="{{ public_path('assets/pdf/compl_footer_sharjah.svg') }}" width="100%" />
         @else
             <img src="{{ public_path('assets/pdf/compl_footer_dubai.svg') }}" width="100%" />

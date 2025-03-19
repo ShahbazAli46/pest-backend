@@ -31,8 +31,9 @@ class QuoteMail extends Mailable
      */
     public function envelope(): Envelope
     {
+        $type=$this->quote->is_contracted==1?'Contract':'Quote';
         return new Envelope(
-            subject: 'Quote Mail',
+            subject: $type.' Mail',
         );
     }
 
@@ -54,7 +55,8 @@ class QuoteMail extends Mailable
     public function attachments(): array
     {
         $clientName = str_replace(' ', '_', $this->quote->user->name); // Replace spaces with underscores
-        $fileName = "{$clientName}_Quote.pdf";
+        $type=$this->quote->is_contracted==1?'Contract':'Quote';
+        $fileName = "{$clientName}_{$type}.pdf";
 
         return [
             Attachment::fromPath($this->pdfPath)

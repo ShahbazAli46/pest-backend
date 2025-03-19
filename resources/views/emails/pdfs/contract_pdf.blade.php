@@ -28,7 +28,7 @@
         
         .footer {
             position: fixed;
-            bottom: 2cm;
+            bottom: 4.5cm;
             left: 0cm;
             right: 0cm;
             height: 2.2cm;
@@ -150,7 +150,13 @@
     </div>
     
     <div class="footer">
-        <img src="{{ public_path('assets/pdf/compl_footer.svg') }}" width="100%" />
+        @if($data['quote']->branch->id==9)
+            <img src="{{ public_path('assets/pdf/compl_footer_ajman.svg') }}" width="100%" />
+        @elseif($data['quote']->branch->id==8)
+            <img src="{{ public_path('assets/pdf/compl_footer_sharjah.svg') }}" width="100%" />
+        @else
+            <img src="{{ public_path('assets/pdf/compl_footer_dubai.svg') }}" width="100%" />
+        @endif
     </div>
     
     <div class="side-image">
