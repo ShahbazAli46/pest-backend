@@ -250,6 +250,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('sale_order/{id?}',[SaleOrderController::class,'index'])->name('sale_order');
     Route::post('sale_order/create',[SaleOrderController::class,'store'])->name('sale_order.create');
 
+
+    Route::get('imp_report/get/{user_client_id?}',[ImpReportController::class,'index'])->name('imp_report.get');
+    Route::post('imp_report/create',[ImpReportController::class,'store'])->name('imp_report.create');
+
+
     Route::prefix('renewable-items')->group(function () {
         Route::get('/', [RenewableItemController::class, 'index'])->name('renewable-items.index');
         Route::post('/create', [RenewableItemController::class, 'store'])->name('renewable-items.store');

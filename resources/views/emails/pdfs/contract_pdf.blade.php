@@ -168,7 +168,9 @@
             <div class="left-div" style="width:60%">                
                 <h4>{{$data['quote']->client->firm_name}}</h4>    
                 <p>{{$data['quote']->client->firm_name}} {{$data['quote']->clientAddress->address}} {{$data['quote']->clientAddress->state}}, {{$data['quote']->clientAddress->country}}</p>    
+                <h4>{{$data['quote']->user->name}}</h4>    
                 <p>{{$data['quote']->client->phone_number}}</p>
+                <p>{{$data['quote']->user->email}}</p>
             </div>
             <div class="left-div" style="width:38%">
                 <h4 style="text-align: right">Contract</h4>
