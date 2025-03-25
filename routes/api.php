@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\{AdminController, StockReportController, AdvanceChequeController, BankController, BranchController, BrandController,ClientController, CustomerController, DashboardController, DeviceController, EmployeeController, ExpenseCategoryController, ExpenseController, JobController, JobServiceReportController, ProductController, DeliveryNoteController, InspectionReportController, QuoteController, ReceivedCashRecordController, SalaryController, SaleOrderController, ServiceController, ServiceInvoiceController, SupplierController, TermsAndConditionController, TreatmentMethodController, UserAuthController, VehicleController, VehicleExpenseController, VendorController,LeaveApplicationController, PurchaseOrderController, RenewableItemController, VisitController};
+use App\Http\Controllers\{AdminController, StockReportController, AdvanceChequeController, BankController, BranchController, BrandController,ClientController, CustomerController, DashboardController, DeviceController, EmployeeController, ExpenseCategoryController, ExpenseController, JobController, JobServiceReportController, ProductController, DeliveryNoteController, ImpReportController, InspectionReportController, QuoteController, ReceivedCashRecordController, SalaryController, SaleOrderController, ServiceController, ServiceInvoiceController, SupplierController, TermsAndConditionController, TreatmentMethodController, UserAuthController, VehicleController, VehicleExpenseController, VendorController,LeaveApplicationController, PestEmailController, PurchaseOrderController, RenewableItemController, VisitController};
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -253,6 +253,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::get('imp_report/get/{user_client_id?}',[ImpReportController::class,'index'])->name('imp_report.get');
     Route::post('imp_report/create',[ImpReportController::class,'store'])->name('imp_report.create');
+
+    //send email
+    Route::post('email/pest_info/send',[PestEmailController::class,'sendDynamicEmail'])->name('email.pest_info.send');
 
 
     Route::prefix('renewable-items')->group(function () {
