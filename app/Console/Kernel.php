@@ -16,9 +16,9 @@ class Kernel extends ConsoleKernel
         $schedule->command('sal_com:generate')->monthlyOn(1, '00:00'); // Runs on the 1st of each month at midnight
         // $schedule->command('invoices:send-monthly')->monthlyOn(1, '00:00'); // Runs on the 1st of each month at midnight
         // $schedule->command('invoices:send-daily')->dailyAt('00:00');
-        $schedule->command('contracts:check-expiration')->everyFifteenMinutes();
-        // $schedule->command('contracts:check-expiration')->dailyAt('00:00');
-        
+        $schedule->command('contracts:check-expiration')->dailyAt('00:00');
+        /*for testing
+        $schedule->command('contracts:check-expiration')->everyFifteenMinutes();*/
     }
 
     /**
