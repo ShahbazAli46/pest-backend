@@ -74,7 +74,7 @@ class ServiceInvoiceController extends Controller
                 return response()->json(['data' => $invoices]);
             }
         }else{ 
-            $invoice=ServiceInvoice::with(['invoiceable','details.itemable','amountHistory','user.client','address','assignedHistories.employeeUser','assignedRecoveryOfficer','job',
+            $invoice=ServiceInvoice::with(['invoiceable.branch','details.itemable','amountHistory','user.client','address','assignedHistories.employeeUser','assignedRecoveryOfficer','job',
             'advanceCheques' => function ($query) {
                 $query->where('cheque_type', 'receive');
             },'advanceCheques.bank'])->where('id',$id)->first();
