@@ -17,6 +17,8 @@ use Illuminate\Support\Facades\Route;
 Route::post('login',[UserAuthController::class,'login']);
 
 Route::get('quote/{id}',[QuoteController::class,'index'])->name('single_quote');
+Route::get('service_invoices/{id?}',[ServiceInvoiceController::class,'index'])->name('service_invoices');
+Route::get('client/ledger/get/{id?}',[ClientController::class,'getClientLedger'])->name('client.ledger.get');
 
 // Protected routes
 Route::middleware(['auth:sanctum'])->group(function () {
@@ -112,7 +114,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('client/address/update/{id}',[ClientController::class,'updateClientAddress'])->name('client.address.update');
     Route::post('client/bank_info/add',[ClientController::class,'storeClientBankInfo'])->name('client.bank_info.add');
     Route::post('client/bank_info/update/{id}',[ClientController::class,'updateClientBankInfo'])->name('client.bank_info.update');
-    Route::get('client/ledger/get/{id?}',[ClientController::class,'getClientLedger'])->name('client.ledger.get');
+    // Route::get('client/ledger/get/{id?}',[ClientController::class,'getClientLedger'])->name('client.ledger.get');
     Route::get('client/received_amount/get/{id?}',[ClientController::class,'getClientReceivedAmt'])->name('client.received_amount.get');
     //Jobs & Clients
     Route::get('client/jobs/get/{id}',[ClientController::class,'getClientJobs'])->name('client.jobs.get');
@@ -223,7 +225,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('job/service_report/feedback/create',[JobServiceReportController::class,'storeFeedback'])->name('job.service_report.feedback.create');
     
     //service invoices
-    Route::get('service_invoices/{id?}',[ServiceInvoiceController::class,'index'])->name('service_invoices');
+    // Route::get('service_invoices/{id?}',[ServiceInvoiceController::class,'index'])->name('service_invoices');
     Route::post('service_invoices/add_payment',[ServiceInvoiceController::class,'addPayment'])->name('service_invoices.add_payment');
     Route::get('service_invoices/assign_invoice/states/{ro_id?}',[ServiceInvoiceController::class,'getAssignedStates'])->name('service_invoices.assign_invoice.states');
     Route::get('service_invoices/settlement/get',[ServiceInvoiceController::class,'getSettlementInvoices'])->name('service_invoices.settlement.get');
@@ -232,7 +234,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('adv_cheques/{type}/{status}/{id?}',[AdvanceChequeController::class,'index'])->name('adv_cheques')->where('type', 'receive|pay');
     // Route::get('adv_cheques/status/change/{id}/{status}/{date}', [AdvanceChequeController::class, 'changeStatus'])->where('status', 'paid|deferred');
     Route::post('adv_cheques/status/change',[AdvanceChequeController::class,'changeStatus'])->name('adv_cheques.status.change');
-    
     
     Route::get('outstandings',[ServiceInvoiceController::class,'outstandings'])->name('outstandings');
 
@@ -249,7 +250,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Sale Orders
     Route::get('sale_order/{id?}',[SaleOrderController::class,'index'])->name('sale_order');
     Route::post('sale_order/create',[SaleOrderController::class,'store'])->name('sale_order.create');
-
 
     Route::get('imp_report/get/{user_client_id?}',[ImpReportController::class,'index'])->name('imp_report.get');
     Route::post('imp_report/create',[ImpReportController::class,'store'])->name('imp_report.create');
