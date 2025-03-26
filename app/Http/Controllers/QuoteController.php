@@ -470,41 +470,8 @@ class QuoteController extends Controller
                     return response()->json(['status' => 'error','message' => 'The Quote has Already been Cancelled.'],500);
                 }
             }
-
-            $quote->update(['contract_cancelled_at'=>now(),'contract_cancel_reason'=>$request->contract_cancel_reason]);
-
-            // calculate contract target
-            $quote_paid_amt=$quote->invoices()->sum('paid_amt');
-            $rem_amt=$quote->grand_total-$quote_paid_amt;
-
-            if($rem_amt>0){
-                $currentMonth = now()->format('Y-m'); // Get current month (e.g., "2024-10")
-                $client = User::with('client')->find($quote->user_id);
-
-                if ($client && $client->client && $client->client->referencable_type == "App\Models\User") {
-                    $salesUserData = User::whereIn('role_id', [8, 9])->where('id', $client->client->referencable_id)->first();
-
-                    if ($salesUserData) {
-                        $empContractTarget = EmpContractTarget::where('user_id', $salesUserData->id)->where('month', $currentMonth)->first();
-
-                        if ($empContractTarget) {
-                            $empContractTarget->update([
-                                'cancelled_contract_amt' => $empContractTarget->cancelled_contract_amt + $rem_amt,
-                                'remaining_target' => $empContractTarget->remaining_target + $rem_amt,
-                            ]);
-
-                            $empContractTarget->details()->create([
-                                'user_id' => $empContractTarget->user_id,
-                                'employee_id' => $empContractTarget->employee_id,
-                                'month' => $empContractTarget->month,
-                                'contract_id' => $quote->id,
-                                'amount' => $rem_amt,
-                                'type' => 'cancel',
-                            ]);
-                        }
-                    }
-                }
-            }
+            //calculate calculations on contract cancel
+            $result = $this->calculateCancelContractCalculations($quote->id, $request->contract_cancel_reason);
             
             DB::commit();
             return response()->json(['status' => 'success','message' => 'The '.$msg_type.' has been Cancelled Successfully']);

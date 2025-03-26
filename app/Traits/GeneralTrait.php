@@ -4,6 +4,7 @@ namespace App\Traits;
 
 use App\Models\Attachment;
 use App\Models\Client;
+use App\Models\EmpContractTarget;
 use App\Models\Job;
 use App\Models\JobRescheduleDetail;
 use App\Models\JobService;
@@ -320,6 +321,60 @@ trait GeneralTrait
         return $issueDates;
     }
 
+    function calculateCancelContractCalculations($quoteId,$cancel_reason)
+    {
+        try {
+            DB::beginTransaction();
+
+            $quote=Quote::find($quoteId);
+            if($quote){
+                $quote->update(['contract_cancelled_at'=>now(),'contract_cancel_reason'=>$cancel_reason]);
+        
+                // calculate contract target
+                $quote_paid_amt=$quote->invoices()->sum('paid_amt');
+                $rem_amt=$quote->grand_total-$quote_paid_amt;
+
+                if($rem_amt>0){
+                    $currentMonth = now()->format('Y-m'); // Get current month (e.g., "2024-10")
+                    $client = User::with('client')->find($quote->user_id);
+
+                    if ($client && $client->client && $client->client->referencable_type == "App\Models\User") {
+                        $salesUserData = User::whereIn('role_id', [8, 9])->where('id', $client->client->referencable_id)->first();
+
+                        if ($salesUserData) {
+                            $empContractTarget = EmpContractTarget::where('user_id', $salesUserData->id)->where('month', $currentMonth)->first();
+
+                            if ($empContractTarget) {
+                                $empContractTarget->update([
+                                    'cancelled_contract_amt' => $empContractTarget->cancelled_contract_amt + $rem_amt,
+                                    'remaining_target' => $empContractTarget->remaining_target + $rem_amt,
+                                ]);
+
+                                $empContractTarget->details()->create([
+                                    'user_id' => $empContractTarget->user_id,
+                                    'employee_id' => $empContractTarget->employee_id,
+                                    'month' => $empContractTarget->month,
+                                    'contract_id' => $quote->id,
+                                    'amount' => $rem_amt,
+                                    'type' => 'cancel',
+                                ]);
+                            }
+                        }
+                    }
+                }
+                DB::commit();
+                return true;
+            }
+
+            DB::rollBack();
+            \Log::error('Contract Not Found');
+            return false;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Contract Cancellation Error: ' . $e->getMessage());
+            return false;
+        }
+    }
     //not used any where yet
     // function linkJobsToInvoice($quoteId)
     // {
