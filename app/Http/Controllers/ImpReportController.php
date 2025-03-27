@@ -16,7 +16,7 @@ class ImpReportController extends Controller
     public function index(Request $request,$user_client_id=null){
         $imp_reports=ImpReports::with(['userClient.client'])->orderBy('id', 'DESC');
         
-        if($request->has('user_client_id')){
+        if($user_client_id!=null){
             $imp_reports->where('user_client_id',$user_client_id);
         }
 
@@ -27,6 +27,7 @@ class ImpReportController extends Controller
             return response()->json(['start_date'=>$startDate,'end_date'=>$endDate,'data' => $imp_reports]);
         }
 
+        $imp_reports=$imp_reports->get();
         return response()->json(['data' => $imp_reports]);
     }
 
@@ -39,7 +40,7 @@ class ImpReportController extends Controller
                 'user_client_id' => 'required|exists:users,id', 
                 'job_id' => 'required|exists:jobs,id', 
                 'report_date' => 'required|date',
-                'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:5120',
+                'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg',//max:5120
                 'description' => 'nullable|string',
             ]);
 

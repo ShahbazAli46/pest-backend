@@ -28,6 +28,7 @@ class CheckContractExpiration extends Command
      */
     public function handle()
     {
+        \Log::info('check contract expiration working');
         // Find contracts that are not already canceled and have passed their end date
         $expiredContracts = Quote::where('contract_end_date', '<', now())
             ->where('is_contracted', 1)
