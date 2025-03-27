@@ -48,6 +48,7 @@ class ReceivedCashRecordController extends Controller
             DB::beginTransaction();
             $request->validate([        
                 'received_cash_record_id' => 'required|integer|exists:received_cash_records,id', 
+                'receipt_no' => 'nullable|max:150',
             ]);
             $received_cash_record=ReceivedCashRecord::findOrFail($request->received_cash_record_id);
 
@@ -79,6 +80,7 @@ class ReceivedCashRecordController extends Controller
                     'referenceable_type' => 'App\Models\User',
                 ]);
                 $received_cash_record->status='approved';
+                $received_cash_record->receipt_no=$request->receipt_no;
                 $received_cash_record->update();
 
                 DB::commit();

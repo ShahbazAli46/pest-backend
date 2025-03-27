@@ -9,7 +9,7 @@ class ReceivedCashRecord extends Model
 {
     use HasFactory;
     public $table="received_cash_records";
-    protected $fillable = ['client_user_id','employee_user_id','paid_amt','service_invoice_id','status','client_ledger_id'];
+    protected $fillable = ['client_user_id','employee_user_id','paid_amt','service_invoice_id','status','client_ledger_id','receipt_no'];
    
     // Relationship with the User model for the client user
     public function clientUser()
