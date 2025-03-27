@@ -19,6 +19,7 @@ Route::post('login',[UserAuthController::class,'login']);
 Route::get('quote/{id}',[QuoteController::class,'index'])->name('single_quote');
 Route::get('service_invoices/{id?}',[ServiceInvoiceController::class,'index'])->name('service_invoices');
 Route::get('client/ledger/get/{id?}',[ClientController::class,'getClientLedger'])->name('client.ledger.get');
+Route::get('job/service_report/{id}',[JobServiceReportController::class,'index'])->name('job.service_report');
 
 // Protected routes
 Route::middleware(['auth:sanctum'])->group(function () {
@@ -220,7 +221,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('leave-application/delete/{id}', [LeaveApplicationController::class, 'destroy'])->name('leave-application.delete');
 
     //service report
-    Route::get('job/service_report/{id}',[JobServiceReportController::class,'index'])->name('job.service_report');
+    // Route::get('job/service_report/{id}',[JobServiceReportController::class,'index'])->name('job.service_report');
     Route::post('job/service_report/create',[JobServiceReportController::class,'store'])->name('job.service_report.create');
     Route::post('job/service_report/feedback/create',[JobServiceReportController::class,'storeFeedback'])->name('job.service_report.feedback.create');
     
