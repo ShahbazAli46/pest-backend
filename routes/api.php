@@ -20,6 +20,8 @@ Route::get('quote/{id}',[QuoteController::class,'index'])->name('single_quote');
 Route::get('service_invoices/{id?}',[ServiceInvoiceController::class,'index'])->name('service_invoices');
 Route::get('client/ledger/get/{id?}',[ClientController::class,'getClientLedger'])->name('client.ledger.get');
 Route::get('job/service_report/{id}',[JobServiceReportController::class,'index'])->name('job.service_report');
+Route::get('treatment_method/{id?}',[TreatmentMethodController::class,'index'])->name('treatment_method');
+Route::get('service/{id?}',[ServiceController::class,'index'])->name('service');
 
 // Protected routes
 Route::middleware(['auth:sanctum'])->group(function () {
@@ -103,7 +105,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('supplier/bank_info/update/{id}',[SupplierController::class,'updateSupplierBankInfo'])->name('supplier.bank_info.update');
 
     // Services
-    Route::get('service/{id?}',[ServiceController::class,'index'])->name('service');
+    // Route::get('service/{id?}',[ServiceController::class,'index'])->name('service');
     Route::post('service/create',[ServiceController::class,'store'])->name('service.create');
     Route::post('service/update/{id}',[ServiceController::class,'update'])->name('service.update');
 
@@ -192,7 +194,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('terms_and_condition/update/{id}',[TermsAndConditionController::class,'update'])->name('terms_and_condition.update');
 
     // Treatment Method
-    Route::get('treatment_method/{id?}',[TreatmentMethodController::class,'index'])->name('treatment_method');
+    // Route::get('treatment_method/{id?}',[TreatmentMethodController::class,'index'])->name('treatment_method');
     Route::post('treatment_method/create',[TreatmentMethodController::class,'store'])->name('treatment_method.create');
     Route::post('treatment_method/update/{id}',[TreatmentMethodController::class,'update'])->name('treatment_method.update');
 
