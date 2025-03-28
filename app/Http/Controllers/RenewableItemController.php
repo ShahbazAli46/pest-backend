@@ -7,10 +7,12 @@ use App\Http\Resources\ClientsResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Models\RenewableItemModel;
+use App\Traits\GeneralTrait;
 use Illuminate\Support\Facades\Response;
 
 class RenewableItemController extends Controller
 {
+    use GeneralTrait;
     function index($searchStr=null)
     {
         $perPage = request('per_page', 10);
@@ -65,7 +67,7 @@ class RenewableItemController extends Controller
             $this->responsee(false, $validator->errors()->all());
         else{
             if ($request->hasFile('file')) {
-                $filePath = $request->file('file')->store('renewable_items', 'public');
+                $filePath=$this->saveImage($request->file,'renewable_items');
                 $request->merge(['file_path' => $filePath]);
             }
             $this->data = RenewableItemModel::create($request->all());
@@ -111,7 +113,8 @@ class RenewableItemController extends Controller
             $this->data = RenewableItemModel::find($id);
             if($this->data){
                 if ($request->hasFile('file')) {
-                    $filePath = $request->file('file')->store('renewable_items', 'public');
+                    $oldFilePath = !empty($this->data->file) ? $this->data->file : null; // Get old file path if it exists and is not empty
+                    $filePath=$this->saveImage($request->file,'renewable_items',$oldFilePath);
                     $request->merge(['file_path' => $filePath]);
                 }
                 if($this->data->update($request->all())){
