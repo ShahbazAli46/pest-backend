@@ -30,6 +30,7 @@ class GenerateSalariesCommissions extends Command
      */ 
     public function handle()
     {
+        \Log::info('generate salary & commission cron working');
         $employee_not_fired=User::notFired()->with('employee')->whereIn('role_id',[2,3,4,6,7,8,9,10])->get();
         $currentMonth = now()->format('Y-m'); // Get current month (e.g., "2024-10")
 
